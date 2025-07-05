@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:progres/src/features/pictures/data/repositories/pictures_repository.dart';
 import 'package:progres/src/features/pictures/data/services/file_service.dart';
 import 'package:progres/src/features/pictures/domain/progress_picture.dart';
@@ -46,7 +45,7 @@ class _AddPicturesScreenState extends ConsumerState<AddPicturesScreen> {
       setState(() {
         _isSaving = true;
       });
-      final newFiles = await picturesFileService.savePictures(pictures);
+      await picturesFileService.savePictures(pictures);
       setState(() {
         _isSaving = false;
       });
