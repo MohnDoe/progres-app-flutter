@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:progres/src/features/pictures/data/repositories/pictures_repository.dart';
+import 'package:progres/src/features/pictures/data/services/file_service.dart';
 import 'package:progres/src/features/pictures/domain/progress_picture.dart';
 
 class AddPicturesScreen extends ConsumerStatefulWidget {
@@ -22,14 +23,18 @@ class _AddPicturesScreenState extends ConsumerState<AddPicturesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final PicturesRepository picturesRepository = ref.watch(
+    final PicturesRepository temporaryPicturesRepository = ref.watch(
       picturesRepositoryProvider,
     );
-    final pictures = picturesRepository.orderedPictures();
+    final PicturesFileService picturesFileService = PicturesFileService();
+
+    bool _isSaving = false;
+
+    final pictures = temporaryPicturesRepository.orderedPictures;
 
     void removePicture(ProgressPicture picture) {
       setState(() {
-        picturesRepository.removePicture(picture);
+        temporaryPicturesRepository.removePicture(picture);
       });
 
       if (pictures.isEmpty) {
@@ -37,7 +42,16 @@ class _AddPicturesScreenState extends ConsumerState<AddPicturesScreen> {
       }
     }
 
-    void savePictures() {}
+    void savePictures() async {
+      setState(() {
+        _isSaving = true;
+      });
+      final newFiles = await picturesFileService.savePictures(pictures);
+      setState(() {
+        _isSaving = false;
+      });
+      Navigator.of(context).pop();
+    }
 
     return Scaffold(
       appBar: AppBar(title: Text("Add pictures")),
@@ -61,7 +75,7 @@ class _AddPicturesScreenState extends ConsumerState<AddPicturesScreen> {
         },
       ),
       floatingActionButton: ElevatedButton.icon(
-        onPressed: pictures.isNotEmpty ? savePictures : null,
+        onPressed: pictures.isNotEmpty || !_isSaving ? savePictures : null,
         label: Text('Add ${pictures.length} pictures'),
       ),
     );
