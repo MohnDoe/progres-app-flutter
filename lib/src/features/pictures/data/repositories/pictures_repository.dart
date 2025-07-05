@@ -1,5 +1,5 @@
 import 'package:image_picker/image_picker.dart';
-import 'package:progres/src/features/pictures/data/picker.dart';
+import 'package:progres/src/features/pictures/data/repositories/picker.dart';
 import 'package:progres/src/features/pictures/domain/progress_picture.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

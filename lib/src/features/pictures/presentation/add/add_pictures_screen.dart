@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:progres/src/features/pictures/data/pictures_repository.dart';
+import 'package:progres/src/features/pictures/data/repositories/pictures_repository.dart';
 import 'package:progres/src/features/pictures/domain/progress_picture.dart';
 
 class AddPicturesScreen extends ConsumerStatefulWidget {
@@ -31,9 +31,13 @@ class _AddPicturesScreenState extends ConsumerState<AddPicturesScreen> {
       setState(() {
         picturesRepository.removePicture(picture);
       });
+
+      if (pictures.isEmpty) {
+        Navigator.of(context).pop();
+      }
     }
 
-    void submitPictures() {}
+    void savePictures() {}
 
     return Scaffold(
       appBar: AppBar(title: Text("Add pictures")),
@@ -57,7 +61,7 @@ class _AddPicturesScreenState extends ConsumerState<AddPicturesScreen> {
         },
       ),
       floatingActionButton: ElevatedButton.icon(
-        onPressed: () {},
+        onPressed: pictures.isNotEmpty ? savePictures : null,
         label: Text('Add ${pictures.length} pictures'),
       ),
     );
