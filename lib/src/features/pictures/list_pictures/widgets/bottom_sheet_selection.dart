@@ -25,6 +25,8 @@ class BottomSheetSelection extends StatelessWidget {
                   await Picker.selectImages();
 
               if (pictures.isNotEmpty) {
+                // Close the bottom sheet before navigating to AddPicturesScreen
+                Navigator.of(context).pop();
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (ctx) =>

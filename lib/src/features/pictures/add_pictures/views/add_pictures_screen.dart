@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/core/services/file_service.dart';
 import 'package:progres/src/features/pictures/add_pictures/viewmodels/add_pictures_view_model.dart';
+import 'package:progres/src/features/pictures/list_pictures/viewmodels/list_pictures_view_model.dart';
 
 /// The screen for adding new pictures.
 ///
@@ -38,6 +39,8 @@ class AddPicturesScreen extends ConsumerWidget {
       isSaving = true;
       await picturesFileService.savePictures(pictures);
       isSaving = false;
+      // Invalidate the picturesViewModelProvider to force a reload of the pictures list
+      ref.invalidate(picturesViewModelProvider);
       Navigator.of(context).pop();
     }
 

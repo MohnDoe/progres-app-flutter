@@ -21,7 +21,7 @@ class ListPicturesScreen extends ConsumerWidget {
         return const BottomSheetSelection();
       },
     );
-    ref.read(picturesViewModelProvider.notifier).loadPictures();
+    // ref.read(picturesViewModelProvider.notifier).loadPictures();
   }
 
   void removePicture(WidgetRef ref, ProgressPicture picture) {
