@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:progres/src/features/pictures/data/repositories/picker.dart';
-import 'package:progres/src/features/pictures/domain/progress_picture.dart';
-import 'package:progres/src/features/pictures/presentation/add/add_pictures_screen.dart';
+import 'package:progres/src/core/domain/models/progress_picture.dart';
+import 'package:progres/src/features/pictures/add_pictures/views/add_pictures_screen.dart';
+import 'package:progres/src/features/pictures/_shared/repositories/picker.dart';
 
 class BottomSheetSelection extends StatelessWidget {
   const BottomSheetSelection({super.key});

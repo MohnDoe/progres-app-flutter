@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:image_picker/image_picker.dart';
 import 'package:native_exif/native_exif.dart';
-import 'package:progres/src/features/pictures/domain/progress_picture.dart';
+import 'package:progres/src/core/domain/models/progress_picture.dart';
 
 class Picker {
   static Future<List<ProgressPicture>> selectImages() async {

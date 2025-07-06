@@ -3,10 +3,9 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart';
 
-import 'package:progres/src/features/pictures/data/repositories/picker.dart';
-import 'package:progres/src/features/pictures/data/services/file_service.dart';
-import 'package:progres/src/features/pictures/domain/progress_picture.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:progres/src/core/domain/models/progress_picture.dart';
+import 'package:progres/src/core/services/file_service.dart';
+import 'package:progres/src/features/pictures/_shared/repositories/picker.dart';
 
 class PicturesRepository {
   List<ProgressPicture> pictures = [];
@@ -31,8 +30,10 @@ class PicturesRepository {
     return pictures;
   }
 
+  /// Returns a new list of pictures sorted by date in ascending order.
+  /// The original `pictures` list remains unchanged.
   List<ProgressPicture> get orderedPictures {
-    final orderedList = pictures;
+    final orderedList = List<ProgressPicture>.from(pictures); // Create a new list to avoid modifying the original
 
     orderedList.sort(
       (ProgressPicture a, ProgressPicture b) => a.date.compareTo(b.date),
@@ -44,33 +45,21 @@ class PicturesRepository {
 
 class UserPicturesRepository extends PicturesRepository {
   Future<void> initPictures() async {
-    print('initPictures');
     List<File> files = await PicturesFileService().listPictures();
-    pictures = [];
-    for (File file in files) {
-      pictures = [
-        ...pictures,
-        ProgressPicture(
+    pictures = files.map((file) => ProgressPicture(
           file: file,
           date: DateTime.fromMicrosecondsSinceEpoch(
             int.parse(basenameWithoutExtension(file.path)) * 1000,
           ),
-        ),
-      ];
-    }
+        )).toList();
   }
 
   @override
   void removePicture(ProgressPicture picture) {
-    // TODO: implement removePicture
     super.removePicture(picture);
+    // Also delete the file from storage
+    if (picture.file.existsSync()) {
+      picture.file.deleteSync();
+    }
   }
 }
-
-final picturesRepositoryProvider = Provider<PicturesRepository>((ref) {
-  return PicturesRepository();
-});
-
-final userPicturesRepositoryProvider = Provider<UserPicturesRepository>((ref) {
-  return UserPicturesRepository();
-});

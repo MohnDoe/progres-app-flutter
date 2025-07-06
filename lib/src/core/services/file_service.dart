@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
-import 'package:progres/src/features/pictures/domain/progress_picture.dart';
+import 'package:progres/src/core/domain/models/progress_picture.dart';
 
 const kProjectId = '1';
 
