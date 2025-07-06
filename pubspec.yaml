@@ -38,6 +38,7 @@ dependencies:
   native_exif: ^0.6.2
   flutter_riverpod: ^2.6.1
   path_provider: ^2.1.5
+  ffmpeg_kit_flutter_new: ^2.0.0
 
 dev_dependencies:
   flutter_test:

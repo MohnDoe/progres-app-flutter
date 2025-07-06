@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/features/pictures/list_pictures/viewmodels/list_pictures_view_model.dart';
 import 'package:progres/src/features/pictures/list_pictures/widgets/bottom_sheet_selection.dart';
+import 'package:progres/src/features/video/generation/view/generation_screen.dart';
 
 /// The screen that displays the list of progress pictures.
 ///
@@ -66,6 +67,14 @@ class ListPicturesScreen extends ConsumerWidget {
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(child: Text(error.toString())),
+      ),
+      floatingActionButton: FilledButton(
+        onPressed: () {
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => GenerationScreen()));
+        },
+        child: Text("Generate"),
       ),
     );
   }
