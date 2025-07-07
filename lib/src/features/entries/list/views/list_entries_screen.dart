@@ -37,9 +37,29 @@ class ListEntriesScreen extends ConsumerWidget {
       ),
       // Use the `when` method to handle the different states of the provider.
       body: entriesState.when(
-        data: (entries) => Text("You have ${entries.length} entries."),
+        data: (entries) => Column(
+          children: [
+            Text("You have ${entries.length} entries."),
+            TextButton(
+              onPressed: () {
+                ref.read(picturesViewModelProvider.notifier).loadEntries();
+              },
+              child: Text("reload"),
+            ),
+          ],
+        ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text(error.toString())),
+        error: (error, stackTrace) => Column(
+          children: [
+            Center(child: Text(error.toString())),
+            TextButton(
+              onPressed: () {
+                ref.read(picturesViewModelProvider.notifier).loadEntries();
+              },
+              child: Text("reload"),
+            ),
+          ],
+        ),
       ),
       floatingActionButton: IconButton(onPressed: () {}, icon: Icon(Icons.add)),
     );

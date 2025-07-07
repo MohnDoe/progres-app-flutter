@@ -19,6 +19,11 @@ class _NewEntryBottomSheetState extends ConsumerState<NewEntryBottomSheet> {
   Widget build(BuildContext context) {
     ProgressEntry entry = ref.watch(progressEntryProvider);
 
+    void saveEntry() async {
+      await ref.read(progressEntriesRepositoryProvider).saveEntry(entry);
+      if (context.mounted) Navigator.of(context).pop();
+    }
+
     return BottomSheet(
       onClosing: () {},
       builder: (BuildContext context) => Padding(
@@ -62,7 +67,10 @@ class _NewEntryBottomSheetState extends ConsumerState<NewEntryBottomSheet> {
             Row(
               children: [
                 Expanded(
-                  child: FilledButton(onPressed: () {}, child: Text("Save")),
+                  child: FilledButton(
+                    onPressed: saveEntry,
+                    child: Text("Save"),
+                  ),
                 ),
               ],
             ),

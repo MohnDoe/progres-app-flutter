@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:progres/src/core/domain/models/progress_entry.dart';
+import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/core/services/file_service.dart'
     show PicturesFileService;
 
@@ -17,5 +20,39 @@ class ProgressEntriesRepository {
     return orderedList;
   }
 
-  Future<void> initEntries() async {}
+  Future<void> saveEntry(ProgressEntry entry) async {
+    for (ProgressEntryType entryType in entry.pictures.keys) {
+      await PicturesFileService().savePicture(
+        entry,
+        entryType,
+        entry.pictures[entryType]!,
+      );
+    }
+  }
+
+  Future<void> initEntries() async {
+    final List<Directory> matchingDirectories = await PicturesFileService()
+        .listEntriesDirectory();
+
+    for (Directory directory in matchingDirectories) {
+      final entryTimestamp = directory.path.split(
+        '/',
+      )[directory.path.split('/').length - 1];
+
+      final entryDate = DateTime.fromMicrosecondsSinceEpoch(
+        int.parse(entryTimestamp) * 1000,
+      );
+
+      final newEntry = ProgressEntry(
+        pictures: await PicturesFileService().getAllEntryTypesFromDate(
+          entryDate,
+        ),
+        date: entryDate,
+      );
+
+      entries.add(newEntry);
+    }
+
+    print(matchingDirectories);
+  }
 }
