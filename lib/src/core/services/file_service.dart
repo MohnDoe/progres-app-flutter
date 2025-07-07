@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 
 const kProjectId = '1';
@@ -18,9 +19,11 @@ class PicturesFileService {
     return '$userPicturesDir/$kProjectId';
   }
 
-  Future<File> savePicture(String dirPath, ProgressPicture picture) async {
+  Future<File> savePicture(ProgressEntry entry, ProgressPicture picture) async {
+    final saveDirPath = await _saveDirPath;
+
     final filePath =
-        '$dirPath/${picture.date.millisecondsSinceEpoch}${p.extension(picture.file.path)}';
+        '$saveDirPath/${entry.date.millisecondsSinceEpoch}${p.extension(picture.file.path)}';
 
     final newFile = File(filePath);
 
@@ -29,30 +32,27 @@ class PicturesFileService {
     return newFile;
   }
 
-  Future<List<File>> savePictures(List<ProgressPicture> pictures) async {
-    final userPicturesDir = await _userPicturesPath;
+  // Future<void> _createDirectory(String directoryPath) async {
+  //   if (!await Directory(directoryPath).exists()) {
+  //     await Directory(directoryPath).create();
+  //   }
+  // }
 
-    if (!await Directory(userPicturesDir).exists()) {
-      await Directory(userPicturesDir).create();
-    }
+  // Future<List<File>> savePictures(List<ProgressPicture> entries) async {
+  //   final userPicturesDir = await _userPicturesPath;
+  //   await _createDirectory(userPicturesDir);
+  //
+  //   final List<File> newFiles = [];
+  //   for (ProgressPicture picture in entries) {
+  //     final newFile = await savePicture(picture);
+  //     newFiles._add(newFile);
+  //   }
+  //   return newFiles;
+  // }
 
-    final dirPath = await _saveDirPath;
-
-    if (!await Directory(dirPath).exists()) {
-      await Directory(dirPath).create();
-    }
-
-    final List<File> newFiles = [];
-    for (ProgressPicture picture in pictures) {
-      final newFile = await savePicture(dirPath, picture);
-      newFiles.add(newFile);
-    }
-    return newFiles;
-  }
-
-  Future<List<File>> listPictures() async {
+  Future<List<File>> listPictures(ProgressEntryType type) async {
     List<File> files = [];
-    final filesDir = await _saveDirPath;
+    final filesDir = "${await _saveDirPath}/$type";
 
     for (FileSystemEntity fileEntity in Directory(filesDir).listSync()) {
       files.add(File(fileEntity.path));

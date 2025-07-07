@@ -1,0 +1,66 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:progres/src/core/domain/models/progress_picture.dart';
+import 'package:progres/src/features/entries/_shared/providers/entries_provider.dart';
+import 'package:progres/src/features/entries/list/viewmodels/list_entries_view_model.dart';
+import 'package:progres/src/features/entries/list/widgets/new_entry_bottom_sheet.dart';
+import 'package:progres/src/features/entries/list/widgets/picture_source_selection_bottom_sheet.dart';
+import 'package:progres/src/features/video/generation/view/generation_screen.dart';
+
+/// The screen that displays the list of progress entries.
+///
+/// This widget is a [ConsumerWidget], which means it can listen to providers.
+/// It listens to the [picturesViewModelProvider] to get the state of the entries list.
+class ListEntriesScreen extends ConsumerWidget {
+  const ListEntriesScreen({super.key});
+
+  void _displayPictureSourceOptions(BuildContext context) async {
+    await showModalBottomSheet(
+      context: context,
+      builder: (BuildContext ctx) {
+        return const PictureSourceSelectionBottomSheet();
+      },
+    );
+  }
+
+  void _onSelectSide(BuildContext context, String side) {
+    print(side);
+    _displayPictureSourceOptions(context);
+  }
+
+  void _displayAddEntryBottomSheet(BuildContext context) async {
+    await showModalBottomSheet(
+      context: context,
+      builder: (BuildContext ctx) {
+        return NewEntryBottomSheet(
+          onSelectSide: (side) => _onSelectSide(context, side),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Watch the picturesViewModelProvider to get the current state.
+    final entriesState = ref.watch(picturesViewModelProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Entries"),
+        actions: [
+          IconButton(
+            onPressed: () => _displayAddEntryBottomSheet(context),
+            icon: const Icon(Icons.add),
+          ),
+        ],
+      ),
+      // Use the `when` method to handle the different states of the provider.
+      body: entriesState.when(
+        data: (entries) => Text("You have ${entries.length} entries."),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stackTrace) => Center(child: Text(error.toString())),
+      ),
+      floatingActionButton: IconButton(onPressed: () {}, icon: Icon(Icons.add)),
+    );
+  }
+}

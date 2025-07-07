@@ -46,7 +46,7 @@ class GenerationScreen extends ConsumerWidget {
   String _getStepText(VideoGenerationStep step) {
     switch (step) {
       case VideoGenerationStep.preparingFrames:
-        return 'Collecting pictures';
+        return 'Collecting entries';
       case VideoGenerationStep.analyzing:
         return 'Analyzing Video';
       case VideoGenerationStep.stabilizing:

@@ -8,10 +8,12 @@ import 'package:ffmpeg_kit_flutter_new/return_code.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/services/file_service.dart';
 import 'package:progres/src/features/video/generation/models/video_generation_progress.dart';
 
-const kStabilizedVideoFilename = 'timelapse_stabilized.mp4';
+const kStabilizedVideoPrefix = 'timelapse_stabilized';
+const kStabilizedVideoExt = 'mp4';
 
 class VideoService {
   Future<Directory> get _temporaryDirectory async =>
@@ -39,7 +41,7 @@ class VideoService {
 
     await _initFramesDirectory();
 
-    Logger().i('Using ${listPictures.length} pictures.');
+    Logger().i('Using ${listPictures.length} entries.');
 
     for (int i = 0; i < listPictures.length; i++) {
       final framePath = p.join(
@@ -96,9 +98,13 @@ class VideoService {
     }
   }
 
-  Stream<VideoGenerationProgress> createVideo() async* {
+  Stream<VideoGenerationProgress> createVideo(
+    ProgressEntryType entryType,
+  ) async* {
     Logger().i('Creating video.');
-    final List<File> listPictures = await PicturesFileService().listPictures();
+    final List<File> listPictures = await PicturesFileService().listPictures(
+      entryType,
+    );
 
     yield VideoGenerationProgress(VideoGenerationStep.preparingFrames, 0);
     await for (final progress in _prepareFrames(listPictures)) {
@@ -106,6 +112,8 @@ class VideoService {
     }
 
     final temporaryDirectory = await _temporaryDirectory;
+    final kStabilizedVideoFilename =
+        '${kStabilizedVideoPrefix}_$entryType.$kStabilizedVideoExt';
     final String stabilizedVideoPath = p.join(
       temporaryDirectory.path,
       kStabilizedVideoFilename,

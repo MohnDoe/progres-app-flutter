@@ -1,8 +1,6 @@
 import 'dart:io';
 
 class ProgressPicture {
-  ProgressPicture({required this.file, required this.date});
-
+  ProgressPicture({required this.file});
   final File file;
-  final DateTime date;
 }

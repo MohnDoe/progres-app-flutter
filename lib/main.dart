@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:progres/src/features/pictures/list_pictures/views/list_pictures_screen.dart';
+import 'package:progres/src/features/entries/list/views/list_entries_screen.dart';
 
 void main() {
   runApp(ProviderScope(child: const MyApp()));
@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
-      home: ListPicturesScreen(),
+      home: ListEntriesScreen(),
     );
   }
 }
