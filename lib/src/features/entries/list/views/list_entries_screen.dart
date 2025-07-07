@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:progres/src/core/domain/models/progress_picture.dart';
-import 'package:progres/src/features/entries/_shared/providers/entries_provider.dart';
 import 'package:progres/src/features/entries/list/viewmodels/list_entries_view_model.dart';
 import 'package:progres/src/features/entries/list/widgets/new_entry_bottom_sheet.dart';
 import 'package:progres/src/features/entries/list/widgets/picture_source_selection_bottom_sheet.dart';
-import 'package:progres/src/features/video/generation/view/generation_screen.dart';
 
 /// The screen that displays the list of progress entries.
 ///
@@ -24,7 +21,6 @@ class ListEntriesScreen extends ConsumerWidget {
   }
 
   void _onSelectSide(BuildContext context, String side) {
-    print(side);
     _displayPictureSourceOptions(context);
   }
 
