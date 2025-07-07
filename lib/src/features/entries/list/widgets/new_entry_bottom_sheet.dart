@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class NewEntryBottomSheet extends StatefulWidget {
   const NewEntryBottomSheet({super.key, required this.onSelectSide});
@@ -14,7 +15,7 @@ class _NewEntryBottomSheetState extends State<NewEntryBottomSheet> {
   Widget build(BuildContext context) {
     return BottomSheet(
       onClosing: () {},
-      constraints: BoxConstraints(maxHeight: 250),
+      constraints: BoxConstraints(maxHeight: 230),
       builder: (BuildContext context) => Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -22,9 +23,22 @@ class _NewEntryBottomSheetState extends State<NewEntryBottomSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  "Progress photos",
-                  style: Theme.of(context).textTheme.titleMedium,
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Column(
+                    children: [
+                      Text(
+                        "Progress photos",
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      Text(
+                        DateFormat.yMMMd().format(DateTime.now()),
+                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
