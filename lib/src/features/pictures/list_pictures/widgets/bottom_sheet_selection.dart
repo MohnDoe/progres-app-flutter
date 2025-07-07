@@ -26,13 +26,17 @@ class BottomSheetSelection extends StatelessWidget {
 
               if (pictures.isNotEmpty) {
                 // Close the bottom sheet before navigating to AddPicturesScreen
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (ctx) =>
-                        AddPicturesScreen(initialPictures: pictures),
-                  ),
-                );
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                }
+                if (context.mounted) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (ctx) =>
+                          AddPicturesScreen(initialPictures: pictures),
+                    ),
+                  );
+                }
               }
             },
             label: Text("Choose images"),

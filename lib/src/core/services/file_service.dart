@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:progres/src/core/domain/models/progress_picture.dart';
@@ -25,7 +25,7 @@ class PicturesFileService {
     final newFile = File(filePath);
 
     await newFile.writeAsBytes(await picture.file.readAsBytes());
-    print('Saved file to : $filePath');
+    Logger().i('Saved file to : $filePath');
     return newFile;
   }
 

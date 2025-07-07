@@ -20,20 +20,10 @@ class AddPicturesScreen extends ConsumerWidget {
     // Watch the addPicturesViewModelProvider to get the current state.
     final pictures = ref.watch(addPicturesViewModelProvider(initialPictures));
     // Read the notifier to call methods on the view model.
-    final picturesNotifier = ref.read(
-      addPicturesViewModelProvider(initialPictures).notifier,
-    );
+    
     final PicturesFileService picturesFileService = PicturesFileService();
 
     bool isSaving = false;
-
-    /// Removes a picture from the list.
-    void removePicture(ProgressPicture picture) {
-      picturesNotifier.removePicture(picture);
-      if (pictures.isEmpty) {
-        Navigator.of(context).pop();
-      }
-    }
 
     /// Saves the pictures to the file system.
     void savePictures() async {
@@ -42,7 +32,9 @@ class AddPicturesScreen extends ConsumerWidget {
       isSaving = false;
       // Invalidate the picturesViewModelProvider to force a reload of the pictures list
       ref.invalidate(picturesViewModelProvider);
-      Navigator.of(context).pop();
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
     }
 
     return Scaffold(
