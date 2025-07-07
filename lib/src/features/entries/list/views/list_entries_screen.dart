@@ -11,26 +11,11 @@ import 'package:progres/src/features/entries/list/widgets/picture_source_selecti
 class ListEntriesScreen extends ConsumerWidget {
   const ListEntriesScreen({super.key});
 
-  void _displayPictureSourceOptions(BuildContext context) async {
-    await showModalBottomSheet(
-      context: context,
-      builder: (BuildContext ctx) {
-        return const PictureSourceSelectionBottomSheet();
-      },
-    );
-  }
-
-  void _onSelectSide(BuildContext context, String side) {
-    _displayPictureSourceOptions(context);
-  }
-
   void _displayAddEntryBottomSheet(BuildContext context) async {
     await showModalBottomSheet(
       context: context,
       builder: (BuildContext ctx) {
-        return NewEntryBottomSheet(
-          onSelectSide: (side) => _onSelectSide(context, side),
-        );
+        return NewEntryBottomSheet();
       },
     );
   }
