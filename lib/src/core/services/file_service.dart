@@ -34,7 +34,7 @@ class PicturesFileService {
     }
 
     final filename =
-        '${entryType.name}-${entry.date.millisecondsSinceEpoch}${p.extension(picture.file.path)}';
+        '${entryType.name}-${(await picture.file.lastModified()).millisecondsSinceEpoch}${p.extension(picture.file.path)}';
 
     final filePath = '${destinationDirectory.path}/$filename';
 
