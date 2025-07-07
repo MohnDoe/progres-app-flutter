@@ -16,4 +16,11 @@ class ProgressEntryNotifier extends StateNotifier<ProgressEntry> {
       date: state.date,
     );
   }
+
+  void removePicture(ProgressEntryType entryType) {
+    final newPictures = state.pictures;
+    newPictures.remove(entryType);
+
+    state = ProgressEntry(pictures: newPictures, date: state.date);
+  }
 }
