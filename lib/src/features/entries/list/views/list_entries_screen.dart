@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:progres/src/features/entries/list/viewmodels/list_entries_view_model.dart';
+import 'package:progres/src/features/entries/list/widgets/entry_item.dart';
 import 'package:progres/src/features/entries/list/widgets/new_entry_bottom_sheet.dart';
 import 'package:progres/src/features/entries/list/widgets/picture_source_selection_bottom_sheet.dart';
 
@@ -37,16 +38,10 @@ class ListEntriesScreen extends ConsumerWidget {
       ),
       // Use the `when` method to handle the different states of the provider.
       body: entriesState.when(
-        data: (entries) => Column(
-          children: [
-            Text("You have ${entries.length} entries."),
-            TextButton(
-              onPressed: () {
-                ref.read(picturesViewModelProvider.notifier).loadEntries();
-              },
-              child: Text("reload"),
-            ),
-          ],
+        data: (entries) => ListView.builder(
+          itemCount: entries.length,
+          padding: EdgeInsets.all(8),
+          itemBuilder: (ctx, index) => EntryItem(entry: entries[index]),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Column(
