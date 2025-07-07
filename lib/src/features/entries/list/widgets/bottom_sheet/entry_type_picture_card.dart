@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
-import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/features/entries/_shared/providers/entries_provider.dart';
 import 'package:progres/src/features/entries/list/widgets/picture_source_selection_bottom_sheet.dart';
 
-class EntryTypeSelection extends ConsumerStatefulWidget {
-  const EntryTypeSelection({super.key, required this.type});
+class EntryTypePictureCard extends ConsumerStatefulWidget {
+  const EntryTypePictureCard({super.key, required this.type});
 
   final ProgressEntryType type;
 
   @override
-  ConsumerState<EntryTypeSelection> createState() => _EntryTypeSelectionState();
+  ConsumerState<EntryTypePictureCard> createState() =>
+      _EntryTypePictureCardState();
 }
 
-class _EntryTypeSelectionState extends ConsumerState<EntryTypeSelection> {
+class _EntryTypePictureCardState extends ConsumerState<EntryTypePictureCard> {
   void _displayPictureSourceOptions() async {
     await showModalBottomSheet(
       context: context,

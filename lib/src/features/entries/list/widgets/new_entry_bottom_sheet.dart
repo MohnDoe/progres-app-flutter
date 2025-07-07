@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/_shared/providers/entries_provider.dart';
-import 'package:progres/src/features/entries/list/widgets/bottom_sheet/entry_type_selection.dart';
+import 'package:progres/src/features/entries/list/widgets/bottom_sheet/entry_type_picture_card.dart';
 
 class NewEntryBottomSheet extends ConsumerStatefulWidget {
   const NewEntryBottomSheet({super.key});
@@ -54,7 +54,7 @@ class _NewEntryBottomSheetState extends ConsumerState<NewEntryBottomSheet> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: ProgressEntryType.values
-                    .map((entryType) => EntryTypeSelection(type: entryType))
+                    .map((entryType) => EntryTypePictureCard(type: entryType))
                     .toList(),
               ),
             ),
