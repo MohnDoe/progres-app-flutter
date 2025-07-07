@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
+import 'package:progres/src/features/pictures/_shared/widget/picture_grid.dart';
 import 'package:progres/src/features/pictures/list_pictures/viewmodels/list_pictures_view_model.dart';
 import 'package:progres/src/features/pictures/list_pictures/widgets/bottom_sheet_selection.dart';
 import 'package:progres/src/features/video/generation/view/generation_screen.dart';
@@ -46,25 +47,7 @@ class ListPicturesScreen extends ConsumerWidget {
       ),
       // Use the `when` method to handle the different states of the provider.
       body: picturesState.when(
-        data: (pictures) => ListView.builder(
-          itemCount: pictures.length,
-          itemBuilder: (BuildContext context, int index) {
-            final picture = pictures[index];
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Image.file(picture.file, width: 50),
-                Text(picture.date.toString()),
-                IconButton(
-                  onPressed: () {
-                    removePicture(ref, picture);
-                  },
-                  icon: const Icon(Icons.delete_forever),
-                ),
-              ],
-            );
-          },
-        ),
+        data: (pictures) => PictureGrid(pictures: pictures),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(child: Text(error.toString())),
       ),
