@@ -10,7 +10,6 @@ class ProgressEntryNotifier extends StateNotifier<ProgressEntry> {
     ProgressEntryType entryType,
     ProgressPicture progressPicture,
   ) {
-    print('hello from setProgressPictureToType');
     state = ProgressEntry(
       pictures: {...state.pictures, entryType: progressPicture},
       date: state.date,
