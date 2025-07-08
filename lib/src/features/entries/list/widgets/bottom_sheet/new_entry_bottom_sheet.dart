@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'package:progres/src/core/domain/models/progress_entry.dart';
-import 'package:progres/src/features/entries/_shared/providers/entries_provider.dart';
 import 'package:progres/src/features/entries/_shared/repositories/progress_entries_repository.dart';
 import 'package:progres/src/features/entries/_shared/repositories/progress_entry_provider.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/date_select_bottom_sheet.dart';

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
-import 'package:progres/src/features/entries/_shared/providers/entries_provider.dart';
 import 'package:progres/src/features/entries/_shared/repositories/progress_entries_repository.dart';
 
 class ListEntriesController
@@ -33,9 +32,11 @@ class ListEntriesController
   }
 }
 
-final listEntriesControllerProvider = StateNotifierProvider<
-    ListEntriesController,
-    AsyncValue<List<ProgressEntry>>>((ref) {
-  final repository = ref.watch(progressEntriesRepositoryProvider);
-  return ListEntriesController(repository);
-});
+final listEntriesControllerProvider =
+    StateNotifierProvider<
+      ListEntriesController,
+      AsyncValue<List<ProgressEntry>>
+    >((ref) {
+      final repository = ref.watch(progressEntriesRepositoryProvider);
+      return ListEntriesController(repository);
+    });
