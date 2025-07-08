@@ -21,16 +21,22 @@ class ProgressEntriesRepository {
   }
 
   Future<void> saveEntry(ProgressEntry entry) async {
+    final Map<ProgressEntryType, ProgressPicture> pictures = {};
     for (ProgressEntryType entryType in entry.pictures.keys) {
-      await PicturesFileService().savePicture(
+      final File savedFile = await PicturesFileService().savePicture(
         entry,
         entryType,
         entry.pictures[entryType]!,
       );
+
+      pictures[entryType] = ProgressPicture(file: savedFile);
     }
+
+    entries.add(ProgressEntry(pictures: pictures, date: entry.date));
   }
 
   Future<void> initEntries() async {
+    entries = [];
     final List<Directory> matchingDirectories = await PicturesFileService()
         .listEntriesDirectory();
 
@@ -52,7 +58,5 @@ class ProgressEntriesRepository {
 
       entries.add(newEntry);
     }
-
-    print(matchingDirectories);
   }
 }

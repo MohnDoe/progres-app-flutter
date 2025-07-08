@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/_shared/providers/entries_provider.dart';
+import 'package:progres/src/features/entries/list/viewmodels/list_entries_view_model.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/date_select_bottom_sheet.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/entry_type_picture_card.dart';
 
@@ -22,6 +23,8 @@ class _NewEntryBottomSheetState extends ConsumerState<NewEntryBottomSheet> {
 
     void saveEntry() async {
       await ref.read(progressEntriesRepositoryProvider).saveEntry(entry);
+      ref.read(picturesViewModelProvider.notifier).loadEntries();
+
       if (context.mounted) Navigator.of(context).pop();
     }
 
