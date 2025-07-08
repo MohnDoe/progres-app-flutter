@@ -17,14 +17,14 @@ class _ImageCardState extends State<ImageCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
       children: [
         Image.file(widget.picture.file, width: 50),
         SegmentedButton(
           style: SegmentedButton.styleFrom(
             visualDensity: VisualDensity.compact,
           ),
-          emptySelectionAllowed: true,
+          emptySelectionAllowed: false,
           showSelectedIcon: false,
           segments: ProgressEntryType.values
               .map(
