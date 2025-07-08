@@ -8,15 +8,14 @@ import 'package:progres/src/features/entries/_shared/repositories/progress_entry
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/date_select_bottom_sheet.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/entry_type_picture_card.dart';
 
-class NewEntryBottomSheet extends ConsumerStatefulWidget {
-  const NewEntryBottomSheet({super.key});
+class EntryBottomSheet extends ConsumerStatefulWidget {
+  const EntryBottomSheet({super.key});
 
   @override
-  ConsumerState<NewEntryBottomSheet> createState() =>
-      _NewEntryBottomSheetState();
+  ConsumerState<EntryBottomSheet> createState() => _NewEntryBottomSheetState();
 }
 
-class _NewEntryBottomSheetState extends ConsumerState<NewEntryBottomSheet> {
+class _NewEntryBottomSheetState extends ConsumerState<EntryBottomSheet> {
   @override
   Widget build(BuildContext context) {
     ProgressEntry entry = ref.watch(progressEntryStateNotifierProvider);

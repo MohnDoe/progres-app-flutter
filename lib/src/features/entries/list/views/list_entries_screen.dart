@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:progres/src/features/entries/list/controllers/list_entries_controller.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/entry_item.dart';
-import 'package:progres/src/features/entries/list/widgets/bottom_sheet/new_entry_bottom_sheet.dart';
+import 'package:progres/src/features/entries/list/widgets/bottom_sheet/entry_bottom_sheet.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/picture_source_selection_bottom_sheet.dart';
 
 /// The screen that displays the list of progress entries.
@@ -16,7 +16,7 @@ class ListEntriesScreen extends ConsumerWidget {
     await showModalBottomSheet(
       context: context,
       builder: (BuildContext ctx) {
-        return NewEntryBottomSheet();
+        return EntryBottomSheet();
       },
     );
   }
