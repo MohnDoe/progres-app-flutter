@@ -19,7 +19,7 @@ class ProgressEntriesRepository {
     ); // Create a new list to avoid modifying the original
 
     orderedList.sort(
-      (ProgressEntry a, ProgressEntry b) => a.date.compareTo(b.date),
+      (ProgressEntry a, ProgressEntry b) => b.date.compareTo(a.date),
     );
 
     return orderedList;
