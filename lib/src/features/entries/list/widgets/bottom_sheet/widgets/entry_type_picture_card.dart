@@ -29,12 +29,6 @@ class _EntryTypePictureCardState extends ConsumerState<EntryTypePictureCard> {
   Widget build(BuildContext context) {
     ProgressEntry entry = ref.watch(progressEntryStateNotifierProvider);
 
-    final icon = switch (widget.type) {
-      ProgressEntryType.front => FaIcon(FontAwesomeIcons.childReaching),
-      ProgressEntryType.side => FaIcon(FontAwesomeIcons.personWalking),
-      ProgressEntryType.back => FaIcon(FontAwesomeIcons.person),
-    };
-
     return Column(
       children: [
         Text(widget.type.name, style: Theme.of(context).textTheme.labelLarge),
@@ -57,7 +51,7 @@ class _EntryTypePictureCardState extends ConsumerState<EntryTypePictureCard> {
                     image: FileImage(entry.pictures[widget.type]!.file),
                     fit: BoxFit.cover,
                   )
-                : Center(child: icon),
+                : Center(child: ProgressEntry.getIconFromType(widget.type)),
           ),
         ),
       ],
