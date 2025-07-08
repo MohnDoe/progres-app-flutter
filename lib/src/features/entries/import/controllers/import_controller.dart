@@ -25,6 +25,14 @@ class ImportControllerNotifier extends StateNotifier<List<ImportItem>> {
 
     state = [...state, importItem];
   }
+
+  Future<void> removeProgressPicture(ProgressPicture picture) async {
+    state = state.where((item) => item['picture'] != picture).toList();
+  }
+
+  Future<void> clearImport() async {
+    state = [];
+  }
 }
 
 final importControllerProvider =
