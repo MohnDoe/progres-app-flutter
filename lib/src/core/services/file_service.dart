@@ -77,6 +77,8 @@ class PicturesFileService {
   Future<List<Directory>> listEntriesDirectory() async {
     final saveDirPath = await _saveDirPath;
     final List<Directory> directories = [];
+
+    if (!await Directory(saveDirPath).exists()) return directories;
     for (FileSystemEntity fileEntity in Directory(saveDirPath).listSync()) {
       if (await Directory(fileEntity.path).exists()) {
         directories.add(Directory(fileEntity.path));

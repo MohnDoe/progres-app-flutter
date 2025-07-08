@@ -27,22 +27,16 @@ class ListEntriesScreen extends ConsumerWidget {
     final entriesState = ref.watch(picturesViewModelProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Entries"),
-        actions: [
-          IconButton(
-            onPressed: () => _displayAddEntryBottomSheet(context),
-            icon: const Icon(Icons.add),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text("Entries")),
       // Use the `when` method to handle the different states of the provider.
       body: entriesState.when(
-        data: (entries) => ListView.builder(
-          itemCount: entries.length,
-          padding: EdgeInsets.all(8),
-          itemBuilder: (ctx, index) => EntryItem(entry: entries[index]),
-        ),
+        data: (entries) => entries.isNotEmpty
+            ? ListView.builder(
+                itemCount: entries.length,
+                padding: const EdgeInsets.all(8),
+                itemBuilder: (ctx, index) => EntryItem(entry: entries[index]),
+              )
+            : Center(child: const Text('You have no entry.')),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Column(
           children: [
@@ -51,12 +45,17 @@ class ListEntriesScreen extends ConsumerWidget {
               onPressed: () {
                 ref.read(picturesViewModelProvider.notifier).loadEntries();
               },
-              child: Text("reload"),
+              child: const Text("reload"),
             ),
           ],
         ),
       ),
-      floatingActionButton: IconButton(onPressed: () {}, icon: Icon(Icons.add)),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _displayAddEntryBottomSheet(context);
+        },
+        child: const Icon(Icons.add),
+      ),
     );
   }
 }
