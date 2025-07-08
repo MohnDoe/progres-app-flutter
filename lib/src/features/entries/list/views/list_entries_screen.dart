@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/list/controllers/list_entries_controller.dart';
@@ -59,12 +60,39 @@ class ListEntriesScreen extends ConsumerWidget {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _displayEntryBottomSheet(context, null);
-        },
-        child: const Icon(Icons.add),
+      floatingActionButtonLocation: ExpandableFab.location,
+      floatingActionButton: ExpandableFab(
+        // TODO: make this shit cuter
+        type: ExpandableFabType.up,
+        childrenAnimation: ExpandableFabAnimation.none,
+        distance: 80,
+        openButtonBuilder: RotateFloatingActionButtonBuilder(
+          child: const Icon(Icons.add),
+          fabSize: ExpandableFabSize.regular,
+          shape: const CircleBorder(),
+          angle: 0,
+        ),
+        children: [
+          FilledButton.icon(
+            onPressed: () {},
+            label: Text("Import photos"),
+            icon: const Icon(Icons.upload),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              _displayEntryBottomSheet(context, null);
+            },
+            label: Text("Create entry"),
+            icon: const Icon(Icons.add),
+          ),
+        ],
       ),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: () {
+      //     _displayEntryBottomSheet(context, null);
+      //   },
+      //   child: const Icon(Icons.add),
+      // ),
     );
   }
 }
