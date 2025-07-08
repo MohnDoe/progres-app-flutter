@@ -21,14 +21,14 @@ class _EntryItemState extends State<EntryItem> {
         borderRadius: BorderRadius.all(Radius.circular(8)),
         color: Theme.of(context).colorScheme.surfaceContainerLowest,
       ),
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.only(left: 16, right: 8, top: 8, bottom: 8),
       margin: EdgeInsets.only(bottom: 4),
       child: Row(
         children: [
           EntryImages(pictures: widget.entry.pictures),
-          const SizedBox(width: 8),
-          Text(DateFormat.yMMMd().format(widget.entry.date)),
           Spacer(),
+          Text(DateFormat.yMMMd().format(widget.entry.date)),
+          const SizedBox(width: 8),
           IconButton(onPressed: () {}, icon: Icon(Icons.edit, size: 16)),
         ],
       ),
@@ -44,7 +44,7 @@ class EntryImages extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var displayedTypes = ProgressEntryType.values
-        // .where((ProgressEntryType entryType) => pictures[entryType] != null)
+        .where((ProgressEntryType entryType) => pictures[entryType] != null)
         .toList();
     return Row(
       children: displayedTypes
