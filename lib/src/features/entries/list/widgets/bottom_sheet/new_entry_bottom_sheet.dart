@@ -21,9 +21,14 @@ class _NewEntryBottomSheetState extends ConsumerState<NewEntryBottomSheet> {
   Widget build(BuildContext context) {
     ProgressEntry entry = ref.watch(progressEntryStateNotifierProvider);
 
+    void resetEntry() {
+      print('reset entry');
+      ref.read(progressEntryStateNotifierProvider.notifier).reset();
+    }
+
     void saveEntry() async {
       await ref.read(progressEntriesRepositoryProvider).saveEntry(entry);
-
+      resetEntry();
       if (context.mounted) Navigator.of(context).pop();
     }
 
@@ -43,7 +48,10 @@ class _NewEntryBottomSheetState extends ConsumerState<NewEntryBottomSheet> {
     }
 
     return BottomSheet(
-      onClosing: () {},
+      onClosing: () {
+        print('on closing');
+        resetEntry();
+      },
       builder: (BuildContext context) => Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
