@@ -32,6 +32,15 @@ class _NewEntryBottomSheetState extends ConsumerState<NewEntryBottomSheet> {
       if (context.mounted) Navigator.of(context).pop();
     }
 
+    bool canSaveEntry() {
+      for (ProgressEntryType entryType in ProgressEntryType.values) {
+        if (entry.pictures[entryType] != null) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     void displayerDateSelectBottomSheet(
       BuildContext context,
       DateTime initialDate,
@@ -53,7 +62,7 @@ class _NewEntryBottomSheetState extends ConsumerState<NewEntryBottomSheet> {
         resetEntry();
       },
       builder: (BuildContext context) => Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.only(top: 0, bottom: 20, left: 16, right: 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -110,7 +119,7 @@ class _NewEntryBottomSheetState extends ConsumerState<NewEntryBottomSheet> {
               children: [
                 Expanded(
                   child: FilledButton(
-                    onPressed: saveEntry,
+                    onPressed: canSaveEntry() ? saveEntry : null,
                     child: Text("Save"),
                   ),
                 ),
