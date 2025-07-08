@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/_shared/providers/entries_provider.dart';
-import 'package:progres/src/features/entries/list/widgets/picture_source_selection_bottom_sheet.dart';
+import 'package:progres/src/features/entries/list/widgets/bottom_sheet/picture_source_selection_bottom_sheet.dart';
 
 class EntryTypePictureCard extends ConsumerStatefulWidget {
   const EntryTypePictureCard({super.key, required this.type});

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:progres/src/features/entries/list/viewmodels/list_entries_view_model.dart';
 import 'package:progres/src/features/entries/list/widgets/entry_item.dart';
-import 'package:progres/src/features/entries/list/widgets/new_entry_bottom_sheet.dart';
-import 'package:progres/src/features/entries/list/widgets/picture_source_selection_bottom_sheet.dart';
+import 'package:progres/src/features/entries/list/widgets/bottom_sheet/new_entry_bottom_sheet.dart';
+import 'package:progres/src/features/entries/list/widgets/bottom_sheet/picture_source_selection_bottom_sheet.dart';
 
 /// The screen that displays the list of progress entries.
 ///

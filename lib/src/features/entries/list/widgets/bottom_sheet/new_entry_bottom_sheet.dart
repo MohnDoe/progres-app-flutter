@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/_shared/providers/entries_provider.dart';
-import 'package:progres/src/features/entries/list/widgets/bottom_sheet/entry_type_picture_card.dart';
+import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/entry_type_picture_card.dart';
 
 class NewEntryBottomSheet extends ConsumerStatefulWidget {
   const NewEntryBottomSheet({super.key});
@@ -38,14 +38,28 @@ class _NewEntryBottomSheetState extends ConsumerState<NewEntryBottomSheet> {
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Column(
                     children: [
-                      Text(
-                        "Progress photos",
-                        style: Theme.of(context).textTheme.titleMedium,
+                      TextButton.icon(
+                        onPressed: () {},
+                        icon: Icon(
+                          Icons.arrow_drop_down,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+
+                        iconAlignment: IconAlignment.end,
+                        label: Text(
+                          DateFormat.yMMMd().format(entry.date),
+                          style: Theme.of(context).textTheme.titleMedium!
+                              .copyWith(
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                        ),
                       ),
                       Text(
-                        DateFormat.yMMMd().format(entry.date),
+                        "Progress photos",
                         style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface,
+                          color: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium!.color!.withAlpha(200),
                         ),
                       ),
                     ],
