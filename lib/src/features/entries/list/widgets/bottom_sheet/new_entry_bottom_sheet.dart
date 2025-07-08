@@ -4,7 +4,8 @@ import 'package:intl/intl.dart';
 
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/_shared/providers/entries_provider.dart';
-import 'package:progres/src/features/entries/list/viewmodels/list_entries_view_model.dart';
+import 'package:progres/src/features/entries/_shared/repositories/progress_entries_repository.dart';
+import 'package:progres/src/features/entries/_shared/repositories/progress_entry_provider.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/date_select_bottom_sheet.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/entry_type_picture_card.dart';
 
@@ -19,11 +20,10 @@ class NewEntryBottomSheet extends ConsumerStatefulWidget {
 class _NewEntryBottomSheetState extends ConsumerState<NewEntryBottomSheet> {
   @override
   Widget build(BuildContext context) {
-    ProgressEntry entry = ref.watch(progressEntryProvider);
+    ProgressEntry entry = ref.watch(progressEntryStateNotifierProvider);
 
     void saveEntry() async {
       await ref.read(progressEntriesRepositoryProvider).saveEntry(entry);
-      ref.read(picturesViewModelProvider.notifier).loadEntries();
 
       if (context.mounted) Navigator.of(context).pop();
     }
@@ -38,7 +38,9 @@ class _NewEntryBottomSheetState extends ConsumerState<NewEntryBottomSheet> {
       );
 
       if (selectedDate == null) return;
-      ref.read(progressEntryProvider.notifier).setDate(selectedDate);
+      ref
+          .read(progressEntryStateNotifierProvider.notifier)
+          .setDate(selectedDate);
     }
 
     return BottomSheet(

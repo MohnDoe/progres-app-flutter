@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
-import 'package:progres/src/features/entries/_shared/providers/entries_provider.dart';
+import 'package:progres/src/features/entries/_shared/repositories/progress_entry_provider.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/picture_source_selection_bottom_sheet.dart';
 
 class EntryTypePictureCard extends ConsumerStatefulWidget {
@@ -26,7 +26,7 @@ class _EntryTypePictureCardState extends ConsumerState<EntryTypePictureCard> {
 
   @override
   Widget build(BuildContext context) {
-    ProgressEntry entry = ref.watch(progressEntryProvider);
+    ProgressEntry entry = ref.watch(progressEntryStateNotifierProvider);
 
     return Column(
       children: [

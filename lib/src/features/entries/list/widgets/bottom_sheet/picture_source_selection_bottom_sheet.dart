@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
-import 'package:progres/src/features/entries/_shared/providers/entries_provider.dart';
-import 'package:progres/src/features/entries/_shared/repositories/picker.dart';
+import 'package:progres/src/features/entries/_shared/repositories/picker/picker.dart';
+import 'package:progres/src/features/entries/_shared/repositories/progress_entry_provider.dart';
 
 class PictureSourceSelectionBottomSheet extends ConsumerWidget {
   const PictureSourceSelectionBottomSheet(this.type, {super.key});
@@ -13,7 +13,7 @@ class PictureSourceSelectionBottomSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ProgressEntry entry = ref.watch(progressEntryProvider);
+    ProgressEntry entry = ref.watch(progressEntryStateNotifierProvider);
 
     void closeSourceSelectionBottomSheet() {
       // close source selection bottom sheet
@@ -22,7 +22,7 @@ class PictureSourceSelectionBottomSheet extends ConsumerWidget {
 
     void pictureSelectionDone(ProgressPicture picture) {
       ref
-          .read(progressEntryProvider.notifier)
+          .read(progressEntryStateNotifierProvider.notifier)
           .setProgressPictureToType(type, picture);
       closeSourceSelectionBottomSheet();
     }
@@ -35,7 +35,7 @@ class PictureSourceSelectionBottomSheet extends ConsumerWidget {
     }
 
     void removeImage() {
-      ref.read(progressEntryProvider.notifier).removePicture(type);
+      ref.read(progressEntryStateNotifierProvider.notifier).removePicture(type);
       closeSourceSelectionBottomSheet();
     }
 

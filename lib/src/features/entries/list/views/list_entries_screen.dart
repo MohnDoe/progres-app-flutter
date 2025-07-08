@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:progres/src/features/entries/list/viewmodels/list_entries_view_model.dart';
-import 'package:progres/src/features/entries/list/widgets/entry_item.dart';
+import 'package:progres/src/features/entries/list/controllers/list_entries_controller.dart';
+import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/entry_item.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/new_entry_bottom_sheet.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/picture_source_selection_bottom_sheet.dart';
 
 /// The screen that displays the list of progress entries.
 ///
 /// This widget is a [ConsumerWidget], which means it can listen to providers.
-/// It listens to the [picturesViewModelProvider] to get the state of the entries list.
+/// It listens to the [listEntriesControllerProvider] to get the state of the entries list.
 class ListEntriesScreen extends ConsumerWidget {
   const ListEntriesScreen({super.key});
 
@@ -23,8 +23,8 @@ class ListEntriesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watch the picturesViewModelProvider to get the current state.
-    final entriesState = ref.watch(picturesViewModelProvider);
+    // Watch the listEntriesControllerProvider to get the current state.
+    final entriesState = ref.watch(listEntriesControllerProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text("Entries")),
@@ -43,7 +43,7 @@ class ListEntriesScreen extends ConsumerWidget {
             Center(child: Text(error.toString())),
             TextButton(
               onPressed: () {
-                ref.read(picturesViewModelProvider.notifier).loadEntries();
+                ref.read(listEntriesControllerProvider.notifier).loadEntries();
               },
               child: const Text("reload"),
             ),

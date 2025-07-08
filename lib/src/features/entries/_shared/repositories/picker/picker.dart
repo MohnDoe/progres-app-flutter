@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:image_picker/image_picker.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
-import 'package:progres/src/features/entries/_shared/repositories/ipicker.dart';
+import 'package:progres/src/features/entries/_shared/repositories/picker/ipicker.dart';
 
 class Picker implements IPicker {
   @override
