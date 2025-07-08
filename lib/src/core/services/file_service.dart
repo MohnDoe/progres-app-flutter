@@ -26,15 +26,14 @@ class PicturesFileService {
   ) async {
     final saveDirPath = await _saveDirPath;
     final destinationDirectory = Directory(
-      '$saveDirPath/${entry.date.millisecondsSinceEpoch}/${entryType.name}',
+      '$saveDirPath/${toFixedDate(entry.date).millisecondsSinceEpoch}/${entryType.name}',
     );
 
     if (!await destinationDirectory.exists()) {
       await destinationDirectory.create(recursive: true);
     }
 
-    final filename =
-        '${entryType.name}-${(await picture.file.lastModified()).millisecondsSinceEpoch}${p.extension(picture.file.path)}';
+    final filename = '${entryType.name}${p.extension(picture.file.path)}';
 
     final filePath = '${destinationDirectory.path}/$filename';
 
@@ -45,23 +44,9 @@ class PicturesFileService {
     return newFile;
   }
 
-  // Future<void> _createDirectory(String directoryPath) async {
-  //   if (!await Directory(directoryPath).exists()) {
-  //     await Directory(directoryPath).create();
-  //   }
-  // }
-
-  // Future<List<File>> savePictures(List<ProgressPicture> entries) async {
-  //   final userPicturesDir = await _userPicturesPath;
-  //   await _createDirectory(userPicturesDir);
-  //
-  //   final List<File> newFiles = [];
-  //   for (ProgressPicture picture in entries) {
-  //     final newFile = await savePicture(picture);
-  //     newFiles._add(newFile);
-  //   }
-  //   return newFiles;
-  // }
+  DateTime toFixedDate(DateTime start) {
+    return DateTime(start.year, start.month, start.day);
+  }
 
   Future<List<File>> listPictures(ProgressEntryType type) async {
     List<File> files = [];
@@ -93,18 +78,14 @@ class PicturesFileService {
   ) async {
     final saveDirPath = await _saveDirPath;
     final picturesDirectory = Directory(
-      '$saveDirPath/${entryDate.millisecondsSinceEpoch}',
+      '$saveDirPath/${toFixedDate(entryDate).millisecondsSinceEpoch}',
     );
 
     final Map<ProgressEntryType, ProgressPicture> result = {};
 
     if (await picturesDirectory.exists()) {
       for (FileSystemEntity fileEntity in picturesDirectory.listSync()) {
-        print(fileEntity.path);
         final String entryTypeString = fileEntity.path.split('/').last;
-        print(entryTypeString);
-        print(ProgressEntryType.values);
-        print(ProgressEntryType.values.byName(entryTypeString));
         result[ProgressEntryType.values.byName(
           entryTypeString,
         )] = ProgressPicture(
