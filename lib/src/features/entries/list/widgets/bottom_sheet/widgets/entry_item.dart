@@ -6,8 +6,9 @@ import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 class EntryItem extends StatefulWidget {
-  const EntryItem({super.key, required this.entry});
+  const EntryItem({super.key, required this.entry, required this.onTapEdit});
   final ProgressEntry entry;
+  final void Function() onTapEdit;
 
   @override
   State<EntryItem> createState() => _EntryItemState();
@@ -29,7 +30,10 @@ class _EntryItemState extends State<EntryItem> {
           Spacer(),
           Text(DateFormat.yMMMd().format(widget.entry.date)),
           const SizedBox(width: 8),
-          IconButton(onPressed: () {}, icon: Icon(Icons.edit, size: 16)),
+          IconButton(
+            onPressed: widget.onTapEdit,
+            icon: Icon(Icons.edit, size: 16),
+          ),
         ],
       ),
     );

@@ -9,7 +9,9 @@ import 'package:progres/src/features/entries/list/widgets/bottom_sheet/date_sele
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/entry_type_picture_card.dart';
 
 class EntryBottomSheet extends ConsumerStatefulWidget {
-  const EntryBottomSheet({super.key});
+  const EntryBottomSheet(this.initialEntry, {super.key});
+
+  final ProgressEntry? initialEntry;
 
   @override
   ConsumerState<EntryBottomSheet> createState() => _NewEntryBottomSheetState();
@@ -17,16 +19,41 @@ class EntryBottomSheet extends ConsumerStatefulWidget {
 
 class _NewEntryBottomSheetState extends ConsumerState<EntryBottomSheet> {
   @override
+  void initState() {
+    super.initState();
+    // Initialize the notifier's state when the widget is first created
+    // We use addPostFrameCallback to ensure that the ref is available and
+    // we are not trying to update state during a build phase.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.initialEntry != null) {
+        // Call the method on your notifier to set the initial state
+        ref
+            .read(progressEntryStateNotifierProvider.notifier)
+            .setEntry(widget.initialEntry!);
+      } else {
+        // Optionally, reset to a default state if initialEntry is null
+        // This might already be handled by your notifier's constructor or reset method
+        ref.read(progressEntryStateNotifierProvider.notifier).reset();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     ProgressEntry entry = ref.watch(progressEntryStateNotifierProvider);
 
     void resetEntry() {
-      print('reset entry');
       ref.read(progressEntryStateNotifierProvider.notifier).reset();
     }
 
     void saveEntry() async {
       await ref.read(progressEntriesRepositoryProvider).saveEntry(entry);
+      resetEntry();
+      if (context.mounted) Navigator.of(context).pop();
+    }
+
+    void addNewEntry() async {
+      await ref.read(progressEntriesRepositoryProvider).addEntry(entry);
       resetEntry();
       if (context.mounted) Navigator.of(context).pop();
     }
@@ -118,7 +145,11 @@ class _NewEntryBottomSheetState extends ConsumerState<EntryBottomSheet> {
               children: [
                 Expanded(
                   child: FilledButton(
-                    onPressed: canSaveEntry() ? saveEntry : null,
+                    onPressed: canSaveEntry()
+                        ? widget.initialEntry == null
+                              ? addNewEntry
+                              : saveEntry
+                        : null,
                     child: Text("Save"),
                   ),
                 ),

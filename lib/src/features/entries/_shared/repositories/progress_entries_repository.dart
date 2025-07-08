@@ -25,7 +25,7 @@ class ProgressEntriesRepository {
     return orderedList;
   }
 
-  Future<void> saveEntry(ProgressEntry entry) async {
+  Future<void> addEntry(ProgressEntry entry) async {
     final Map<ProgressEntryType, ProgressPicture> pictures = {};
     for (ProgressEntryType entryType in entry.pictures.keys) {
       final File savedFile = await PicturesFileService().savePicture(
@@ -40,6 +40,11 @@ class ProgressEntriesRepository {
     final newEntry = ProgressEntry(pictures: pictures, date: entry.date);
     entries.add(newEntry);
     _entriesController.add(orderedEntries);
+  }
+
+  Future<void> saveEntry(ProgressEntry entry) async {
+    entries.removeWhere((e) => e.date == entry.date);
+    await addEntry(entry);
   }
 
   Future<void> initEntries() async {

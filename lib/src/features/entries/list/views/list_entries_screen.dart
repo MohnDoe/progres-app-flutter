@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/list/controllers/list_entries_controller.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/entry_item.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/entry_bottom_sheet.dart';
@@ -12,11 +13,14 @@ import 'package:progres/src/features/entries/list/widgets/bottom_sheet/picture_s
 class ListEntriesScreen extends ConsumerWidget {
   const ListEntriesScreen({super.key});
 
-  void _displayAddEntryBottomSheet(BuildContext context) async {
+  void _displayEntryBottomSheet(
+    BuildContext context,
+    ProgressEntry? entry,
+  ) async {
     await showModalBottomSheet(
       context: context,
       builder: (BuildContext ctx) {
-        return EntryBottomSheet();
+        return EntryBottomSheet(entry);
       },
     );
   }
@@ -34,7 +38,12 @@ class ListEntriesScreen extends ConsumerWidget {
             ? ListView.builder(
                 itemCount: entries.length,
                 padding: const EdgeInsets.all(8),
-                itemBuilder: (ctx, index) => EntryItem(entry: entries[index]),
+                itemBuilder: (ctx, index) => EntryItem(
+                  entry: entries[index],
+                  onTapEdit: () {
+                    _displayEntryBottomSheet(context, entries[index]);
+                  },
+                ),
               )
             : Center(child: const Text('You have no entry.')),
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -52,7 +61,7 @@ class ListEntriesScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          _displayAddEntryBottomSheet(context);
+          _displayEntryBottomSheet(context, null);
         },
         child: const Icon(Icons.add),
       ),

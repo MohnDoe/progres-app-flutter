@@ -16,6 +16,8 @@ class ProgressEntryNotifier extends StateNotifier<ProgressEntry> {
     );
   }
 
+  void setEntry(ProgressEntry entry) => state = entry;
+
   void setDate(DateTime date) {
     state = ProgressEntry(pictures: state.pictures, date: date);
   }
