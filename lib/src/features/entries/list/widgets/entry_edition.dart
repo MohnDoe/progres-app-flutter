@@ -54,7 +54,9 @@ class _EntryEditionState extends ConsumerState<EntryEdition> {
     }
 
     void saveEntry() async {
-      await ref.read(progressEntriesRepositoryProvider).saveEntry(entry);
+      await ref
+          .read(progressEntriesRepositoryProvider)
+          .editEntry(widget.initialEntry!, entry);
       resetEntry();
       // TODO: move this into onSaveEntry
       if (context.mounted) Navigator.of(context).pop();

@@ -26,6 +26,7 @@ class ProgressEntriesRepository {
   }
 
   Future<void> addEntry(ProgressEntry entry) async {
+    print('Adding entry');
     final Map<ProgressEntryType, ProgressPicture> pictures = {};
     for (ProgressEntryType entryType in entry.pictures.keys) {
       final File savedFile = await PicturesFileService().savePicture(
@@ -42,9 +43,29 @@ class ProgressEntriesRepository {
     _entriesController.add(orderedEntries);
   }
 
-  Future<void> saveEntry(ProgressEntry entry) async {
-    entries.removeWhere((e) => e.date == entry.date);
-    await addEntry(entry);
+  /*
+  * Essentially editing an entry.
+  * Deleting is ensures that files are "moved"
+  * */
+  Future<void> editEntry(ProgressEntry oldEntry, ProgressEntry newEntry) async {
+    final Map<ProgressEntryType, ProgressPicture> finalEntryPictures = {};
+
+    for (ProgressEntryType entryType in newEntry.pictures.keys) {
+      finalEntryPictures[entryType] = await PicturesFileService()
+          .duplicateProgressPicture(newEntry.pictures[entryType]!);
+    }
+
+    final finalEntry = ProgressEntry(
+      pictures: finalEntryPictures,
+      date: newEntry.date,
+    );
+
+    entries.removeWhere((e) => e.date == oldEntry.date);
+    await addEntry(finalEntry);
+
+    if (!newEntry.date.isAtSameMomentAs(oldEntry.date)) {
+      await deleteEntry(oldEntry);
+    }
   }
 
   Future<void> initEntries() async {
@@ -74,6 +95,7 @@ class ProgressEntriesRepository {
   }
 
   Future<void> deleteEntry(ProgressEntry entry) async {
+    print('Deleting entry');
     entries = entries
         .where((ProgressEntry e) => !e.date.isAtSameMomentAs(entry.date))
         .toList();

@@ -19,6 +19,16 @@ class PicturesFileService {
     return '$userPicturesDir/$kProjectId';
   }
 
+  Future<ProgressPicture> duplicateProgressPicture(
+    ProgressPicture progressPicture,
+  ) async {
+    final newProgressPicture = ProgressPicture(
+      file: File(progressPicture.file.path),
+    );
+
+    return newProgressPicture;
+  }
+
   Future<File> savePicture(
     ProgressEntry entry,
     ProgressEntryType entryType,
@@ -85,12 +95,14 @@ class PicturesFileService {
 
     if (await picturesDirectory.exists()) {
       for (FileSystemEntity fileEntity in picturesDirectory.listSync()) {
-        final String entryTypeString = fileEntity.path.split('/').last;
-        result[ProgressEntryType.values.byName(
-          entryTypeString,
-        )] = ProgressPicture(
-          file: File(Directory(fileEntity.path).listSync().first.path),
-        );
+        if (Directory(fileEntity.path).listSync().isNotEmpty) {
+          final String entryTypeString = fileEntity.path.split('/').last;
+          result[ProgressEntryType.values.byName(
+            entryTypeString,
+          )] = ProgressPicture(
+            file: File(Directory(fileEntity.path).listSync().first.path),
+          );
+        }
       }
     }
 
@@ -103,6 +115,7 @@ class PicturesFileService {
       '$saveDirPath/${entry.date.millisecondsSinceEpoch}',
     );
 
+    print("Deleting entry folder : $entryDirectory");
     if (await entryDirectory.exists()) {
       await entryDirectory.delete(recursive: true);
     }
