@@ -14,12 +14,16 @@ class ImportCard extends ConsumerStatefulWidget {
 }
 
 class _ImportCardState extends ConsumerState<ImportCard> {
-  ProgressEntryType? selectedType;
-
   void _onDelete(ProgressPicture picture) {
     ref
         .read(importControllerProvider.notifier)
         .removePictureFromImports(picture);
+  }
+
+  void _onSelectedType(ProgressEntryType entryType) {
+    ref
+        .read(importControllerProvider.notifier)
+        .updatePictureEntryType(widget.importItem.picture, entryType);
   }
 
   @override
@@ -76,17 +80,9 @@ class _ImportCardState extends ConsumerState<ImportCard> {
                       ),
                       label: Text(entryType.name),
                       showCheckmark: false,
-                      selected: selectedType == entryType,
+                      selected: widget.importItem.type == entryType,
                       onSelected: (bool _) {
-                        setState(() {
-                          selectedType = entryType;
-                        });
-                        ref
-                            .read(importControllerProvider.notifier)
-                            .updatePictureEntryType(
-                              widget.importItem.picture,
-                              entryType,
-                            );
+                        _onSelectedType(entryType);
                       },
                     ),
                   )

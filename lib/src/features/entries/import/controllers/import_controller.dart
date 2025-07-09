@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logger/logger.dart';
 import 'package:native_exif/native_exif.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
@@ -46,8 +47,6 @@ class ImportControllerNotifier extends StateNotifier<List<ImportItem>> {
   }
 
   void removePictureFromImports(ProgressPicture picture) async {
-    print(picture.file.path);
-    print(state.where((item) => item.picture != picture).toList().length);
     state = state.where((item) => item.picture != picture).toList();
   }
 
@@ -71,9 +70,8 @@ class ImportControllerNotifier extends StateNotifier<List<ImportItem>> {
       type: entryType,
     );
 
-    final newState = state;
-    newState.insert(correspondingItemIndex, newImportItem);
-
+    final newState = List<ImportItem>.from(state);
+    newState[correspondingItemIndex] = newImportItem;
     state = newState;
   }
 }

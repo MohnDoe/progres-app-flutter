@@ -28,6 +28,42 @@ class _ImportDayGroupState extends ConsumerState<ImportDayGroup> {
       ref.read(importControllerProvider.notifier).removeDay(date);
     }
 
+    // --- Start of isValid logic ---
+    bool isValid = false; // Default to false
+    // Condition 1: No more than 3 import items
+    if (widget.importItems.length <= ProgressEntryType.values.length) {
+      // Or a hardcoded 3 if that's the absolute max
+      // Condition 2: Each importItem has a type set to a different value, and none are null.
+      if (widget.importItems.isNotEmpty) {
+        // Only proceed if there are items to check
+        final Set<ProgressEntryType> uniqueTypes = {};
+        bool allTypesValidAndUnique = true;
+
+        for (final item in widget.importItems) {
+          if (item.type == null) {
+            allTypesValidAndUnique = false;
+            break; // Found a null type, no need to check further
+          }
+          if (uniqueTypes.contains(item.type!)) {
+            allTypesValidAndUnique = false;
+            break; // Found a duplicate type
+          }
+          uniqueTypes.add(item.type!);
+        }
+        isValid = allTypesValidAndUnique;
+      } else {
+        // If importItems is empty, it can be considered valid based on the conditions
+        // (no more than 3 items, and the condition about types is vacuously true).
+        // Adjust this if empty should be invalid.
+        isValid = true;
+      }
+    }
+    // --- End of isValid logic ---
+
+    // You can now use the 'isValid' boolean to change UI elements,
+    // for example, the color of an icon or text.
+    print("ImportDayGroup for ${widget.date}: isValid = $isValid");
+
     return Container(
       margin: EdgeInsets.only(bottom: 16),
       child: Column(
@@ -60,6 +96,7 @@ class _ImportDayGroupState extends ConsumerState<ImportDayGroup> {
                   onPressed: () => onDeleteImportDayGroup(widget.date),
                   icon: Icon(Icons.delete_outline, size: 16),
                 ),
+                if (isValid) Icon(Icons.check),
               ],
             ),
           ),
@@ -72,7 +109,7 @@ class _ImportDayGroupState extends ConsumerState<ImportDayGroup> {
                   .map(
                     (ImportItem importItem) => Container(
                       margin: const EdgeInsets.only(right: 4),
-                      child: ImportCard(importItem),
+                      child: ImportCard(key: ValueKey(importItem), importItem),
                     ),
                   )
                   .toList(),

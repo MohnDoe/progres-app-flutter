@@ -33,7 +33,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   Widget build(BuildContext context) {
     // 1. Watch the STATE of the provider (the List<ProgressEntry>)
     final List<ImportItem> importItems = ref.watch(importControllerProvider);
-
+    // 1.b Sort by date descending
     importItems.sort(
       (ImportItem a, ImportItem b) => -(a.date).compareTo((b.date)),
     );
@@ -47,16 +47,23 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       groupedByDay[date]!.add(item);
     }
 
+    print('build ImportScreen');
+
     return Scaffold(
       appBar: AppBar(title: Text('Importing ${importItems.length} photos')),
       body: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8),
         child: ListView.builder(
           itemCount: groupedByDay.length,
-          itemBuilder: (context, index) => ImportDayGroup(
-            date: groupedByDay.keys.elementAt(index),
-            importItems: groupedByDay.values.elementAt(index),
-          ),
+          itemBuilder: (context, index) {
+            final DateTime date = groupedByDay.keys.elementAt(index);
+            final List<ImportItem> importItemsForDay = groupedByDay[date]!;
+            return ImportDayGroup(
+              key: ValueKey(date),
+              date: date,
+              importItems: importItemsForDay,
+            );
+          },
         ),
       ),
     );
