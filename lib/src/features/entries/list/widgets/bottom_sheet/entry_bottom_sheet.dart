@@ -5,9 +5,14 @@ import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/list/widgets/entry_edition.dart';
 
 class EntryBottomSheet extends ConsumerStatefulWidget {
-  const EntryBottomSheet(this.initialEntry, {super.key});
+  const EntryBottomSheet(
+    this.initialEntry, {
+    super.key,
+    this.isNewEntry = false,
+  });
 
   final ProgressEntry? initialEntry;
+  final bool isNewEntry;
 
   @override
   ConsumerState<EntryBottomSheet> createState() => _NewEntryBottomSheetState();
@@ -20,7 +25,8 @@ class _NewEntryBottomSheetState extends ConsumerState<EntryBottomSheet> {
       onClosing: () {
         // resetEntry();
       },
-      builder: (BuildContext context) => EntryEdition(widget.initialEntry),
+      builder: (BuildContext context) =>
+          EntryEdition(widget.initialEntry, canEditDate: widget.isNewEntry),
     );
   }
 }

@@ -39,7 +39,12 @@ class ProgressEntriesRepository {
     }
 
     final newEntry = ProgressEntry(pictures: pictures, date: entry.date);
-    entries.add(newEntry);
+
+    final newEntries = List<ProgressEntry>.from(entries);
+    newEntries.add(newEntry);
+
+    entries = newEntries;
+
     _entriesController.add(orderedEntries);
   }
 

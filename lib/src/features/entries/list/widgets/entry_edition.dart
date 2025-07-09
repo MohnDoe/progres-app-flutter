@@ -10,10 +10,16 @@ import 'package:progres/src/features/entries/list/widgets/bottom_sheet/date_sele
 import 'bottom_sheet/widgets/entry_type_picture_card.dart';
 
 class EntryEdition extends ConsumerStatefulWidget {
-  const EntryEdition(this.initialEntry, {super.key, this.onClose});
+  const EntryEdition(
+    this.initialEntry, {
+    super.key,
+    this.onClose,
+    this.canEditDate = true,
+  });
 
   final ProgressEntry? initialEntry;
   final void Function()? onClose;
+  final bool canEditDate;
 
   @override
   ConsumerState createState() => _EntryEditionState();
@@ -158,7 +164,7 @@ class _EntryEditionState extends ConsumerState<EntryEdition> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // If not initial entry simply display date, otherwise let it be edited
-                    widget.initialEntry != null
+                    !widget.canEditDate
                         ? EntryDateText(entry.date)
                         : TextButton.icon(
                             onPressed: () {

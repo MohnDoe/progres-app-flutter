@@ -15,7 +15,6 @@ class _AddTodayButtonState extends State<AddTodayButton> {
   @override
   Widget build(BuildContext context) {
     void switchToAdd() {
-      print('prout');
       setState(() {
         isButton = false;
       });
@@ -39,6 +38,7 @@ class _AddTodayButtonState extends State<AddTodayButton> {
             )
           : EntryEdition(
               null,
+              canEditDate: false,
               onClose: () {
                 setState(() {
                   isButton = true;

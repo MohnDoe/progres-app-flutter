@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
+import 'package:progres/src/features/entries/_shared/repositories/entry_status_provider.dart';
 import 'package:progres/src/features/entries/import/views/import_screen.dart';
 import 'package:progres/src/features/entries/list/controllers/list_entries_controller.dart';
 import 'package:progres/src/features/entries/list/widgets/add_today_button.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/entry_item.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/entry_bottom_sheet.dart';
-import 'package:progres/src/features/entries/list/widgets/bottom_sheet/picture_source_selection_bottom_sheet.dart';
 
 /// The screen that displays the list of progress entries.
 ///
@@ -16,14 +16,14 @@ import 'package:progres/src/features/entries/list/widgets/bottom_sheet/picture_s
 class ListEntriesScreen extends ConsumerWidget {
   const ListEntriesScreen({super.key});
 
-  void _displayEntryBottomSheet(
+  void _displayEditEntryBottomSheet(
     BuildContext context,
     ProgressEntry? entry,
   ) async {
     await showModalBottomSheet(
       context: context,
       builder: (BuildContext ctx) {
-        return EntryBottomSheet(entry);
+        return EntryBottomSheet(entry, isNewEntry: false);
       },
     );
   }
@@ -32,6 +32,12 @@ class ListEntriesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Watch the listEntriesControllerProvider to get the current state.
     final entriesState = ref.watch(listEntriesControllerProvider);
+
+    final now = DateTime.now();
+
+    final bool alreadyEntryForToday = ref.watch(
+      doesEntryExistForDateProvider(DateTime(now.year, now.month, now.day)),
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -58,12 +64,16 @@ class ListEntriesScreen extends ConsumerWidget {
                       ? EntryItem(
                           entry: entries[index - 1],
                           onTapEdit: () {
-                            _displayEntryBottomSheet(
+                            _displayEditEntryBottomSheet(
                               context,
                               entries[index - 1],
                             );
                           },
                         )
+                      // TODO: don't show if already have an entry for today
+                      // instead show something like congrats or smt
+                      : alreadyEntryForToday
+                      ? Text('hello')
                       : AddTodayButton(),
                   reverse: true,
                 ),
@@ -106,7 +116,7 @@ class ListEntriesScreen extends ConsumerWidget {
       //     ),
       //     FilledButton.icon(
       //       onPressed: () {
-      //         _displayEntryBottomSheet(context, null);
+      //         _displayEditEntryBottomSheet(context, null);
       //       },
       //       label: Text("Create entry"),
       //       icon: const Icon(Icons.add),
