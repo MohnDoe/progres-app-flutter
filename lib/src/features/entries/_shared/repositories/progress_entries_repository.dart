@@ -72,6 +72,16 @@ class ProgressEntriesRepository {
     }
     _entriesController.add(orderedEntries);
   }
+
+  Future<void> deleteEntry(ProgressEntry entry) async {
+    entries = entries
+        .where((ProgressEntry e) => !e.date.isAtSameMomentAs(entry.date))
+        .toList();
+
+    _entriesController.add(orderedEntries);
+
+    await PicturesFileService().deleteEntry(entry);
+  }
 }
 
 final progressEntriesRepositoryProvider = Provider<ProgressEntriesRepository>(

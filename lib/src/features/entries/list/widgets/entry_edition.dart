@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/_shared/repositories/progress_entries_repository.dart';
 import 'package:progres/src/features/entries/_shared/repositories/progress_entry_provider.dart';
+import 'package:progres/src/features/entries/list/controllers/list_entries_controller.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/date_select_bottom_sheet.dart';
 
 import 'bottom_sheet/widgets/entry_type_picture_card.dart';
@@ -46,9 +47,16 @@ class _EntryEditionState extends ConsumerState<EntryEdition> {
       ref.read(progressEntryStateNotifierProvider.notifier).reset();
     }
 
+    void deleteEntry() {
+      ref.read(progressEntriesRepositoryProvider).deleteEntry(entry);
+      // TODO: move this into onDeleteEntry
+      if (context.mounted) Navigator.of(context).pop();
+    }
+
     void saveEntry() async {
       await ref.read(progressEntriesRepositoryProvider).saveEntry(entry);
       resetEntry();
+      // TODO: move this into onSaveEntry
       if (context.mounted) Navigator.of(context).pop();
     }
 
@@ -87,41 +95,73 @@ class _EntryEditionState extends ConsumerState<EntryEdition> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Stack(
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Column(
-                  children: [
-                    TextButton.icon(
-                      onPressed: () {
-                        displayerDateSelectBottomSheet(context, entry.date);
-                      },
-                      icon: Icon(
-                        Icons.arrow_drop_down,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-
-                      iconAlignment: IconAlignment.end,
-                      label: Text(
-                        DateFormat.yMMMd().format(entry.date),
-                        style: Theme.of(context).textTheme.titleMedium!
-                            .copyWith(
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                      ),
+              if (widget.initialEntry != null)
+                Positioned(
+                  right: 0,
+                  child: Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.max,
+                      children: [
+                        IconButton(
+                          onPressed: deleteEntry,
+                          icon: Icon(Icons.delete_outline_rounded),
+                        ),
+                      ],
                     ),
-                    Text(
-                      "Progress photos",
-                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).textTheme.bodyMedium!.color!.withAlpha(200),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Column(
+                      children: [
+                        widget.initialEntry != null
+                            ? TextButton.icon(
+                                onPressed: () {
+                                  displayerDateSelectBottomSheet(
+                                    context,
+                                    entry.date,
+                                  );
+                                },
+                                icon: Icon(
+                                  Icons.arrow_drop_down,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
+                                ),
+
+                                iconAlignment: IconAlignment.end,
+                                label: Text(
+                                  DateFormat.yMMMd().format(entry.date),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium!
+                                      .copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
+                                      ),
+                                ),
+                              )
+                            : Text("Today"),
+                        Text(
+                          "Progress photos",
+                          style: Theme.of(context).textTheme.bodyMedium!
+                              .copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium!.color!.withAlpha(200),
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

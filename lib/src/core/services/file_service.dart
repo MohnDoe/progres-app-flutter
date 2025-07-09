@@ -96,4 +96,15 @@ class PicturesFileService {
 
     return result;
   }
+
+  Future<void> deleteEntry(ProgressEntry entry) async {
+    final saveDirPath = await _saveDirPath;
+    final entryDirectory = Directory(
+      '$saveDirPath/${entry.date.millisecondsSinceEpoch}',
+    );
+
+    if (await entryDirectory.exists()) {
+      await entryDirectory.delete(recursive: true);
+    }
+  }
 }
