@@ -19,10 +19,10 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   @override
   void initState() {
     super.initState();
-    importPictures();
+    addPictures();
   }
 
-  void importPictures() async {
+  void addPictures() async {
     final List<ProgressPicture> selectedPictures = await Picker().pickImages();
     for (ProgressPicture picture in selectedPictures) {
       ref.read(importControllerProvider.notifier).addProgressPicture(picture);
@@ -64,6 +64,20 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
               importItems: importItemsForDay,
             );
           },
+        ),
+      ),
+      bottomNavigationBar: BottomAppBar(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            TextButton.icon(
+              icon: Icon(Icons.add),
+              onPressed: addPictures,
+              label: Text("Add photos"),
+            ),
+            const SizedBox(width: 8),
+            FilledButton(onPressed: () {}, child: Text('Import')),
+          ],
         ),
       ),
     );

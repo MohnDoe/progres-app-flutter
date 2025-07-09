@@ -20,12 +20,12 @@ class ImportControllerNotifier extends StateNotifier<List<ImportItem>> {
   }
 
   Future<void> addProgressPicture(ProgressPicture picture) async {
-    final exifFile = await Exif.fromPath(picture.file.path);
-    final pictureOriginalDate = await exifFile.getOriginalDate();
-
-    if (state.any((item) => item.picture == picture)) {
+    if (state.any((item) => item.picture.file.path == picture.file.path)) {
       return;
     }
+
+    final exifFile = await Exif.fromPath(picture.file.path);
+    final pictureOriginalDate = await exifFile.getOriginalDate();
 
     final importItem = ImportItem(
       picture: picture,
