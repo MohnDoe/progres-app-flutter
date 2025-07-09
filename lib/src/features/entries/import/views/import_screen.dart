@@ -74,6 +74,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
               label: Text("Add more photos"),
             ),
             const SizedBox(width: 8),
+            // TODO: enforce rules for import validation
             FilledButton(onPressed: importPictures, child: Text('Import')),
           ],
         ),
