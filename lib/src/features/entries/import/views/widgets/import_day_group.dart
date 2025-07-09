@@ -8,10 +8,14 @@ import 'package:progres/src/features/entries/import/controllers/import_controlle
 import 'import_card.dart';
 
 class ImportDayGroup extends ConsumerStatefulWidget {
-  const ImportDayGroup({super.key, required this.date, required this.pictures});
+  const ImportDayGroup({
+    super.key,
+    required this.date,
+    required this.importItems,
+  });
 
   final DateTime date;
-  final List<ProgressPicture> pictures;
+  final List<ImportItem> importItems;
 
   @override
   ConsumerState<ImportDayGroup> createState() => _ImportDayGroupState();
@@ -41,7 +45,7 @@ class _ImportDayGroupState extends ConsumerState<ImportDayGroup> {
                 Row(
                   children: [
                     Text(
-                      '${widget.pictures.length}',
+                      '${widget.importItems.length}',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     Text(
@@ -64,13 +68,11 @@ class _ImportDayGroupState extends ConsumerState<ImportDayGroup> {
             height: 160,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              children: widget.pictures
+              children: widget.importItems
                   .map(
-                    (picture) => Container(
+                    (ImportItem importItem) => Container(
                       margin: const EdgeInsets.only(right: 4),
-                      child: ImportCard(
-                        ImportItem(picture: picture, date: widget.date),
-                      ),
+                      child: ImportCard(importItem),
                     ),
                   )
                   .toList(),

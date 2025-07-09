@@ -38,14 +38,13 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       (ImportItem a, ImportItem b) => -(a.date).compareTo((b.date)),
     );
     // 2. Compute groupedByDay based on the current state (entries)
-    final Map<DateTime, List<ProgressPicture>> groupedByDay = {};
+    final Map<DateTime, List<ImportItem>> groupedByDay = {};
     for (final item in importItems) {
-      final picture = item.picture;
       final date = item.date;
       if (!groupedByDay.containsKey(date)) {
         groupedByDay[date] = [];
       }
-      groupedByDay[date]!.add(picture);
+      groupedByDay[date]!.add(item);
     }
 
     return Scaffold(
@@ -56,7 +55,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           itemCount: groupedByDay.length,
           itemBuilder: (context, index) => ImportDayGroup(
             date: groupedByDay.keys.elementAt(index),
-            pictures: groupedByDay.values.elementAt(index),
+            importItems: groupedByDay.values.elementAt(index),
           ),
         ),
       ),
