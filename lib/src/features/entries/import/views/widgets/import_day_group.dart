@@ -60,10 +60,6 @@ class _ImportDayGroupState extends ConsumerState<ImportDayGroup> {
     }
     // --- End of isValid logic ---
 
-    // You can now use the 'isValid' boolean to change UI elements,
-    // for example, the color of an icon or text.
-    print("ImportDayGroup for ${widget.date}: isValid = $isValid");
-
     return Container(
       margin: EdgeInsets.only(bottom: 16),
       child: Column(

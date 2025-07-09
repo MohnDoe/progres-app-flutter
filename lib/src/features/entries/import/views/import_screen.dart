@@ -19,10 +19,10 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   @override
   void initState() {
     super.initState();
-    addPictures();
+    addPicturesPickerStart();
   }
 
-  void addPictures() async {
+  void addPicturesPickerStart() async {
     final List<ProgressPicture> selectedPictures = await Picker().pickImages();
     for (ProgressPicture picture in selectedPictures) {
       ref.read(importControllerProvider.notifier).addProgressPicture(picture);
@@ -72,8 +72,8 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           children: [
             TextButton.icon(
               icon: Icon(Icons.add),
-              onPressed: addPictures,
-              label: Text("Add photos"),
+              onPressed: addPicturesPickerStart,
+              label: Text("Add more photos"),
             ),
             const SizedBox(width: 8),
             FilledButton(onPressed: () {}, child: Text('Import')),
