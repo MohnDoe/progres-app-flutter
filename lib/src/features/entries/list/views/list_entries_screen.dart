@@ -37,14 +37,34 @@ class ListEntriesScreen extends ConsumerWidget {
       // Use the `when` method to handle the different states of the provider.
       body: entriesState.when(
         data: (entries) => entries.isNotEmpty
-            ? ListView.builder(
-                itemCount: entries.length,
+            ? Padding(
                 padding: const EdgeInsets.all(8),
-                itemBuilder: (ctx, index) => EntryItem(
-                  entry: entries[index],
-                  onTapEdit: () {
-                    _displayEntryBottomSheet(context, entries[index]);
-                  },
+                child: ListView.builder(
+                  itemCount: entries.length + 1,
+                  itemBuilder: (ctx, index) => (index != 0)
+                      ? EntryItem(
+                          entry: entries[index - 1],
+                          onTapEdit: () {
+                            _displayEntryBottomSheet(
+                              context,
+                              entries[index - 1],
+                            );
+                          },
+                        )
+                      : SizedBox(
+                          height: 64,
+                          child: FilledButton(
+                            onPressed: () {},
+                            style: FilledButton.styleFrom(
+                              textStyle: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium!
+                                  .copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            child: Text("Add today's photos"),
+                          ),
+                        ),
+                  reverse: true,
                 ),
               )
             : Center(child: const Text('You have no entry.')),
@@ -61,42 +81,36 @@ class ListEntriesScreen extends ConsumerWidget {
           ],
         ),
       ),
-      floatingActionButtonLocation: ExpandableFab.location,
-      floatingActionButton: ExpandableFab(
-        // TODO: make this shit cuter
-        type: ExpandableFabType.up,
-        childrenAnimation: ExpandableFabAnimation.none,
-        distance: 80,
-        openButtonBuilder: RotateFloatingActionButtonBuilder(
-          child: const Icon(Icons.add),
-          fabSize: ExpandableFabSize.regular,
-          shape: const CircleBorder(),
-          angle: 0,
-        ),
-        children: [
-          FilledButton.icon(
-            onPressed: () {
-              Navigator.of(
-                context,
-              ).push(MaterialPageRoute(builder: (_) => const ImportScreen()));
-            },
-            label: Text("Import photos"),
-            icon: const Icon(Icons.upload),
-          ),
-          FilledButton.icon(
-            onPressed: () {
-              _displayEntryBottomSheet(context, null);
-            },
-            label: Text("Create entry"),
-            icon: const Icon(Icons.add),
-          ),
-        ],
-      ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () {
-      //     _displayEntryBottomSheet(context, null);
-      //   },
-      //   child: const Icon(Icons.add),
+      // floatingActionButtonLocation: ExpandableFab.location,
+      // floatingActionButton: ExpandableFab(
+      //   // TODO: make this shit cuter
+      //   type: ExpandableFabType.up,
+      //   childrenAnimation: ExpandableFabAnimation.none,
+      //   distance: 80,
+      //   openButtonBuilder: RotateFloatingActionButtonBuilder(
+      //     child: const Icon(Icons.add),
+      //     fabSize: ExpandableFabSize.regular,
+      //     shape: const CircleBorder(),
+      //     angle: 0,
+      //   ),
+      //   children: [
+      //     FilledButton.icon(
+      //       onPressed: () {
+      //         Navigator.of(
+      //           context,
+      //         ).push(MaterialPageRoute(builder: (_) => const ImportScreen()));
+      //       },
+      //       label: Text("Import photos"),
+      //       icon: const Icon(Icons.upload),
+      //     ),
+      //     FilledButton.icon(
+      //       onPressed: () {
+      //         _displayEntryBottomSheet(context, null);
+      //       },
+      //       label: Text("Create entry"),
+      //       icon: const Icon(Icons.add),
+      //     ),
+      //   ],
       // ),
     );
   }

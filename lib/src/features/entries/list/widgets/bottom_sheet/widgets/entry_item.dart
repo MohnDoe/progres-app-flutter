@@ -20,10 +20,10 @@ class _EntryItemState extends State<EntryItem> {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.all(Radius.circular(8)),
-        color: Theme.of(context).colorScheme.surfaceContainerLowest,
+        color: Theme.of(context).colorScheme.surfaceDim,
       ),
       padding: EdgeInsets.only(left: 16, right: 8, top: 8, bottom: 8),
-      margin: EdgeInsets.only(bottom: 4),
+      margin: EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
           EntryImages(pictures: widget.entry.pictures),
