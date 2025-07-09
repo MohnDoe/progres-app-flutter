@@ -10,9 +10,10 @@ import 'package:progres/src/features/entries/list/widgets/bottom_sheet/date_sele
 import 'bottom_sheet/widgets/entry_type_picture_card.dart';
 
 class EntryEdition extends ConsumerStatefulWidget {
-  const EntryEdition(this.initialEntry, {super.key});
+  const EntryEdition(this.initialEntry, {super.key, this.onClose});
 
   final ProgressEntry? initialEntry;
+  final void Function()? onClose;
 
   @override
   ConsumerState createState() => _EntryEditionState();
@@ -54,6 +55,11 @@ class _EntryEditionState extends ConsumerState<EntryEdition> {
     void deleteEntry() {
       ref.read(progressEntriesRepositoryProvider).deleteEntry(entry);
       // TODO: move this into onDeleteEntry
+      resetEntry();
+      if (widget.onClose != null) {
+        widget.onClose!();
+        return;
+      }
       if (context.mounted) Navigator.of(context).pop();
     }
 
@@ -63,12 +69,20 @@ class _EntryEditionState extends ConsumerState<EntryEdition> {
           .editEntry(widget.initialEntry!, entry);
       resetEntry();
       // TODO: move this into onSaveEntry
+      if (widget.onClose != null) {
+        widget.onClose!();
+        return;
+      }
       if (context.mounted) Navigator.of(context).pop();
     }
 
     void addNewEntry() async {
       await ref.read(progressEntriesRepositoryProvider).addEntry(entry);
       resetEntry();
+      if (widget.onClose != null) {
+        widget.onClose!();
+        return;
+      }
       if (context.mounted) Navigator.of(context).pop();
     }
 
@@ -103,6 +117,23 @@ class _EntryEditionState extends ConsumerState<EntryEdition> {
         children: [
           Stack(
             children: [
+              if (widget.onClose != null)
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      IconButton(
+                        onPressed: widget.onClose,
+                        icon: Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                ),
+              // DELETE ENTRY BUTTON
               if (widget.initialEntry != null)
                 Positioned(
                   right: 0,
@@ -119,12 +150,14 @@ class _EntryEditionState extends ConsumerState<EntryEdition> {
                     ],
                   ),
                 ),
+              // DISPLAY DATE
               SizedBox(
                 height: 64,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    // If not initial entry simply display date, otherwise let it be edited
                     widget.initialEntry != null
                         ? EntryDateText(entry.date)
                         : TextButton.icon(

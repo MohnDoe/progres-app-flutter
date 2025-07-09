@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/import/views/import_screen.dart';
 import 'package:progres/src/features/entries/list/controllers/list_entries_controller.dart';
+import 'package:progres/src/features/entries/list/widgets/add_today_button.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/entry_item.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/entry_bottom_sheet.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/picture_source_selection_bottom_sheet.dart';
@@ -63,19 +64,7 @@ class ListEntriesScreen extends ConsumerWidget {
                             );
                           },
                         )
-                      : SizedBox(
-                          height: 64,
-                          child: FilledButton(
-                            onPressed: () {},
-                            style: FilledButton.styleFrom(
-                              textStyle: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium!
-                                  .copyWith(fontWeight: FontWeight.bold),
-                            ),
-                            child: Text("Add today's photos"),
-                          ),
-                        ),
+                      : AddTodayButton(),
                   reverse: true,
                 ),
               )
