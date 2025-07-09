@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/_shared/repositories/progress_entries_repository.dart';
 import 'package:progres/src/features/entries/_shared/repositories/progress_entry_provider.dart';
-import 'package:progres/src/features/entries/list/controllers/list_entries_controller.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/date_select_bottom_sheet.dart';
 
 import 'bottom_sheet/widgets/entry_type_picture_card.dart';
@@ -102,17 +101,17 @@ class _EntryEditionState extends ConsumerState<EntryEdition> {
               if (widget.initialEntry != null)
                 Positioned(
                   right: 0,
-                  child: Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.max,
-                      children: [
-                        IconButton(
-                          onPressed: deleteEntry,
-                          icon: Icon(Icons.delete_outline_rounded),
-                        ),
-                      ],
-                    ),
+                  top: 0,
+                  bottom: 0,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      IconButton(
+                        onPressed: deleteEntry,
+                        icon: Icon(Icons.delete_outline_rounded),
+                      ),
+                    ],
                   ),
                 ),
               Row(
