@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
+import 'package:progres/src/features/entries/_shared/repositories/entry_status_provider.dart';
 import 'package:progres/src/features/entries/_shared/repositories/progress_entries_repository.dart';
 import 'package:progres/src/features/entries/import/controllers/import_controller.dart';
 import 'package:progres/src/features/entries/list/controllers/list_entries_controller.dart';
@@ -29,19 +30,10 @@ class _ImportDayGroupState extends ConsumerState<ImportDayGroup> {
       ref.read(importControllerProvider.notifier).removeDay(date);
     }
 
-    // --- Check if an entry already exists for this date ---
-    final List<ProgressEntry> existingEntries = ref
-        .watch(progressEntriesRepositoryProvider)
-        .entries;
-    // Normalize the current group's date to midnight for comparison
-    final normalizedGroupDate = DateTime(
-      widget.date.year,
-      widget.date.month,
-      widget.date.day,
+    final bool entryAlreadyExists = ref.watch(
+      doesEntryExistForDateProvider(widget.date),
     );
-    final bool entryAlreadyExists = existingEntries
-        .map((ProgressEntry entry) => entry.date)
-        .contains(normalizedGroupDate);
+
     // --- Start of isValid logic ---
     bool isValid = false; // Default to false
     // Condition 1: No more than 3 import items

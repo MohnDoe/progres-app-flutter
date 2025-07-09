@@ -33,7 +33,19 @@ class ListEntriesScreen extends ConsumerWidget {
     final entriesState = ref.watch(listEntriesControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Entries")),
+      appBar: AppBar(
+        title: const Text("Entries"),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => ImportScreen()));
+            },
+            child: Text("Import"),
+          ),
+        ],
+      ),
       // Use the `when` method to handle the different states of the provider.
       body: entriesState.when(
         data: (entries) => entries.isNotEmpty
