@@ -4,9 +4,11 @@ import 'package:intl/intl.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/features/entries/_shared/repositories/picker/picker.dart';
+import 'package:progres/src/features/entries/_shared/repositories/progress_entries_repository.dart';
 import 'package:progres/src/features/entries/import/controllers/import_controller.dart';
 import 'package:progres/src/features/entries/import/views/widgets/import_day_group.dart';
 import 'package:progres/src/features/entries/import/views/widgets/import_card.dart';
+import 'package:progres/src/features/entries/list/controllers/list_entries_controller.dart';
 
 class ImportScreen extends ConsumerStatefulWidget {
   const ImportScreen({super.key});
@@ -29,25 +31,21 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     }
   }
 
+  void importPictures() async {
+    await ref.read(importControllerProvider.notifier).saveImports();
+    ref.read(importControllerProvider.notifier).resetImport();
+    ref.read(listEntriesControllerProvider.notifier).loadEntries();
+    Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     // 1. Watch the STATE of the provider (the List<ProgressEntry>)
     final List<ImportItem> importItems = ref.watch(importControllerProvider);
+    final groupedByDay = ref
+        .watch(importControllerProvider.notifier)
+        .groupedByDay;
     // 1.b Sort by date descending
-    importItems.sort(
-      (ImportItem a, ImportItem b) => -(a.date).compareTo((b.date)),
-    );
-    // 2. Compute groupedByDay based on the current state (entries)
-    final Map<DateTime, List<ImportItem>> groupedByDay = {};
-    for (final item in importItems) {
-      final date = item.date;
-      if (!groupedByDay.containsKey(date)) {
-        groupedByDay[date] = [];
-      }
-      groupedByDay[date]!.add(item);
-    }
-
-    print('build ImportScreen');
 
     return Scaffold(
       appBar: AppBar(title: Text('Importing ${importItems.length} photos')),
@@ -76,7 +74,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
               label: Text("Add more photos"),
             ),
             const SizedBox(width: 8),
-            FilledButton(onPressed: () {}, child: Text('Import')),
+            FilledButton(onPressed: importPictures, child: Text('Import')),
           ],
         ),
       ),

@@ -5,6 +5,8 @@ import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/core/services/file_service.dart';
 
+import '../../_shared/repositories/progress_entries_repository.dart';
+
 class ImportItem {
   ImportItem({required this.picture, this.type, required this.date});
   final ProgressPicture picture;
@@ -15,8 +17,53 @@ class ImportItem {
 class ImportControllerNotifier extends StateNotifier<List<ImportItem>> {
   ImportControllerNotifier() : super([]);
 
-  void saveImport() async {
+  void resetImport() async {
     state = [];
+  }
+
+  List<ProgressEntry> groupImportIntoProgressEntries() {
+    final List<ProgressEntry> progressEntries = [];
+
+    for (DateTime day in groupedByDay.keys) {
+      final List<ImportItem> importItems = groupedByDay[day]!;
+      final Map<ProgressEntryType, ProgressPicture> pictures = {};
+      for (ImportItem item in importItems) {
+        pictures[item.type!] = item.picture;
+      }
+      final progressEntry = ProgressEntry(pictures: pictures, date: day);
+      progressEntries.add(progressEntry);
+    }
+
+    return progressEntries;
+  }
+
+  List<ImportItem> get orderedByDate {
+    final orderedList = List<ImportItem>.from(
+      state,
+    ); // Create a new list to avoid modifying the original
+    orderedList.sort(
+      (ImportItem a, ImportItem b) => -(a.date).compareTo((b.date)),
+    );
+
+    return orderedList;
+  }
+
+  Map<DateTime, List<ImportItem>> get groupedByDay {
+    final Map<DateTime, List<ImportItem>> result = {};
+    for (final item in orderedByDate) {
+      final date = item.date;
+      if (!result.containsKey(date)) {
+        result[date] = [];
+      }
+      result[date]!.add(item);
+    }
+    return result;
+  }
+
+  Future<void> saveImports() async {
+    for (ProgressEntry progressEntry in groupImportIntoProgressEntries()) {
+      await ProgressEntriesRepository().addEntry(progressEntry);
+    }
   }
 
   Future<void> addProgressPicture(ProgressPicture picture) async {
