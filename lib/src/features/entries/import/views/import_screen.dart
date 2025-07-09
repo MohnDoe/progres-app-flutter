@@ -5,8 +5,8 @@ import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/features/entries/_shared/repositories/picker/picker.dart';
 import 'package:progres/src/features/entries/import/controllers/import_controller.dart';
-import 'package:progres/src/features/entries/import/views/widgets/day_group.dart';
-import 'package:progres/src/features/entries/import/views/widgets/image_card.dart';
+import 'package:progres/src/features/entries/import/views/widgets/import_day_group.dart';
+import 'package:progres/src/features/entries/import/views/widgets/import_card.dart';
 
 class ImportScreen extends ConsumerStatefulWidget {
   const ImportScreen({super.key});
@@ -35,14 +35,13 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     final List<ImportItem> importItems = ref.watch(importControllerProvider);
 
     importItems.sort(
-      (ImportItem a, ImportItem b) =>
-          -(a['date'] as DateTime).compareTo((b['date'] as DateTime)),
+      (ImportItem a, ImportItem b) => -(a.date).compareTo((b.date)),
     );
     // 2. Compute groupedByDay based on the current state (entries)
     final Map<DateTime, List<ProgressPicture>> groupedByDay = {};
     for (final item in importItems) {
-      final picture = item['picture'] as ProgressPicture;
-      final date = item['date'] as DateTime;
+      final picture = item.picture;
+      final date = item.date;
       if (!groupedByDay.containsKey(date)) {
         groupedByDay[date] = [];
       }
@@ -55,7 +54,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 8),
         child: ListView.builder(
           itemCount: groupedByDay.length,
-          itemBuilder: (context, index) => DayGroup(
+          itemBuilder: (context, index) => ImportDayGroup(
             date: groupedByDay.keys.elementAt(index),
             pictures: groupedByDay.values.elementAt(index),
           ),

@@ -4,17 +4,16 @@ import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/features/entries/import/controllers/import_controller.dart';
 
-class ImageCard extends ConsumerStatefulWidget {
-  const ImageCard({super.key, required this.picture, required this.date});
+class ImportCard extends ConsumerStatefulWidget {
+  const ImportCard(this.importItem, {super.key});
 
-  final ProgressPicture picture;
-  final DateTime date;
+  final ImportItem importItem;
 
   @override
-  ConsumerState<ImageCard> createState() => _ImageCardState();
+  ConsumerState<ImportCard> createState() => _ImportCardState();
 }
 
-class _ImageCardState extends ConsumerState<ImageCard> {
+class _ImportCardState extends ConsumerState<ImportCard> {
   ProgressEntryType? selectedType;
 
   void _onDelete(ProgressPicture picture) {
@@ -44,7 +43,7 @@ class _ImageCardState extends ConsumerState<ImageCard> {
             child: Stack(
               children: [
                 Image.file(
-                  widget.picture.file,
+                  widget.importItem.picture.file,
                   width: 120,
                   fit: BoxFit.cover,
                   height: 120,
@@ -53,7 +52,7 @@ class _ImageCardState extends ConsumerState<ImageCard> {
                   bottom: 0,
                   child: IconButton.filled(
                     onPressed: () {
-                      _onDelete(widget.picture);
+                      _onDelete(widget.importItem.picture);
                     },
                     icon: Icon(Icons.delete_outline),
                   ),
@@ -78,12 +77,16 @@ class _ImageCardState extends ConsumerState<ImageCard> {
                       label: Text(entryType.name),
                       showCheckmark: false,
                       selected: selectedType == entryType,
-                      onSelected: (bool value) {
+                      onSelected: (bool _) {
                         setState(() {
-                          if (value) {
-                            selectedType = entryType;
-                          }
+                          selectedType = entryType;
                         });
+                        ref
+                            .read(importControllerProvider.notifier)
+                            .updatePictureEntryType(
+                              widget.importItem.picture,
+                              entryType,
+                            );
                       },
                     ),
                   )

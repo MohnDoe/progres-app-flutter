@@ -5,22 +5,22 @@ import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/features/entries/import/controllers/import_controller.dart';
 
-import 'image_card.dart';
+import 'import_card.dart';
 
-class DayGroup extends ConsumerStatefulWidget {
-  const DayGroup({super.key, required this.date, required this.pictures});
+class ImportDayGroup extends ConsumerStatefulWidget {
+  const ImportDayGroup({super.key, required this.date, required this.pictures});
 
   final DateTime date;
   final List<ProgressPicture> pictures;
 
   @override
-  ConsumerState<DayGroup> createState() => _DayGroupState();
+  ConsumerState<ImportDayGroup> createState() => _ImportDayGroupState();
 }
 
-class _DayGroupState extends ConsumerState<DayGroup> {
+class _ImportDayGroupState extends ConsumerState<ImportDayGroup> {
   @override
   Widget build(BuildContext context) {
-    void onDeleteDayGroup(DateTime date) {
+    void onDeleteImportDayGroup(DateTime date) {
       ref.read(importControllerProvider.notifier).removeDay(date);
     }
 
@@ -53,7 +53,7 @@ class _DayGroupState extends ConsumerState<DayGroup> {
                   ],
                 ),
                 IconButton(
-                  onPressed: () => onDeleteDayGroup(widget.date),
+                  onPressed: () => onDeleteImportDayGroup(widget.date),
                   icon: Icon(Icons.delete_outline, size: 16),
                 ),
               ],
@@ -68,7 +68,9 @@ class _DayGroupState extends ConsumerState<DayGroup> {
                   .map(
                     (picture) => Container(
                       margin: const EdgeInsets.only(right: 4),
-                      child: ImageCard(picture: picture, date: widget.date),
+                      child: ImportCard(
+                        ImportItem(picture: picture, date: widget.date),
+                      ),
                     ),
                   )
                   .toList(),
