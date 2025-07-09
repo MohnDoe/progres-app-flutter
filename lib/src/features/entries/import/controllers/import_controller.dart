@@ -8,8 +8,8 @@ typedef ImportItem = Map<String, Object>;
 class ImportControllerNotifier extends StateNotifier<List<ImportItem>> {
   ImportControllerNotifier() : super([]);
 
-  Future<void> saveImport() async {
-    //   TODO
+  void saveImport() async {
+    state = [];
   }
 
   Future<void> addProgressPicture(ProgressPicture picture) async {
@@ -26,12 +26,25 @@ class ImportControllerNotifier extends StateNotifier<List<ImportItem>> {
     state = [...state, importItem];
   }
 
-  Future<void> removeProgressPicture(ProgressPicture picture) async {
+  void removeProgressPicture(ProgressPicture picture) async {
     state = state.where((item) => item['picture'] != picture).toList();
   }
 
-  Future<void> clearImport() async {
+  void clearImport() async {
     state = [];
+  }
+
+  void removePictureFromImports(ProgressPicture picture) async {
+    state = state.where((item) => item['picture'] != picture).toList();
+  }
+
+  void removeDay(DateTime date) {
+    state = state
+        .where(
+          (ImportItem entry) =>
+              !(entry['date']! as DateTime).isAtSameMomentAs(date),
+        )
+        .toList();
   }
 }
 
