@@ -1,5 +1,7 @@
+import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:progres/src/core/ui/theme/theme_data.dart';
 import 'package:progres/src/features/entries/list/views/list_entries_screen.dart';
 
 void main() {
@@ -14,12 +16,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Progrès',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Color.fromARGB(255, 255, 217, 0),
-          brightness: Brightness.dark,
-        ),
-      ),
+      theme: AppTheme.dark,
+      themeMode: ThemeMode.dark,
       home: ListEntriesScreen(),
     );
   }

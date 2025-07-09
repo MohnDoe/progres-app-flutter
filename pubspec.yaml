@@ -45,6 +45,7 @@ dependencies:
   logger: ^2.3.0
   font_awesome_flutter: ^10.8.0
   flutter_expandable_fab: ^2.5.2
+  flex_color_scheme: ^8.2.0
 
 dev_dependencies:
   flutter_test:
