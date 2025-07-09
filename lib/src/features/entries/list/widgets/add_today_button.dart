@@ -24,7 +24,7 @@ class _AddTodayButtonState extends State<AddTodayButton> {
       duration: Duration(milliseconds: 250),
       child: isButton
           ? SizedBox(
-              height: 64,
+              height: 80,
               width: double.infinity,
               child: FilledButton(
                 onPressed: switchToAdd,

@@ -8,6 +8,7 @@ import 'package:progres/src/features/entries/list/controllers/list_entries_contr
 import 'package:progres/src/features/entries/list/widgets/add_today_button.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/entry_item.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/entry_bottom_sheet.dart';
+import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/today_entry_highlight.dart';
 
 /// The screen that displays the list of progress entries.
 ///
@@ -33,13 +34,9 @@ class ListEntriesScreen extends ConsumerWidget {
     // Watch the listEntriesControllerProvider to get the current state.
     final entriesState = ref.watch(listEntriesControllerProvider);
 
-    final now = DateTime.now();
-
     final bool alreadyEntryForToday = ref.watch(
-      doesEntryExistForDateProvider(DateTime(now.year, now.month, now.day)),
+      doesEntryExistForDateProvider(DateTime.now()),
     );
-
-    print("alreadyEntryForToday: $alreadyEntryForToday");
 
     return Scaffold(
       appBar: AppBar(
@@ -61,22 +58,24 @@ class ListEntriesScreen extends ConsumerWidget {
             ? Padding(
                 padding: const EdgeInsets.all(8),
                 child: ListView.builder(
-                  itemCount: entries.length + 1,
-                  itemBuilder: (ctx, index) => (index != 0)
-                      ? EntryItem(
-                          entry: entries[index - 1],
-                          onTapEdit: () {
-                            _displayEditEntryBottomSheet(
-                              context,
-                              entries[index - 1],
-                            );
-                          },
-                        )
-                      // TODO: don't show if already have an entry for today
-                      // instead show something like congrats or smt
-                      : alreadyEntryForToday
-                      ? Text('hello')
-                      : AddTodayButton(),
+                  itemCount: alreadyEntryForToday
+                      ? entries.length
+                      : entries.length + 1,
+                  itemBuilder: (ctx, index) {
+                    final idx = alreadyEntryForToday ? index : index - 1;
+                    return (!alreadyEntryForToday && index == 0)
+                        ? AddTodayButton()
+                        : EntryItem(
+                            highlight: alreadyEntryForToday && idx == 0,
+                            entry: entries[idx],
+                            onTapEdit: () {
+                              _displayEditEntryBottomSheet(
+                                context,
+                                entries[idx],
+                              );
+                            },
+                          );
+                  },
                   reverse: true,
                 ),
               )
