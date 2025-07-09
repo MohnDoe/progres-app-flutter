@@ -39,6 +39,8 @@ class ListEntriesScreen extends ConsumerWidget {
       doesEntryExistForDateProvider(DateTime(now.year, now.month, now.day)),
     );
 
+    print("alreadyEntryForToday: $alreadyEntryForToday");
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Entries"),
