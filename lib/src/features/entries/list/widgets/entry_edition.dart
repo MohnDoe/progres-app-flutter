@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
+import 'package:progres/src/features/entries/_shared/repositories/entry_status_provider.dart';
 import 'package:progres/src/features/entries/_shared/repositories/progress_entries_repository.dart';
 import 'package:progres/src/features/entries/_shared/repositories/progress_entry_provider.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/date_select_bottom_sheet.dart';
@@ -42,6 +43,10 @@ class _EntryEditionState extends ConsumerState<EntryEdition> {
   Widget build(BuildContext context) {
     ProgressEntry entry = ref.watch(progressEntryStateNotifierProvider);
 
+    final bool entryAlreadyExists = ref.watch(
+      doesEntryExistForDateProvider(entry.date),
+    );
+
     void resetEntry() {
       ref.read(progressEntryStateNotifierProvider.notifier).reset();
     }
@@ -76,7 +81,7 @@ class _EntryEditionState extends ConsumerState<EntryEdition> {
       return false;
     }
 
-    void displayerDateSelectBottomSheet(
+    void displayDateSelectBottomSheet(
       BuildContext context,
       DateTime initialDate,
     ) async {
@@ -114,59 +119,31 @@ class _EntryEditionState extends ConsumerState<EntryEdition> {
                     ],
                   ),
                 ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Column(
-                      children: [
-                        widget.initialEntry != null
-                            ? TextButton.icon(
-                                onPressed: () {
-                                  displayerDateSelectBottomSheet(
-                                    context,
-                                    entry.date,
-                                  );
-                                },
-                                icon: Icon(
-                                  Icons.arrow_drop_down,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface,
-                                ),
-
-                                iconAlignment: IconAlignment.end,
-                                label: Text(
-                                  DateFormat.yMMMd().format(entry.date),
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium!
-                                      .copyWith(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurface,
-                                      ),
-                                ),
-                              )
-                            : Text("Today"),
-                        Text(
-                          "Progress photos",
-                          style: Theme.of(context).textTheme.bodyMedium!
-                              .copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).textTheme.bodyMedium!.color!.withAlpha(200),
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              SizedBox(
+                height: 64,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    widget.initialEntry != null
+                        ? EntryDateText(entry.date)
+                        : TextButton.icon(
+                            onPressed: () {
+                              displayDateSelectBottomSheet(context, entry.date);
+                            },
+                            icon: Icon(
+                              Icons.arrow_drop_down,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                            iconAlignment: IconAlignment.end,
+                            label: EntryDateText(entry.date),
+                          ),
+                  ],
+                ),
               ),
             ],
           ),
-          Divider(),
+          Divider(height: 0),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
@@ -177,6 +154,7 @@ class _EntryEditionState extends ConsumerState<EntryEdition> {
             ),
           ),
           SizedBox(height: 8),
+
           Row(
             children: [
               Expanded(
@@ -192,6 +170,22 @@ class _EntryEditionState extends ConsumerState<EntryEdition> {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class EntryDateText extends StatelessWidget {
+  const EntryDateText(this.date, {super.key});
+
+  final DateTime date;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      DateFormat.yMMMd().format(date),
+      style: Theme.of(context).textTheme.titleMedium!.copyWith(
+        color: Theme.of(context).colorScheme.onSurface,
       ),
     );
   }
