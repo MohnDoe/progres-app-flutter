@@ -21,7 +21,7 @@ class ImportControllerNotifier extends StateNotifier<List<ImportItem>> {
     state = [];
   }
 
-  List<ProgressEntry> groupImportIntoProgressEntries() {
+  List<ProgressEntry> convertImportDaysToProgressEntriesList() {
     final List<ProgressEntry> progressEntries = [];
 
     for (DateTime day in groupedByDay.keys) {
@@ -76,7 +76,8 @@ class ImportControllerNotifier extends StateNotifier<List<ImportItem>> {
   }
 
   Future<void> saveImports() async {
-    for (ProgressEntry progressEntry in groupImportIntoProgressEntries()) {
+    for (ProgressEntry progressEntry
+        in convertImportDaysToProgressEntriesList()) {
       await ProgressEntriesRepository().addEntry(progressEntry);
     }
   }
