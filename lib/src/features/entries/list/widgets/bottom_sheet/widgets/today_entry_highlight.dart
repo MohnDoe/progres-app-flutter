@@ -16,77 +16,110 @@ class _TodayEntryHighlightState extends State<TodayEntryHighlight> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.all(Radius.circular(8)),
-        border: Border.all(
-          color: Theme.of(context).primaryColor,
-          width: 2,
-          strokeAlign: BorderSide.strokeAlignInside,
-        ),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).colorScheme.primaryContainer.withAlpha(80),
+            blurRadius: 64,
+            spreadRadius: -16,
+          ),
+        ],
       ),
-      padding: const EdgeInsets.all(16),
-      child: Stack(
-        children: [
-          Column(
+      child: ClipPath(
+        clipBehavior: Clip.antiAlias,
+        clipper: ShapeBorderClipper(
+          shape: ContinuousRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(32)),
+          ),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            // borderRadius: BorderRadius.all(Radius.circular(16)),
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          padding: const EdgeInsets.only(top: 8, left: 8, right: 8, bottom: 8),
+          child: Stack(
             children: [
-              Text(
-                "Today's photos",
-                style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              Text(
-                "Looking great!",
-                style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 16),
-              GridView.count(
-                primary: false,
-                shrinkWrap: true, // Allow GridView to size itself vertically
-                physics:
-                    const NeverScrollableScrollPhysics(), // Disable scrolling if it's not desired within this small grid
-                crossAxisCount: 3,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8, // Added for spacing between columns
-                childAspectRatio: 1.0,
-                children: widget.entry.pictures.keys
-                    .map(
-                      (ProgressEntryType entryType) => ClipPath(
-                        clipBehavior: Clip.antiAlias,
-                        clipper: ShapeBorderClipper(
-                          shape: ContinuousRectangleBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(32)),
+              Column(
+                children: [
+                  Text(
+                    "Today's photos",
+                    style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  Text(
+                    "Looking great!",
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  GridView.count(
+                    primary: false,
+                    shrinkWrap:
+                        true, // Allow GridView to size itself vertically
+                    physics:
+                        const NeverScrollableScrollPhysics(), // Disable scrolling if it's not desired within this small grid
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8, // Added for spacing between columns
+                    childAspectRatio: 1.0,
+                    children: widget.entry.pictures.keys
+                        .map(
+                          (ProgressEntryType entryType) => ClipPath(
+                            clipBehavior: Clip.antiAlias,
+                            clipper: ShapeBorderClipper(
+                              shape: ContinuousRectangleBorder(
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(48),
+                                ),
+                              ),
+                            ),
+                            child: Container(
+                              child: widget.entry.pictures[entryType] != null
+                                  ? Image.file(
+                                      widget.entry.pictures[entryType]!.file,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : SizedBox(width: 80),
+                            ),
                           ),
-                        ),
-                        child: Container(
-                          child: widget.entry.pictures[entryType] != null
-                              ? Image.file(
-                                  widget.entry.pictures[entryType]!.file,
-                                  fit: BoxFit.cover,
-                                )
-                              : SizedBox(width: 80),
-                        ),
+                        )
+                        .toList(),
+                  ),
+                ],
+              ),
+              Positioned(
+                right: 8,
+                child: FilledButton.icon(
+                  style: Theme.of(context).filledButtonTheme.style!.copyWith(
+                    shape: WidgetStateProperty.all<ContinuousRectangleBorder>(
+                      ContinuousRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(32)),
                       ),
-                    )
-                    .toList(),
+                    ),
+                    backgroundColor: WidgetStateProperty.all(
+                      Theme.of(context).colorScheme.surface,
+                    ),
+                  ),
+                  onPressed: widget.onTapEdit,
+                  label: Text(
+                    "Edit",
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  icon: Icon(
+                    Icons.edit,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
               ),
             ],
           ),
-          Positioned(
-            left: 0,
-            child: IconButton.filled(
-              onPressed: widget.onTapEdit,
-              visualDensity: VisualDensity.compact,
-              icon: Icon(
-                Icons.edit,
-                size: 16,
-                color: Theme.of(context).colorScheme.onPrimary,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

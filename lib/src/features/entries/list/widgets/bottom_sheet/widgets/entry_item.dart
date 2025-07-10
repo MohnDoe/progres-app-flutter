@@ -66,7 +66,7 @@ class EntryImages extends StatelessWidget {
               clipBehavior: Clip.antiAlias,
               clipper: ShapeBorderClipper(
                 shape: ContinuousRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(8)),
+                  borderRadius: BorderRadius.all(Radius.circular(20)),
                 ),
               ),
               child: SizedBox(
