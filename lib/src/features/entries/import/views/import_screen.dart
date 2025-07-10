@@ -21,7 +21,6 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   @override
   void initState() {
     super.initState();
-    ref.read(importControllerProvider.notifier).resetImports();
     addPicturesPickerStart();
   }
 
@@ -34,8 +33,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
 
   void importPictures() async {
     await ref.read(importControllerProvider.notifier).saveImports();
-    ref.read(importControllerProvider.notifier).resetImports();
-    ref.read(listEntriesControllerProvider.notifier).loadEntries();
+    ref.read(importControllerProvider.notifier).clearImport();
     if (context.mounted) {
       Navigator.of(context).pop();
     }
@@ -43,9 +41,11 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(importControllerProvider);
+    final importState = ref.watch(importControllerProvider); // DO NOT DELETE
+
+    final bool isEntireImportValid = importState.isEntireImportValid;
     final importNotifier = ref.watch(importControllerProvider.notifier);
-    final groupedData = importNotifier.groupedByDay;
+    final groupedData = importNotifier.groupedItemsForDisplay;
 
     return Scaffold(
       body: Container(
@@ -75,7 +75,10 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
             ),
             const SizedBox(width: 8),
             // TODO: enforce rules for import validation
-            FilledButton(onPressed: importPictures, child: Text('Import')),
+            FilledButton(
+              onPressed: isEntireImportValid ? importPictures : null,
+              child: Text('Import'),
+            ),
           ],
         ),
       ),

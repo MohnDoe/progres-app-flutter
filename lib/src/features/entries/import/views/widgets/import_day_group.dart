@@ -25,45 +25,32 @@ class ImportDayGroup extends ConsumerStatefulWidget {
 class _ImportDayGroupState extends ConsumerState<ImportDayGroup> {
   @override
   Widget build(BuildContext context) {
+    // Get the validity for THIS specific group
+    final bool isThisGroupValid = ref.watch(
+      importControllerProvider.select(
+        (value) => value.groupValidity[widget.date] ?? false,
+      ),
+      // The `widget.date` here MUST be normalized the same way as the keys in groupValidity map
+      // The keys in `groupValidity` are already normalized by _recalculateAllValidity
+      // So, if widget.date might have time, normalize it:
+      // importControllerProvider.select((value) {
+      //   final normalizedDate = DateTime(widget.date.year, widget.date.month, widget.date.day);
+      //   return value.groupValidity[normalizedDate] ?? false;
+      // })
+    );
+
+    final normalizedWidgetDate = DateTime(
+      widget.date.year,
+      widget.date.month,
+      widget.date.day,
+    );
+    final entryAlreadyExists = ref.watch(
+      doesEntryExistForDateProvider(normalizedWidgetDate),
+    );
+
     void onDeleteImportDayGroup(DateTime date) {
       ref.read(importControllerProvider.notifier).removeDay(date);
     }
-
-    final bool entryAlreadyExists = ref.watch(
-      doesEntryExistForDateProvider(widget.date),
-    );
-
-    // --- Start of isValid logic ---
-    bool isValid = false; // Default to false
-    // Condition 1: No more than 3 import items
-    if (widget.importItems.length <= ProgressEntryType.values.length) {
-      // Or a hardcoded 3 if that's the absolute max
-      // Condition 2: Each importItem has a type set to a different value, and none are null.
-      if (widget.importItems.isNotEmpty) {
-        // Only proceed if there are items to check
-        final Set<ProgressEntryType> uniqueTypes = {};
-        bool allTypesValidAndUnique = true;
-
-        for (final item in widget.importItems) {
-          if (item.type == null) {
-            allTypesValidAndUnique = false;
-            break; // Found a null type, no need to check further
-          }
-          if (uniqueTypes.contains(item.type!)) {
-            allTypesValidAndUnique = false;
-            break; // Found a duplicate type
-          }
-          uniqueTypes.add(item.type!);
-        }
-        isValid = allTypesValidAndUnique;
-      } else {
-        // If importItems is empty, it can be considered valid based on the conditions
-        // (no more than 3 items, and the condition about types is vacuously true).
-        // Adjust this if empty should be invalid.
-        isValid = true;
-      }
-    }
-    // --- End of isValid logic ---
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,7 +112,7 @@ class _ImportDayGroupState extends ConsumerState<ImportDayGroup> {
                       onPressed: () => onDeleteImportDayGroup(widget.date),
                       child: const Text("Remove day"),
                     ),
-              if (isValid && !entryAlreadyExists) Icon(Icons.check),
+              if (isThisGroupValid && !entryAlreadyExists) Icon(Icons.check),
             ],
           ),
         ),
