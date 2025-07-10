@@ -39,47 +39,50 @@ class ListEntriesScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Entries"),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(
-                context,
-              ).push(MaterialPageRoute(builder: (_) => ImportScreen()));
-            },
-            child: Text("Import"),
-          ),
-        ],
-      ),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       // Use the `when` method to handle the different states of the provider.
       body: entriesState.when(
-        data: (entries) => entries.isNotEmpty
-            ? Padding(
-                padding: const EdgeInsets.all(8),
-                child: ListView.builder(
-                  itemCount: alreadyEntryForToday
-                      ? entries.length
-                      : entries.length + 1,
-                  itemBuilder: (ctx, index) {
-                    final idx = alreadyEntryForToday ? index : index - 1;
-                    return (!alreadyEntryForToday && index == 0)
-                        ? AddTodayButton()
-                        : EntryItem(
-                            highlight: alreadyEntryForToday && idx == 0,
-                            entry: entries[idx],
-                            onTapEdit: () {
-                              _displayEditEntryBottomSheet(
-                                context,
-                                entries[idx],
-                              );
-                            },
-                          );
-                  },
-                  reverse: true,
+        data: (entries) {
+          final List<Widget> listItems = [
+            if (!alreadyEntryForToday) AddTodayButton(),
+          ];
+
+          listItems.addAll(
+            entries.map(
+              (ProgressEntry entry) => EntryItem(
+                highlight: alreadyEntryForToday && entries.indexOf(entry) == 0,
+                entry: entry,
+                onTapEdit: () {
+                  _displayEditEntryBottomSheet(context, entry);
+                },
+              ),
+            ),
+          );
+
+          listItems.add(
+            Padding(
+              padding: const EdgeInsets.only(bottom: 32),
+              child: Center(
+                child: Text(
+                  "Your journey began here.",
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
-              )
-            : Center(child: const Text('You have no entry.')),
+              ),
+            ),
+          );
+
+          return entries.isNotEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: ListView.separated(
+                    itemCount: listItems.length,
+                    itemBuilder: (ctx, index) => listItems[index],
+                    reverse: true,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  ),
+                )
+              : Center(child: const Text('You have no entry.'));
+        },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Column(
           children: [

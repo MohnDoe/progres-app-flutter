@@ -42,17 +42,32 @@ class _TodayEntryHighlightState extends State<TodayEntryHighlight> {
                 ),
               ),
               const SizedBox(height: 16),
-              Row(
-                spacing: 8,
+              GridView.count(
+                primary: false,
+                shrinkWrap: true, // Allow GridView to size itself vertically
+                physics:
+                    const NeverScrollableScrollPhysics(), // Disable scrolling if it's not desired within this small grid
+                crossAxisCount: 3,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8, // Added for spacing between columns
+                childAspectRatio: 1.0,
                 children: widget.entry.pictures.keys
                     .map(
-                      (ProgressEntryType entryType) => Image(
-                        image: FileImage(
-                          widget.entry.pictures[entryType]!.file,
+                      (ProgressEntryType entryType) => ClipPath(
+                        clipBehavior: Clip.antiAlias,
+                        clipper: ShapeBorderClipper(
+                          shape: ContinuousRectangleBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(32)),
+                          ),
                         ),
-                        fit: BoxFit.cover,
-                        height: 80,
-                        width: 80,
+                        child: Container(
+                          child: widget.entry.pictures[entryType] != null
+                              ? Image.file(
+                                  widget.entry.pictures[entryType]!.file,
+                                  fit: BoxFit.cover,
+                                )
+                              : SizedBox(width: 80),
+                        ),
                       ),
                     )
                     .toList(),

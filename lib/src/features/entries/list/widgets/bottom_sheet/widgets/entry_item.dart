@@ -29,10 +29,9 @@ class _EntryItemState extends State<EntryItem> {
         : Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.all(Radius.circular(8)),
-              color: Theme.of(context).colorScheme.surfaceDim,
+              color: Theme.of(context).colorScheme.surfaceContainerLowest,
             ),
-            padding: EdgeInsets.only(left: 16, right: 8, top: 8, bottom: 8),
-            margin: EdgeInsets.only(bottom: 8),
+            padding: EdgeInsets.all(8),
             child: Row(
               children: [
                 EntryImages(pictures: widget.entry.pictures),
@@ -60,30 +59,26 @@ class EntryImages extends StatelessWidget {
         .where((ProgressEntryType entryType) => pictures[entryType] != null)
         .toList();
     return Row(
+      spacing: 4,
       children: displayedTypes
           .map(
-            (ProgressEntryType entryType) => Container(
-              transform: Matrix4.translation(
-                Vector3(
-                  (-8 * displayedTypes.indexOf(entryType).toDouble()),
-                  0,
-                  0,
+            (ProgressEntryType entryType) => ClipPath(
+              clipBehavior: Clip.antiAlias,
+              clipper: ShapeBorderClipper(
+                shape: ContinuousRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(8)),
                 ),
               ),
-              child: ClipOval(
-                child: CircleAvatar(
-                  radius: 16,
-                  backgroundColor: Theme.of(
-                    context,
-                  ).colorScheme.surfaceContainer,
-                  child: pictures[entryType] != null
-                      ? Image.file(
-                          pictures[entryType]!.file,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        )
-                      : null,
-                ),
+              child: SizedBox(
+                width: 40,
+                height: 40,
+                child: pictures[entryType] != null
+                    ? Image.file(
+                        pictures[entryType]!.file,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      )
+                    : null,
               ),
             ),
           )
