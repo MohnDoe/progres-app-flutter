@@ -111,7 +111,6 @@ class _ImportDayGroupState extends ConsumerState<ImportDayGroup> {
               entryAlreadyExists
                   ? FilledButton(
                       onPressed: () => onDeleteImportDayGroup(widget.date),
-                      child: Text("Remove"),
                       style: FilledButton.styleFrom(
                         backgroundColor: Theme.of(
                           context,
@@ -120,10 +119,11 @@ class _ImportDayGroupState extends ConsumerState<ImportDayGroup> {
                           context,
                         ).colorScheme.onErrorContainer,
                       ),
+                      child: const Text("Remove"),
                     )
                   : TextButton(
                       onPressed: () => onDeleteImportDayGroup(widget.date),
-                      child: Text("Remove day"),
+                      child: const Text("Remove day"),
                     ),
               if (isValid && !entryAlreadyExists) Icon(Icons.check),
             ],
