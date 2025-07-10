@@ -115,13 +115,13 @@ class _ImportDayGroupState extends ConsumerState<ImportDayGroup> {
           ),
           SizedBox(
             width: double.infinity,
-            height: 160,
+            height: 200,
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: widget.importItems
                   .map(
                     (ImportItem importItem) => Container(
-                      margin: const EdgeInsets.only(right: 4),
+                      margin: const EdgeInsets.only(right: 16),
                       child: ImportCard(key: ValueKey(importItem), importItem),
                     ),
                   )
