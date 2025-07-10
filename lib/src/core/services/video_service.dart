@@ -1,13 +1,19 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
-import 'package:ffmpeg_kit_flutter_new/ffmpeg_session.dart';
+import 'package:ffmpeg_kit_flutter_new/ffprobe_kit.dart';
+
 import 'package:ffmpeg_kit_flutter_new/return_code.dart';
+import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/services/file_service.dart';
+import 'package:progres/src/features/video/generation/models/video_generation_progress.dart';
 
-const kStabilizedVideoFilename = 'timelapse_stabilized.mp4';
+const kStabilizedVideoPrefix = 'timelapse_stabilized';
+const kStabilizedVideoExt = 'mp4';
 
 class VideoService {
   Future<Directory> get _temporaryDirectory async =>
@@ -27,14 +33,15 @@ class VideoService {
     }
   }
 
-  Future<void> _prepareFrames() async {
-    print('Preparing frames');
-    final List<File> listPictures = await PicturesFileService().listPictures();
+  Stream<VideoGenerationProgress> _prepareFrames(
+    List<File> listPictures,
+  ) async* {
+    Logger().i('Preparing frames');
     final framesDirectory = await _framesDirectory;
 
     await _initFramesDirectory();
 
-    print('Using ${listPictures.length} pictures.');
+    Logger().i('Using ${listPictures.length} entries.');
 
     for (int i = 0; i < listPictures.length; i++) {
       final framePath = p.join(
@@ -42,25 +49,32 @@ class VideoService {
         'frame_${i.toString().padLeft(4, '0')}.jpg',
       );
       await listPictures[i].copy(framePath);
+      yield VideoGenerationProgress(
+        VideoGenerationStep.preparingFrames,
+        (i + 1) / listPictures.length,
+      );
     }
   }
 
-  Future<void> _analyseVideo() async {
-    print('Analysing video.');
+  Stream<VideoGenerationProgress> _analyseVideo() async* {
+    Logger().i('Analysing video.');
     final framesInputPattern = await _framesInputPattern;
     final transformsFilePath = await _transformsFilePath;
-    // Step 1: Analyze motion vectors and create transform file
     await _deleteFile(transformsFilePath);
 
     final String analyzeCommand =
         "-i $framesInputPattern "
         "-vf vidstabdetect=shakiness=5:accuracy=15:result=\"$transformsFilePath\":tripod=1 "
         "-f null -";
-    await _executeCommand(analyzeCommand);
+    await for (final p in _executeCommand(analyzeCommand)) {
+      yield VideoGenerationProgress(VideoGenerationStep.analyzing, p);
+    }
   }
 
-  Future<void> _stabilizeVideo(String stabilizedVideoPath) async {
-    print('Stabilizing video.');
+  Stream<VideoGenerationProgress> _stabilizeVideo(
+    String stabilizedVideoPath,
+  ) async* {
+    Logger().i('Stabilizing video.');
     final framesInputPattern = await _framesInputPattern;
     final transformsFilePath = await _transformsFilePath;
 
@@ -73,7 +87,9 @@ class VideoService {
         "-c:v libx264 -pix_fmt yuv420p "
         "$stabilizedVideoPath";
 
-    await _executeCommand(stabilizeCommand);
+    await for (final p in _executeCommand(stabilizeCommand)) {
+      yield VideoGenerationProgress(VideoGenerationStep.stabilizing, p);
+    }
   }
 
   Future<void> _deleteFile(String path) async {
@@ -82,36 +98,80 @@ class VideoService {
     }
   }
 
-  Future<String> createVideo() async {
-    print('Creating video.');
+  Stream<VideoGenerationProgress> createVideo(
+    ProgressEntryType entryType,
+  ) async* {
+    Logger().i('Creating video.');
+    final List<File> listPictures = await PicturesFileService().listPictures(
+      entryType,
+    );
 
-    await _prepareFrames();
+    yield VideoGenerationProgress(VideoGenerationStep.preparingFrames, 0);
+    await for (final progress in _prepareFrames(listPictures)) {
+      yield progress;
+    }
+
     final temporaryDirectory = await _temporaryDirectory;
-
+    final kStabilizedVideoFilename =
+        '${kStabilizedVideoPrefix}_$entryType.$kStabilizedVideoExt';
     final String stabilizedVideoPath = p.join(
       temporaryDirectory.path,
       kStabilizedVideoFilename,
     );
-
-    // delete stabilized video if it exists
     await _deleteFile(stabilizedVideoPath);
 
-    await _analyseVideo();
+    yield VideoGenerationProgress(VideoGenerationStep.analyzing, 0);
+    await for (final progress in _analyseVideo()) {
+      yield progress;
+    }
+    yield VideoGenerationProgress(VideoGenerationStep.analyzing, 1);
 
-    // Step 2: Apply transforms to stabilize the video
-    await _stabilizeVideo(stabilizedVideoPath);
-
-    return stabilizedVideoPath;
+    yield VideoGenerationProgress(VideoGenerationStep.stabilizing, 0);
+    await for (final progress in _stabilizeVideo(stabilizedVideoPath)) {
+      yield progress;
+    }
+    yield VideoGenerationProgress(
+      VideoGenerationStep.done,
+      1,
+      videoPath: stabilizedVideoPath,
+    );
   }
 
-  Future<void> _executeCommand(String command) async {
-    print(command);
-    await FFmpegKit.execute(command);
+  Stream<double> _executeCommand(String command) {
+    final controller = StreamController<double>();
+    final _duration = 0;
 
-    FFmpegSession session = await FFmpegKit.execute(command);
-    final returnCode = await session.getReturnCode();
-    if (ReturnCode.isSuccess(returnCode)) {
-      print('Command done.');
-    }
+    FFmpegKit.executeAsync(
+      command,
+      (session) async {
+        final returnCode = await session.getReturnCode();
+
+        if (ReturnCode.isSuccess(returnCode)) {
+          Logger().i('Command done.');
+          controller.close();
+        } else {
+          final allLogs = await session.getAllLogsAsString();
+          Logger().e('Command failed with logs: $allLogs');
+          controller.addError('FFmpeg command failed');
+          controller.close();
+        }
+      },
+      // (log) => Logger().i(log.getMessage()),
+      null,
+      (statistics) {
+        Logger().i('getVideoFrameNumber ${statistics.getVideoFrameNumber()}');
+        Logger().i('getVideoFPS ${statistics.getVideoFps()}');
+        Logger().i('getTime ${statistics.getTime()}');
+        // First step is analysis, which does not provide progress updates.
+        if (statistics.getVideoFrameNumber() > 0) {
+          final progress =
+              statistics.getVideoFrameNumber() / statistics.getVideoFps();
+          controller.add(progress);
+          Logger().i(progress);
+        }
+      },
+    );
+
+    return controller.stream;
   }
 }

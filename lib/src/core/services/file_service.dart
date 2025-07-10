@@ -1,7 +1,8 @@
 import 'dart:io';
-
+import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 
 const kProjectId = '1';
@@ -18,46 +19,105 @@ class PicturesFileService {
     return '$userPicturesDir/$kProjectId';
   }
 
-  Future<File> savePicture(String dirPath, ProgressPicture picture) async {
-    final filePath =
-        '$dirPath/${picture.date.millisecondsSinceEpoch}${p.extension(picture.file.path)}';
+  Future<ProgressPicture> duplicateProgressPicture(
+    ProgressPicture progressPicture,
+  ) async {
+    final newProgressPicture = ProgressPicture(
+      file: File(progressPicture.file.path),
+    );
+
+    return newProgressPicture;
+  }
+
+  Future<File> savePicture(
+    ProgressEntry entry,
+    ProgressEntryType entryType,
+    ProgressPicture picture,
+  ) async {
+    final saveDirPath = await _saveDirPath;
+    final destinationDirectory = Directory(
+      '$saveDirPath/${toFixedDate(entry.date).millisecondsSinceEpoch}/${entryType.name}',
+    );
+
+    if (!await destinationDirectory.exists()) {
+      await destinationDirectory.create(recursive: true);
+    }
+
+    final filename = '${entryType.name}${p.extension(picture.file.path)}';
+
+    final filePath = '${destinationDirectory.path}/$filename';
 
     final newFile = File(filePath);
 
     await newFile.writeAsBytes(await picture.file.readAsBytes());
-    print('Saved file to : $filePath');
+    Logger().i('Saved file to : $filePath');
     return newFile;
   }
 
-  Future<List<File>> savePictures(List<ProgressPicture> pictures) async {
-    final userPicturesDir = await _userPicturesPath;
-
-    if (!await Directory(userPicturesDir).exists()) {
-      await Directory(userPicturesDir).create();
-    }
-
-    final dirPath = await _saveDirPath;
-
-    if (!await Directory(dirPath).exists()) {
-      await Directory(dirPath).create();
-    }
-
-    final List<File> newFiles = [];
-    for (ProgressPicture picture in pictures) {
-      final newFile = await savePicture(dirPath, picture);
-      newFiles.add(newFile);
-    }
-    return newFiles;
+  DateTime toFixedDate(DateTime start) {
+    return DateTime(start.year, start.month, start.day);
   }
 
-  Future<List<File>> listPictures() async {
+  Future<List<File>> listPictures(ProgressEntryType type) async {
     List<File> files = [];
-    final filesDir = await _saveDirPath;
+    final filesDir = "${await _saveDirPath}/$type";
 
     for (FileSystemEntity fileEntity in Directory(filesDir).listSync()) {
       files.add(File(fileEntity.path));
     }
 
     return files;
+  }
+
+  Future<List<Directory>> listEntriesDirectory() async {
+    final saveDirPath = await _saveDirPath;
+    final List<Directory> directories = [];
+
+    if (!await Directory(saveDirPath).exists()) return directories;
+    for (FileSystemEntity fileEntity in Directory(saveDirPath).listSync()) {
+      if (await Directory(fileEntity.path).exists()) {
+        directories.add(Directory(fileEntity.path));
+      }
+    }
+
+    return directories;
+  }
+
+  Future<Map<ProgressEntryType, ProgressPicture>> getAllEntryTypesFromDate(
+    DateTime entryDate,
+  ) async {
+    final saveDirPath = await _saveDirPath;
+    final picturesDirectory = Directory(
+      '$saveDirPath/${toFixedDate(entryDate).millisecondsSinceEpoch}',
+    );
+
+    final Map<ProgressEntryType, ProgressPicture> result = {};
+
+    if (await picturesDirectory.exists()) {
+      for (FileSystemEntity fileEntity in picturesDirectory.listSync()) {
+        if (Directory(fileEntity.path).listSync().isNotEmpty) {
+          final String entryTypeString = fileEntity.path.split('/').last;
+          result[ProgressEntryType.values.byName(
+            entryTypeString,
+          )] = ProgressPicture(
+            file: File(Directory(fileEntity.path).listSync().first.path),
+          );
+        }
+      }
+    }
+
+    return result;
+  }
+
+  Future<void> deleteEntry(ProgressEntry entry) async {
+    final saveDirPath = await _saveDirPath;
+    final entryDirectory = Directory(
+      '$saveDirPath/${entry.date.millisecondsSinceEpoch}',
+    );
+
+    print("Deleting entry folder : $entryDirectory");
+    if (await entryDirectory.exists()) {
+      await entryDirectory.delete(recursive: true);
+    }
   }
 }
