@@ -21,6 +21,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   @override
   void initState() {
     super.initState();
+    ref.read(importControllerProvider.notifier).resetImports();
     addPicturesPickerStart();
   }
 
@@ -42,18 +43,18 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final groupedByDay = ref
-        .watch(importControllerProvider.notifier)
-        .groupedByDay;
+    ref.watch(importControllerProvider);
+    final importNotifier = ref.watch(importControllerProvider.notifier);
+    final groupedData = importNotifier.groupedByDay;
 
     return Scaffold(
       body: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8),
         child: ListView.separated(
-          itemCount: groupedByDay.length,
+          itemCount: groupedData.length,
           itemBuilder: (context, index) {
-            final DateTime date = groupedByDay.keys.elementAt(index);
-            final List<ImportItem> importItemsForDay = groupedByDay[date]!;
+            final DateTime date = groupedData.keys.elementAt(index);
+            final List<ImportItem> importItemsForDay = groupedData[date]!;
             return ImportDayGroup(
               key: ValueKey(date),
               date: date,

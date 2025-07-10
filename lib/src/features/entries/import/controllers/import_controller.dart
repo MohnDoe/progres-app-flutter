@@ -49,15 +49,30 @@ class ImportControllerNotifier extends StateNotifier<List<ImportItem>> {
   }
 
   Map<DateTime, List<ImportItem>> get groupedByDay {
-    final Map<DateTime, List<ImportItem>> result = {};
-    for (final item in orderedByDate) {
-      final date = item.date;
-      if (!result.containsKey(date)) {
-        result[date] = [];
-      }
-      result[date]!.add(item);
+    print(
+      "ImportControllerNotifier: groupedByDay GETTER CALLED. Current state count: ${state.length}",
+    ); // DEBUG
+    final Map<DateTime, List<ImportItem>> groups = {};
+    for (final item in state) {
+      // ALWAYS uses the current `state`
+      final dateKey = DateTime(
+        item.date.year,
+        item.date.month,
+        item.date.day,
+      ); // Normalize for grouping
+      groups.update(
+        dateKey,
+        (existingItems) => [...existingItems, item],
+        ifAbsent: () => [item],
+      );
     }
-    return result;
+    // Optional: Sort groups by date if needed
+    // final sortedKeys = groups.keys.toList()..sort((a, b) => b.compareTo(a)); // Descending
+    // final Map<DateTime, List<ImportItem>> sortedGroups = {
+    //   for (var key in sortedKeys) key: groups[key]!
+    // };
+    // return sortedGroups;
+    return groups;
   }
 
   Future<void> saveImports() async {
@@ -68,11 +83,27 @@ class ImportControllerNotifier extends StateNotifier<List<ImportItem>> {
 
   Future<void> addProgressPicture(ProgressPicture picture) async {
     if (state.any((item) => item.picture.file.path == picture.file.path)) {
+      print(
+        "addProgressPicture: Picture ${picture.file.path} already exists in state. Skipping.",
+      );
       return;
     }
 
-    final exifFile = await Exif.fromPath(picture.file.path);
-    final pictureOriginalDate = await exifFile.getOriginalDate();
+    // 2. Get EXIF data
+    Exif? exifFile; // Use nullable Exif
+    DateTime? pictureOriginalDate;
+    try {
+      exifFile = await Exif.fromPath(picture.file.path);
+      pictureOriginalDate = await exifFile.getOriginalDate();
+      print(
+        "addProgressPicture: EXIF original date: $pictureOriginalDate for ${picture.file.path}",
+      );
+    } catch (e) {
+      print(
+        "addProgressPicture: Error reading EXIF for ${picture.file.path}: $e",
+      );
+      // For now, it will fall through to pictureOriginalDate being null, then use DateTime.now().
+    }
 
     final importItem = ImportItem(
       picture: picture,
@@ -81,8 +112,23 @@ class ImportControllerNotifier extends StateNotifier<List<ImportItem>> {
         pictureOriginalDate ?? DateTime.now(),
       ),
     );
+    print(
+      "addProgressPicture: Created ImportItem for date: ${importItem.date}, path: ${importItem.picture.file.path}",
+    );
 
-    state = [...state, importItem];
+    // 4. Update state IMMUTABLY
+    state = [
+      ...state,
+      importItem,
+    ]; // Creates a new list with the old items + new item
+    print(
+      "addProgressPicture: Picture added. New state count: ${state.length}",
+    );
+    if (state.isNotEmpty) {
+      print(
+        "addProgressPicture: Last item added date: ${state.last.date}, path: ${state.last.picture.file.path}",
+      );
+    }
   }
 
   void removeProgressPicture(ProgressPicture picture) async {
@@ -97,10 +143,37 @@ class ImportControllerNotifier extends StateNotifier<List<ImportItem>> {
     state = state.where((item) => item.picture != picture).toList();
   }
 
-  void removeDay(DateTime date) {
-    state = state
-        .where((ImportItem entry) => !entry.date.isAtSameMomentAs(date))
-        .toList();
+  void removeDay(DateTime dateToRemove) {
+    print(
+      "ImportControllerNotifier: removeDay called for date: $dateToRemove",
+    ); // For debugging
+
+    state = state.where((entry) {
+      // Normalize dates to ensure correct comparison (if time components might differ)
+      final normalizedEntryDate = DateTime(
+        entry.date.year,
+        entry.date.month,
+        entry.date.day,
+      );
+      final normalizedDateToRemove = DateTime(
+        dateToRemove.year,
+        dateToRemove.month,
+        dateToRemove.day,
+      );
+      return !normalizedEntryDate.isAtSameMomentAs(normalizedDateToRemove);
+    }).toList();
+
+    print(
+      "ImportControllerNotifier: State after removeDay. New count: ${state.length}",
+    ); // For debugging
+    // If state is empty now, print that too
+    if (state.isEmpty) {
+      print("ImportControllerNotifier: State is now empty.");
+    } else {
+      print(
+        "ImportControllerNotifier: First entry date in new state (if any): ${state.first.date}",
+      );
+    }
   }
 
   void updatePictureEntryType(
@@ -120,6 +193,10 @@ class ImportControllerNotifier extends StateNotifier<List<ImportItem>> {
     final newState = List<ImportItem>.from(state);
     newState[correspondingItemIndex] = newImportItem;
     state = newState;
+  }
+
+  void init(List<ImportItem> initialImportItems) {
+    state = initialImportItems;
   }
 }
 
