@@ -25,8 +25,13 @@ class _NewEntryBottomSheetState extends ConsumerState<EntryBottomSheet> {
       onClosing: () {
         // resetEntry();
       },
-      builder: (BuildContext context) =>
-          EntryEdition(widget.initialEntry, canEditDate: widget.isNewEntry),
+      builder: (BuildContext context) => EntryEdition(
+        widget.initialEntry,
+        canEditDate: widget.isNewEntry,
+        onClose: () {
+          Navigator.of(context).pop();
+        },
+      ),
     );
   }
 }

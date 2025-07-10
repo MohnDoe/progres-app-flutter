@@ -37,7 +37,7 @@ class _AddTodayButtonState extends State<AddTodayButton> {
               ),
             )
           : EntryEdition(
-              null,
+              null, // no initial entry
               canEditDate: false,
               onClose: () {
                 setState(() {

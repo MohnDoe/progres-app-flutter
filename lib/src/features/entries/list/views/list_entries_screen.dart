@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/_shared/repositories/entry_status_provider.dart';
 import 'package:progres/src/features/entries/import/views/import_screen.dart';
@@ -24,7 +25,7 @@ class ListEntriesScreen extends ConsumerWidget {
     await showModalBottomSheet(
       context: context,
       builder: (BuildContext ctx) {
-        return EntryBottomSheet(entry, isNewEntry: false);
+        return EntryBottomSheet(entry, isNewEntry: entry == null);
       },
     );
   }
@@ -39,6 +40,38 @@ class ListEntriesScreen extends ConsumerWidget {
     );
 
     return Scaffold(
+      appBar: AppBar(
+        actions: [
+          PopupMenuButton(
+            icon: FaIcon(FontAwesomeIcons.plus),
+            iconSize: 16,
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                child: TextButton.icon(
+                  icon: FaIcon(FontAwesomeIcons.plus, size: 16),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _displayEditEntryBottomSheet(context, null);
+                  },
+                  label: Text("New entry"),
+                ),
+              ),
+              PopupMenuItem(
+                child: TextButton.icon(
+                  icon: FaIcon(FontAwesomeIcons.upload, size: 16),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ImportScreen()),
+                    );
+                  },
+                  label: Text("Import photos"),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
       backgroundColor: Theme.of(context).colorScheme.surface,
       // Use the `when` method to handle the different states of the provider.
       body: entriesState.when(

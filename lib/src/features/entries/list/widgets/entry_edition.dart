@@ -19,6 +19,7 @@ class EntryEdition extends ConsumerStatefulWidget {
 
   final ProgressEntry? initialEntry;
   final void Function()? onClose;
+  // TODO: add initialDate and make it so that creating a new entry (not today) display "Select a date"
   final bool canEditDate;
 
   @override
@@ -194,17 +195,31 @@ class _EntryEditionState extends ConsumerState<EntryEdition> {
           ),
           SizedBox(height: 8),
 
-          Row(
+          Column(
             children: [
-              Expanded(
-                child: FilledButton(
-                  onPressed: canSaveEntry()
-                      ? widget.initialEntry == null
-                            ? addNewEntry
-                            : saveEntry
-                      : null,
-                  child: Text("Save"),
+              if (entryAlreadyExists && widget.canEditDate)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    "An entry already exists at this date.",
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
                 ),
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: canSaveEntry()
+                          ? widget.initialEntry == null
+                                ? addNewEntry
+                                : saveEntry
+                          : null,
+                      child: Text("Save"),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
