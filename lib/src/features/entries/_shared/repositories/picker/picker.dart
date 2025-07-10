@@ -7,7 +7,11 @@ import 'package:progres/src/features/entries/_shared/repositories/picker/ipicker
 class Picker implements IPicker {
   @override
   Future<ProgressPicture?> pickImage(ImageSource source) async {
-    final xf = await ImagePicker().pickImage(source: source);
+    final xf = await ImagePicker().pickImage(
+      source: source,
+      preferredCameraDevice: CameraDevice.front,
+      requestFullMetadata: true,
+    );
     if (xf != null) {
       return ProgressPicture(file: File(xf.path));
     } else {
