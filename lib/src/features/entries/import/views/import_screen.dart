@@ -33,25 +33,23 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
 
   void importPictures() async {
     await ref.read(importControllerProvider.notifier).saveImports();
-    ref.read(importControllerProvider.notifier).resetImport();
+    ref.read(importControllerProvider.notifier).resetImports();
     ref.read(listEntriesControllerProvider.notifier).loadEntries();
-    Navigator.of(context).pop();
+    if (context.mounted) {
+      Navigator.of(context).pop();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // 1. Watch the STATE of the provider (the List<ProgressEntry>)
-    final List<ImportItem> importItems = ref.watch(importControllerProvider);
     final groupedByDay = ref
         .watch(importControllerProvider.notifier)
         .groupedByDay;
-    // 1.b Sort by date descending
 
     return Scaffold(
-      appBar: AppBar(title: Text('Importing ${importItems.length} photos')),
       body: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: ListView.builder(
+        child: ListView.separated(
           itemCount: groupedByDay.length,
           itemBuilder: (context, index) {
             final DateTime date = groupedByDay.keys.elementAt(index);
@@ -62,6 +60,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
               importItems: importItemsForDay,
             );
           },
+          separatorBuilder: (context, index) => const SizedBox(height: 16),
         ),
       ),
       bottomNavigationBar: BottomAppBar(

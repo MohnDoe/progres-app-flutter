@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/_shared/repositories/entry_status_provider.dart';
@@ -64,70 +65,91 @@ class _ImportDayGroupState extends ConsumerState<ImportDayGroup> {
     }
     // --- End of isValid logic ---
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4.0),
-            child: Row(
-              children: [
-                Text(
-                  DateFormat.yMMMMd().format(widget.date),
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                if (entryAlreadyExists) // Display message if entry exists
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2.0),
-                    child: Text(
-                      "An entry already exists for this date.",
-                      style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                        color: Colors.orange.shade800,
-                        fontStyle: FontStyle.italic,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // DAY HEADER
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Row(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    DateFormat.yMMMMd().format(widget.date),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '${widget.importItems.length}',
+                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
+                      Text(
+                        '/${ProgressEntryType.values.length} max',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(width: 8),
+                      if (entryAlreadyExists) // Display message if entry exists
+                        Text(
+                          "An entry already exists for this date.",
+                          style: Theme.of(context).textTheme.bodySmall!
+                              .copyWith(
+                                color: Theme.of(context).colorScheme.error,
+                                fontStyle: FontStyle.italic,
+                              ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+              Spacer(),
+              entryAlreadyExists
+                  ? FilledButton(
+                      onPressed: () => onDeleteImportDayGroup(widget.date),
+                      child: Text("Remove"),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.errorContainer,
+                        foregroundColor: Theme.of(
+                          context,
+                        ).colorScheme.onErrorContainer,
+                      ),
+                    )
+                  : TextButton(
+                      onPressed: () => onDeleteImportDayGroup(widget.date),
+                      child: Text("Remove day"),
+                    ),
+              if (isValid && !entryAlreadyExists) Icon(Icons.check),
+            ],
+          ),
+        ),
+        // PICTURES
+        SizedBox(
+          width: double.infinity,
+          height: entryAlreadyExists ? 100 : 200,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: widget.importItems
+                .map(
+                  (ImportItem importItem) => Container(
+                    margin: const EdgeInsets.only(right: 16),
+                    child: ImportCard(
+                      key: ValueKey(importItem),
+                      importItem,
+                      disabled: entryAlreadyExists,
                     ),
                   ),
-                Spacer(),
-                Row(
-                  children: [
-                    Text(
-                      '${widget.importItems.length}',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    Text(
-                      '/${ProgressEntryType.values.length}',
-                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                IconButton(
-                  onPressed: () => onDeleteImportDayGroup(widget.date),
-                  icon: Icon(Icons.delete_outline, size: 16),
-                ),
-                if (isValid) Icon(Icons.check),
-              ],
-            ),
+                )
+                .toList(),
           ),
-          SizedBox(
-            width: double.infinity,
-            height: 200,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: widget.importItems
-                  .map(
-                    (ImportItem importItem) => Container(
-                      margin: const EdgeInsets.only(right: 16),
-                      child: ImportCard(key: ValueKey(importItem), importItem),
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

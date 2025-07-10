@@ -17,7 +17,7 @@ class ImportItem {
 class ImportControllerNotifier extends StateNotifier<List<ImportItem>> {
   ImportControllerNotifier() : super([]);
 
-  void resetImport() async {
+  void resetImports() async {
     state = [];
   }
 
