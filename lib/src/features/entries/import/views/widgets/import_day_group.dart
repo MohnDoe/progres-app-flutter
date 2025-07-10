@@ -3,9 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/_shared/repositories/entry_status_provider.dart';
-import 'package:progres/src/features/entries/_shared/repositories/progress_entries_repository.dart';
 import 'package:progres/src/features/entries/import/controllers/import_controller.dart';
-import 'package:progres/src/features/entries/list/controllers/list_entries_controller.dart';
 
 import 'import_card.dart';
 
