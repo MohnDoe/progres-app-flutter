@@ -22,13 +22,3 @@ class GenerateTimelapseUsecase implements Usecase<String, TimelapseConfig> {
     return await repository.generateTimelapse(params);
   }
 }
-
-class CancelTimelapseUsecase {
-  final TimelapseRepository repository;
-
-  CancelTimelapseUsecase(this.repository);
-
-  Future<void> call() async {
-    await repository.cancelTimelapseGeneration();
-  }
-}

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:progres/src/core/errors/failures.dart';
 import 'package:progres/src/features/timelapse/domain/entities/timelapse_config.dart';
+import 'package:progres/src/features/timelapse/domain/usecases/cancel_timelapse_usecase.dart';
 import 'package:progres/src/features/timelapse/domain/usecases/generate_timelapse_usecase.dart';
 import 'package:progres/src/features/timelapse/domain/usecases/get_timelapse_images_usecase.dart';
 import 'package:progres/src/features/timelapse/presentation/notifiers/timelapse_state.dart';
@@ -119,10 +120,9 @@ class TimelapseNotifier extends StateNotifier<TimelapseState> {
         // Check if the failure is due to cancellation
         if (failure is FfmpegProcessingFailure &&
             (failure.ffmpegLogs?.contains("Received stop signal") ??
-                false || failure.ffmpegLogs!.contains("Exiting normally") ??
-                false &&
-                    failure.returnCode !=
-                        0) // Some FFmpeg versions might output this on cancel
+                failure.ffmpegLogs?.contains("Exiting normally") ??
+                failure.returnCode !=
+                    0) // Some FFmpeg versions might output this on cancel
             ) {
           state = state.copyWith(
             status: TimelapseStatus.cancelled,
