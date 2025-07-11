@@ -46,6 +46,7 @@ dependencies:
   font_awesome_flutter: ^10.8.0
   flutter_expandable_fab: ^2.5.2
   flex_color_scheme: ^8.2.0
+  equatable: ^2.0.7
 
 dev_dependencies:
   flutter_test:
