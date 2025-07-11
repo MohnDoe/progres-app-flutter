@@ -4,19 +4,18 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
+import 'package:progres/src/core/utils/file_utils.dart';
 
 const kProjectId = '1';
 
 class PicturesFileService {
   Future<String> get _userPicturesPath async {
-    final directory = await getApplicationDocumentsDirectory();
-
-    return '${directory.path}/user_pictures';
+    return await FileUtils.getAppDocumentsPath('user_pictures');
   }
 
   Future<String> get _saveDirPath async {
-    final userPicturesDir = await _userPicturesPath;
-    return '$userPicturesDir/$kProjectId';
+    final userPicturesDirPath = await _userPicturesPath;
+    return p.join(userPicturesDirPath, kProjectId);
   }
 
   Future<ProgressPicture> duplicateProgressPicture(
@@ -39,9 +38,7 @@ class PicturesFileService {
       '$saveDirPath/${toFixedDate(entry.date).millisecondsSinceEpoch}/${entryType.name}',
     );
 
-    if (!await destinationDirectory.exists()) {
-      await destinationDirectory.create(recursive: true);
-    }
+    FileUtils.initDirectory(destinationDirectory);
 
     final filename = '${entryType.name}${p.extension(picture.file.path)}';
 
@@ -115,9 +112,6 @@ class PicturesFileService {
       '$saveDirPath/${entry.date.millisecondsSinceEpoch}',
     );
 
-    print("Deleting entry folder : $entryDirectory");
-    if (await entryDirectory.exists()) {
-      await entryDirectory.delete(recursive: true);
-    }
+    await FileUtils.deleteDirectory(entryDirectory);
   }
 }
