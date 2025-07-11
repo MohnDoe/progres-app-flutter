@@ -84,10 +84,14 @@ class TimelapseRepositoryImpl implements TimelapseRepository {
           fps: config.fps,
           zoom: config.vidstabZoom ?? 0,
           smoothing: config.vidstabSmoothing ?? 10,
-          // tempImageSubDirForTransform: "vidstab_detect_imgs" // If detect pass images are reused
+          // tempImageSubDirForTransform:
+          //     "vidstab_detect_images", // If detect pass images are reused
         );
 
         if (!transformResult.isSuccess || transformResult.outputPath == null) {
+          for (final log in (transformResult.logs ?? "").split("\n")) {
+            print("FFmpeg Log: $log");
+          }
           return Left(
             FfmpegProcessingFailure(
               "VidStab transformation failed.",

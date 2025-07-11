@@ -237,7 +237,7 @@ class TimelapseCreationScreen extends ConsumerWidget {
                 ),
                 TextFormField(
                   initialValue:
-                      (timelapseState.currentConfig.vidstabSmoothing ?? 10)
+                      (timelapseState.currentConfig.vidstabSmoothing ?? 1)
                           .toString(),
                   decoration: const InputDecoration(
                     labelText: 'VidStab Smoothing (e.g., 10-30)',

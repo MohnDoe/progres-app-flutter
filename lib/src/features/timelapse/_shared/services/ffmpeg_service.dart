@@ -30,14 +30,35 @@ class FfmpegService {
     for (int i = 0; i < sourceImageFiles.length; i++) {
       final newFileName =
           "img${(i + 1).toString().padLeft(4, '0')}.jpg"; // e.g., img0001.jpg
+      print("Copying image ${sourceImageFiles[i].path} to $newFileName");
       try {
         await sourceImageFiles[i].copy(p.join(tempImageDir.path, newFileName));
+        print("Copied image to ${tempImageDir.path}");
       } catch (e) {
         print("Error copying image ${sourceImageFiles[i].path}: $e");
         await FileUtils.deleteDirectory(tempImageDir); // Clean up on error
         return null; // Indicate failure
       }
     }
+    // After loop, verify files are there
+    final preparedFiles = await tempImageDir.list().toList();
+    print(
+      "Number of files in temp dir after preparation: ${preparedFiles.length}",
+    );
+    if (preparedFiles.isEmpty && sourceImageFiles.isNotEmpty) {
+      print(
+        "CRITICAL: Files were supposed to be copied, but the temp directory is still empty!",
+      );
+    } else {
+      for (var fileEntity in preparedFiles) {
+        if (fileEntity is File) {
+          print("Found prepared file: ${fileEntity.path}");
+        }
+      }
+    }
+
+    print("Prepared images for FFmpeg: ${tempImageDir.path}");
+
     return p.join(tempImageDir.path, "img%04d.jpg"); // Return pattern
   }
 
@@ -87,7 +108,7 @@ class FfmpegService {
   }) async {
     final imageInputPattern = await _prepareImagesForFfmpeg(
       imageFiles,
-      "vidstab_detect_imgs",
+      "vidstab_detect_images",
     );
     if (imageInputPattern == null) {
       return FfmpegResult(
@@ -101,9 +122,14 @@ class FfmpegService {
     );
     await FileUtils.deleteFile(transformsFilePath);
 
+    // --- KEY CHANGE FOR PHONE TESTING/STABILITY ---
+    final int detectProcessingWidth = 240; // Or 640. Experiment!
+    // ---
+
     final command =
-        "-framerate $fps -start_number 1 -i $imageInputPattern "
-        "-vf vidstabdetect=shakiness=$shakiness:accuracy=$accuracy:result='$transformsFilePath' "
+        "-loglevel debug -framerate $fps -start_number 1 -i $imageInputPattern "
+        // Scale images DOWN before detection for stability on phone
+        "-vf \"scale=$detectProcessingWidth:-1,vidstabdetect=shakiness=$shakiness:accuracy=$accuracy:result='$transformsFilePath'\" "
         "-f null -";
 
     print("Executing VidStabDetect: $command");
@@ -113,6 +139,11 @@ class FfmpegService {
 
     // Don't delete images yet, transform pass needs them
     // await FileUtils.deleteDirectory(Directory(p.dirname(imageInputPattern)));
+    // if (!rc!.isValueSuccess()) {
+    for (final log in logs) {
+      print("FFmpeg (vidpassdetect) Log: ${log.getMessage()}");
+    }
+    // }
 
     return FfmpegResult(
       returnCode: rc!.getValue() ?? ReturnCode.cancel,
@@ -135,6 +166,11 @@ class FfmpegService {
     // Re-prepare or reuse image pattern from detect pass
     // For simplicity, we assume images are still in the temp dir from detect pass, or re-prepare.
     // A more robust way would be to pass the temp dir path around.
+    if (tempImageSubDirForTransform != null) {
+      print(
+        "Using existing temp dir for transform: $tempImageSubDirForTransform",
+      );
+    }
     final imageInputPattern = tempImageSubDirForTransform != null
         ? p.join(
             (await FileUtils.getTemporaryImageDir(
@@ -142,7 +178,7 @@ class FfmpegService {
             )).path,
             "img%04d.jpg",
           )
-        : await _prepareImagesForFfmpeg(imageFiles, "vidstab_transform_imgs");
+        : await _prepareImagesForFfmpeg(imageFiles, "vidstab_transform_images");
 
     if (imageInputPattern == null) {
       return FfmpegResult(
@@ -157,10 +193,18 @@ class FfmpegService {
     // optzoom=1 is default if zoom=0 is not explicitly set or zoom=0
     // If you want to explicitly control zoom, set it (e.g., zoom=1 for 1% zoom).
     // The unsharp filter is optional.
+    // Use the same processing width as detect pass
+    final int transformProcessingWidth =
+        240; // Or 640. MUST MATCH DETECT'S SCALE
+
     final command =
-        "-framerate $fps -start_number 1 -i $imageInputPattern "
-        "-vf vidstabtransform=input='$transformsFilePath':zoom=$zoom:smoothing=$smoothing,unsharp=5:5:0.8:3:3:0.4 "
-        "-c:v libx264 -pix_fmt yuv420p -movflags +faststart $outputPath";
+        "-loglevel debug -framerate $fps -start_number 1 -i $imageInputPattern "
+        // Scale images DOWN before transform, matching detect pass
+        "-vf \"scale=$transformProcessingWidth:-1,vidstabtransform=input='$transformsFilePath':zoom=$zoom:smoothing=$smoothing,unsharp=5:5:0.8:3:3:0.4\" "
+        // Optional: If you want final output at a HIGHER resolution than processing res:
+        // Add another scale filter *after* vidstabtransform if needed, e.g. ",scale=1280:-1"
+        // But this adds more processing time. Best if output res matches processing res for speed.
+        "-c:v libx264 -pix_fmt yuv420p $outputPath";
 
     print("Executing VidStabTransform: $command");
     final session = await FFmpegKit.execute(command);

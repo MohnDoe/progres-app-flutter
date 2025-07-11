@@ -53,7 +53,7 @@ class TimelapseNotifier extends StateNotifier<TimelapseState> {
       (images) => state = state.copyWith(
         status: TimelapseStatus.imagesLoaded,
         availableImages: images,
-        selectedImages: [],
+        selectedImages: images,
       ), // Reset selected images
     );
   }
