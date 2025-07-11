@@ -1,8 +1,9 @@
 import 'package:dartz/dartz.dart';
 import 'package:progres/src/core/errors/failures.dart';
-import 'package:progres/src/features/timelapse/domain/entities/timelapse_config.dart';
-import 'package:progres/src/features/timelapse/domain/repositories/timelapse_repository.dart';
-import 'package:progres/src/features/timelapse/domain/usecases/usecase.dart';
+import 'package:progres/src/features/timelapse/_shared/domain/entities/timelapse_config.dart';
+import 'package:progres/src/features/timelapse/generate/domain/repositories/timelapse_repository.dart';
+
+import 'usecase.dart';
 
 class GenerateTimelapseUsecase implements Usecase<String, TimelapseConfig> {
   final TimelapseRepository repository;

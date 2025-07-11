@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
-import 'package:progres/src/features/timelapse/domain/entities/timelapse_config.dart';
+import 'package:progres/src/features/timelapse/_shared/domain/entities/timelapse_config.dart';
 
 abstract class TimelapseLocalDatasource {
   Future<List<File>> getStoredImageFiles(TimelapseViewType viewType);

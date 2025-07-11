@@ -2,11 +2,11 @@
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:progres/src/core/errors/failures.dart';
-import 'package:progres/src/features/timelapse/domain/entities/timelapse_config.dart';
-import 'package:progres/src/features/timelapse/domain/usecases/cancel_timelapse_usecase.dart';
-import 'package:progres/src/features/timelapse/domain/usecases/generate_timelapse_usecase.dart';
-import 'package:progres/src/features/timelapse/domain/usecases/get_timelapse_images_usecase.dart';
-import 'package:progres/src/features/timelapse/presentation/notifiers/timelapse_state.dart';
+import 'package:progres/src/features/timelapse/_shared/domain/entities/timelapse_config.dart';
+import 'package:progres/src/features/timelapse/_shared/notifiers/timelapse_state.dart';
+import 'package:progres/src/features/timelapse/generate/domain/usecases/cancel_timelapse_usecase.dart';
+import 'package:progres/src/features/timelapse/generate/domain/usecases/generate_timelapse_usecase.dart';
+import 'package:progres/src/features/timelapse/generate/domain/usecases/get_timelapse_images_usecase.dart';
 
 class TimelapseNotifier extends StateNotifier<TimelapseState> {
   final GetTimelapseImagesUsecase _getTimelapseImagesUsecase;

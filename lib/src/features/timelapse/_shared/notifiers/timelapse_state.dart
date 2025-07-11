@@ -2,7 +2,7 @@
 import 'dart:io';
 import 'package:equatable/equatable.dart';
 import 'package:progres/src/core/errors/failures.dart';
-import 'package:progres/src/features/timelapse/domain/entities/timelapse_config.dart';
+import 'package:progres/src/features/timelapse/_shared/domain/entities/timelapse_config.dart';
 
 enum TimelapseStatus {
   initial, // Initial state, nothing loaded

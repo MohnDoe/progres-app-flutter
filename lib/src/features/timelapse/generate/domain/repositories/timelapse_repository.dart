@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:dartz/dartz.dart'; // For Either
 import 'package:progres/src/core/errors/failures.dart';
-import '../entities/timelapse_config.dart';
+import 'package:progres/src/features/timelapse/_shared/domain/entities/timelapse_config.dart';
 
 abstract class TimelapseRepository {
   /// Fetches the list of image files available for timelapse creation for a given view.

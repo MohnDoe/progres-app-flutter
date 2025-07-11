@@ -1,11 +1,10 @@
-// lib/features/timelapse/data/repositories/timelapse_repository_impl.dart
 import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:progres/src/core/errors/failures.dart';
-import 'package:progres/src/features/timelapse/data/datasources/timelapse_local_datasource.dart';
-import 'package:progres/src/features/timelapse/domain/entities/timelapse_config.dart';
-import 'package:progres/src/features/timelapse/domain/repositories/timelapse_repository.dart';
-import 'package:progres/src/features/timelapse/services/ffmpeg_service.dart';
+import 'package:progres/src/features/timelapse/_shared/domain/entities/timelapse_config.dart';
+import 'package:progres/src/features/timelapse/_shared/services/ffmpeg_service.dart';
+import 'package:progres/src/features/timelapse/generate/data/datasources/timelapse_local_datasource.dart';
+import 'package:progres/src/features/timelapse/generate/domain/repositories/timelapse_repository.dart';
 
 class TimelapseRepositoryImpl implements TimelapseRepository {
   final TimelapseLocalDatasource localDatasource;
