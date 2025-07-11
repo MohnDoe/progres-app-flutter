@@ -2,27 +2,22 @@ import 'dart:io';
 import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit_config.dart';
 import 'package:ffmpeg_kit_flutter_new/ffprobe_kit.dart';
-import 'package:ffmpeg_kit_flutter_new/media_information.dart';
 import 'package:ffmpeg_kit_flutter_new/media_information_session.dart';
 import 'package:ffmpeg_kit_flutter_new/return_code.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:progres/src/core/utils/file_utils.dart';
 
-// Define a class to hold FFmpeg results for better type safety
 class FfmpegResult {
+  FfmpegResult({required this.returnCode, this.outputPath, this.logs});
+
   final int returnCode;
   final String? outputPath; // Path to the generated video or transforms file
   final String? logs;
 
-  FfmpegResult({required this.returnCode, this.outputPath, this.logs});
-
-  bool get isSuccess => returnCode == 0;
+  bool get isSuccess => returnCode == ReturnCode.success;
 }
 
 class FfmpegService {
-  final FFmpegKitConfig _flutterFFmpegConfig = FFmpegKitConfig();
-
   // --- Helper to prepare images (copy and rename) ---
   Future<String?> _prepareImagesForFfmpeg(
     List<File> sourceImageFiles,
@@ -54,7 +49,7 @@ class FfmpegService {
   }) async {
     final imageInputPattern = await _prepareImagesForFfmpeg(
       imageFiles,
-      "simple_timelapse_imgs",
+      "simple_timelapse_images",
     );
     if (imageInputPattern == null) {
       return FfmpegResult(returnCode: -1, logs: "Failed to prepare images.");
