@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dartz/dartz.dart';
+import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/errors/failures.dart';
 import 'package:progres/src/features/timelapse/_shared/domain/entities/timelapse_config.dart';
 import 'package:progres/src/features/timelapse/generate/domain/repositories/timelapse_repository.dart';
@@ -22,7 +23,7 @@ class GetTimelapseImagesUsecase
 
 class GetTimelapseImagesParams {
   // Equatable
-  final TimelapseViewType viewType;
+  final ProgressEntryType viewType;
 
   GetTimelapseImagesParams({required this.viewType});
   // @override List<Object> get props => [viewType];

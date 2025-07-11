@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/errors/failures.dart';
 import 'package:progres/src/features/timelapse/_shared/domain/entities/timelapse_config.dart';
 import 'package:progres/src/features/timelapse/_shared/notifiers/timelapse_state.dart';
@@ -20,7 +21,7 @@ class TimelapseCreationScreen extends ConsumerWidget {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (timelapseState.status == TimelapseStatus.initial) {
         timelapseNotifier.loadImagesForView(
-          TimelapseViewType.front,
+          ProgressEntryType.front,
         ); // Default view
       }
     });
@@ -43,9 +44,9 @@ class TimelapseCreationScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             // --- View Type Selector ---
-            DropdownButton<TimelapseViewType>(
+            DropdownButton<ProgressEntryType>(
               value: timelapseState.currentConfig.viewType,
-              items: TimelapseViewType.values
+              items: ProgressEntryType.values
                   .map(
                     (view) => DropdownMenuItem(
                       value: view,
@@ -53,7 +54,7 @@ class TimelapseCreationScreen extends ConsumerWidget {
                     ),
                   )
                   .toList(),
-              onChanged: (TimelapseViewType? newView) {
+              onChanged: (ProgressEntryType? newView) {
                 if (newView != null) {
                   timelapseNotifier.loadImagesForView(newView);
                 }

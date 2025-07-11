@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dartz/dartz.dart';
+import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/errors/failures.dart';
 import 'package:progres/src/features/timelapse/_shared/domain/entities/timelapse_config.dart';
 import 'package:progres/src/features/timelapse/_shared/services/ffmpeg_service.dart';
@@ -17,7 +18,7 @@ class TimelapseRepositoryImpl implements TimelapseRepository {
 
   @override
   Future<Either<Failure, List<File>>> getAvailableImages(
-    TimelapseViewType viewType,
+    ProgressEntryType viewType,
   ) async {
     try {
       final imageFiles = await localDatasource.getStoredImageFiles(viewType);

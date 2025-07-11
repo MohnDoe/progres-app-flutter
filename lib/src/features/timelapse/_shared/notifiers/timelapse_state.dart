@@ -1,6 +1,7 @@
 // lib/features/timelapse/presentation/notifiers/timelapse_state.dart
 import 'dart:io';
 import 'package:equatable/equatable.dart';
+import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/errors/failures.dart';
 import 'package:progres/src/features/timelapse/_shared/domain/entities/timelapse_config.dart';
 
@@ -32,7 +33,7 @@ class TimelapseState extends Equatable {
     this.selectedImages = const [],
     this.currentConfig = const TimelapseConfig(
       sourceImageFiles: [],
-      viewType: TimelapseViewType.front,
+      viewType: ProgressEntryType.front,
     ), // Default
     this.generatedVideoPath,
     this.failure,

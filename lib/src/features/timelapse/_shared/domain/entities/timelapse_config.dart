@@ -1,12 +1,11 @@
 // lib/features/timelapse/domain/entities/timelapse_config.dart
 import 'dart:io';
 import 'package:equatable/equatable.dart';
-
-enum TimelapseViewType { front, side, back }
+import 'package:progres/src/core/domain/models/progress_entry.dart';
 
 class TimelapseConfig extends Equatable {
   final List<File> sourceImageFiles; // The actual selected image files
-  final TimelapseViewType viewType;
+  final ProgressEntryType viewType;
   final int fps;
   final bool enableStabilization;
 
@@ -41,7 +40,7 @@ class TimelapseConfig extends Equatable {
 
   TimelapseConfig copyWith({
     List<File>? sourceImageFiles,
-    TimelapseViewType? viewType,
+    ProgressEntryType? viewType,
     int? fps,
     bool? enableStabilization,
     int? vidstabShakiness,

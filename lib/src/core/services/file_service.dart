@@ -38,7 +38,7 @@ class PicturesFileService {
       '$saveDirPath/${toFixedDate(entry.date).millisecondsSinceEpoch}/${entryType.name}',
     );
 
-    FileUtils.initDirectory(destinationDirectory);
+    await FileUtils.initDirectory(destinationDirectory);
 
     final filename = '${entryType.name}${p.extension(picture.file.path)}';
 
@@ -57,7 +57,7 @@ class PicturesFileService {
 
   Future<List<File>> listPictures(ProgressEntryType type) async {
     List<File> files = [];
-    final filesDir = "${await _saveDirPath}/$type";
+    final filesDir = "${await _saveDirPath}/${type.name}";
 
     for (FileSystemEntity fileEntity in Directory(filesDir).listSync()) {
       files.add(File(fileEntity.path));
@@ -78,6 +78,26 @@ class PicturesFileService {
     }
 
     return directories;
+  }
+
+  static Future<File?> getFileFromEntryDirectory(
+    Directory entryDirectory,
+    ProgressEntryType type,
+  ) async {
+    if (!await entryDirectory.exists()) return null;
+
+    final Directory entryTypeDirectory = Directory(
+      "${entryDirectory.path}/${type.name}",
+    );
+    if (!await entryTypeDirectory.exists()) return null;
+
+    List<FileSystemEntity> fileSystemEntities = entryTypeDirectory.listSync();
+
+    if (fileSystemEntities.isNotEmpty) {
+      return File(fileSystemEntities.first.path);
+    }
+
+    return null;
   }
 
   Future<Map<ProgressEntryType, ProgressPicture>> getAllEntryTypesFromDate(

@@ -1,6 +1,9 @@
 // lib/features/timelapse/presentation/notifiers/timelapse_notifier.dart
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:progres/src/core/domain/models/progress_entry.dart';
+import 'package:progres/src/core/domain/models/progress_entry.dart';
+import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/errors/failures.dart';
 import 'package:progres/src/features/timelapse/_shared/domain/entities/timelapse_config.dart';
 import 'package:progres/src/features/timelapse/_shared/notifiers/timelapse_state.dart';
@@ -24,16 +27,16 @@ class TimelapseNotifier extends StateNotifier<TimelapseState> {
     // Initial state
     // Initialize with a default view type or load last used
     // This could also be a method called from the UI when the screen loads
-    _updateInitialConfig(TimelapseViewType.front);
+    _updateInitialConfig(ProgressEntryType.front);
   }
 
-  void _updateInitialConfig(TimelapseViewType initialView) {
+  void _updateInitialConfig(ProgressEntryType initialView) {
     state = state.copyWith(
       currentConfig: state.currentConfig.copyWith(viewType: initialView),
     );
   }
 
-  Future<void> loadImagesForView(TimelapseViewType viewType) async {
+  Future<void> loadImagesForView(ProgressEntryType viewType) async {
     state = state.copyWith(
       status: TimelapseStatus.loadingImages,
       currentConfig: state.currentConfig.copyWith(viewType: viewType),

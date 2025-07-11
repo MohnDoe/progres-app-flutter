@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
@@ -9,7 +8,7 @@ import 'package:progres/src/features/entries/list/controllers/list_entries_contr
 import 'package:progres/src/features/entries/list/widgets/add_today_button.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/entry_item.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/entry_bottom_sheet.dart';
-import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/today_entry_highlight.dart';
+import 'package:progres/src/features/timelapse/generate/ui/views/timelapse_creation_screen.dart';
 
 /// The screen that displays the list of progress entries.
 ///
@@ -54,6 +53,20 @@ class ListEntriesScreen extends ConsumerWidget {
                     _displayEditEntryBottomSheet(context, null);
                   },
                   label: Text("New entry"),
+                ),
+              ),
+              PopupMenuItem(
+                child: TextButton.icon(
+                  icon: FaIcon(FontAwesomeIcons.brain, size: 16),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => TimelapseCreationScreen(),
+                      ),
+                    );
+                  },
+                  label: Text("Generate timelapse"),
                 ),
               ),
               PopupMenuItem(

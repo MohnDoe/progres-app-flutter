@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dartz/dartz.dart'; // For Either
+import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/errors/failures.dart';
 import 'package:progres/src/features/timelapse/_shared/domain/entities/timelapse_config.dart';
 
@@ -7,7 +8,7 @@ abstract class TimelapseRepository {
   /// Fetches the list of image files available for timelapse creation for a given view.
   /// This is specific to how you store and identify your user's daily photos.
   Future<Either<Failure, List<File>>> getAvailableImages(
-    TimelapseViewType viewType,
+    ProgressEntryType viewType,
   );
 
   /// Generates the timelapse video based on the provided configuration.

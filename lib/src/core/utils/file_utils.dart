@@ -41,8 +41,11 @@ class FileUtils {
   }
 
   static Future<void> initDirectory(Directory directory) async {
+    print('Initializing directory: ${directory.path}');
     if (!await directory.exists()) {
+      print('Directory does not exist, creating: ${directory.path}');
       await directory.create(recursive: true);
+      print('Directory created: ${directory.path}');
     }
   }
 }
