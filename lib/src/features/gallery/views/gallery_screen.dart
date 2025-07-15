@@ -39,7 +39,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     initialItem: 1,
   );
 
-  late ProgressEntry _selectedEntry = widget.currentEntry;
+  late ProgressEntry _firstEntry = widget.currentEntry;
   late ProgressEntry? _secondEntry = widget.secondEntry;
   late ProgressEntryType _selectedType = widget.entryType;
   ActiveEntry _activeEntry = ActiveEntry.first;
@@ -62,14 +62,14 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
 
     int getIndexOfEntry(ProgressEntry entry, ActiveEntry activeEntry) {
       if (activeEntry == ActiveEntry.first) {
-        return entries.indexOf(_selectedEntry);
+        return entries.indexOf(_firstEntry);
       } else {
         return entries.indexOf(_secondEntry!);
       }
     }
 
     void move(CarouselDirection direction) {
-      final currentIndex = getIndexOfEntry(_selectedEntry, _activeEntry);
+      final currentIndex = getIndexOfEntry(_firstEntry, _activeEntry);
 
       int newIndex = currentIndex;
 
@@ -82,7 +82,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
 
       setState(() {
         if (_activeEntry == ActiveEntry.first) {
-          _selectedEntry = newEntry;
+          _firstEntry = newEntry;
         } else {
           _secondEntry = newEntry;
         }
@@ -92,14 +92,14 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
 
     bool hasPreviousEntry() {
       final index = entries.indexOf(
-        _activeEntry == ActiveEntry.first ? _selectedEntry : _secondEntry!,
+        _activeEntry == ActiveEntry.first ? _firstEntry : _secondEntry!,
       );
       return index < entries.length - 1;
     }
 
     bool hasNextEntry() {
       final index = entries.indexOf(
-        _activeEntry == ActiveEntry.first ? _selectedEntry : _secondEntry!,
+        _activeEntry == ActiveEntry.first ? _firstEntry : _secondEntry!,
       );
       return index > 0;
     }
@@ -107,7 +107,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     void initSideBySide() {
       if (_secondEntry == null) {
         setState(() {
-          _secondEntry = _selectedEntry;
+          _secondEntry = _firstEntry;
         });
       }
     }
@@ -122,7 +122,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
           initSideBySide();
         } else {
           if (_activeEntry == ActiveEntry.second) {
-            _selectedEntry = _secondEntry!;
+            _firstEntry = _secondEntry!;
           }
           _activeEntry = ActiveEntry.first;
         }
@@ -147,12 +147,12 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                       children: [
                         // DATE ENTRY
                         Text(
-                          DateFormat.yMMMd().format(_selectedEntry.date),
+                          DateFormat.yMMMd().format(_firstEntry.date),
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         const SizedBox(height: 16),
                         PictureDisplay(
-                          picture: _selectedEntry.pictures[_selectedType]!,
+                          picture: _firstEntry.pictures[_selectedType]!,
                           highlight: false,
                         ),
                       ],
@@ -167,7 +167,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                         Column(
                           children: [
                             Text(
-                              DateFormat.yMMMd().format(_selectedEntry.date),
+                              DateFormat.yMMMd().format(_firstEntry.date),
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             const SizedBox(height: 8),
@@ -177,15 +177,14 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                                   _activeEntry = ActiveEntry.first;
                                   _carouselController.animateToItem(
                                     getIndexOfEntry(
-                                      _selectedEntry,
+                                      _firstEntry,
                                       ActiveEntry.first,
                                     ),
                                   );
                                 });
                               },
                               child: PictureDisplay(
-                                picture:
-                                    _selectedEntry.pictures[_selectedType]!,
+                                picture: _firstEntry.pictures[_selectedType]!,
                                 highlight: _activeEntry == ActiveEntry.first,
                                 width: 200,
                                 borderRadius: 64,
@@ -231,7 +230,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                           (ProgressEntryType type) => ButtonSegment(
                             value: type,
                             label: Text(type.name),
-                            enabled: _selectedEntry.pictures[type] != null,
+                            enabled: _firstEntry.pictures[type] != null,
                           ),
                         )
                         .toList(),
@@ -258,7 +257,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
               onTap: (index) {
                 setState(() {
                   if (_activeEntry == ActiveEntry.first) {
-                    _selectedEntry = entries[index];
+                    _firstEntry = entries[index];
                   } else {
                     _secondEntry = entries[index];
                   }
@@ -280,7 +279,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                           fit: BoxFit.cover,
                         ),
                         (_activeEntry == ActiveEntry.first &&
-                                    e == _selectedEntry) ||
+                                    e == _firstEntry) ||
                                 (_activeEntry == ActiveEntry.second &&
                                     e == _secondEntry)
                             ? Container(
