@@ -340,6 +340,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // TODO: add first and last entry buttons
             IconButton(
               onPressed: hasPreviousEntry()
                   ? () => move(CarouselDirection.left)
