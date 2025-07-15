@@ -121,6 +121,9 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         if (mode == GalleryMode.sideBySide) {
           initSideBySide();
         } else {
+          if (_activeEntry == ActiveEntry.first) {
+            _selectedEntry = _secondEntry!;
+          }
           _activeEntry = ActiveEntry.first;
         }
       });
@@ -231,7 +234,11 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
 
               onTap: (index) {
                 setState(() {
-                  _selectedEntry = entries[index];
+                  if (_activeEntry == ActiveEntry.first) {
+                    _selectedEntry = entries[index];
+                  } else {
+                    _secondEntry = entries[index];
+                  }
                   _carouselController.animateToItem(index);
                 });
               },
