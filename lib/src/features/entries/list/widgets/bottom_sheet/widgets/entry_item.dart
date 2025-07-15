@@ -23,10 +23,11 @@ class EntryItem extends StatefulWidget {
 }
 
 class _EntryItemState extends State<EntryItem> {
-  void _openPictureViewer() {
+  void _openPictureViewer(ProgressEntryType type) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => GalleryScreen(currentEntry: widget.entry),
+        builder: (_) =>
+            GalleryScreen(currentEntry: widget.entry, entryType: type),
       ),
     );
   }
@@ -45,7 +46,7 @@ class _EntryItemState extends State<EntryItem> {
               children: [
                 EntryImages(
                   pictures: widget.entry.pictures,
-                  onPictureTap: () => _openPictureViewer(),
+                  onPictureTap: (type) => _openPictureViewer(type),
                 ),
                 Spacer(),
                 Text(DateFormat.yMMMd().format(widget.entry.date)),
@@ -69,7 +70,7 @@ class EntryImages extends StatelessWidget {
 
   final Map<ProgressEntryType, ProgressPicture> pictures;
 
-  final void Function() onPictureTap;
+  final void Function(ProgressEntryType type) onPictureTap;
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +93,7 @@ class EntryImages extends StatelessWidget {
                 height: 40,
                 child: pictures[entryType] != null
                     ? InkWell(
-                        onTap: onPictureTap,
+                        onTap: () => onPictureTap(entryType),
                         child: Image.file(
                           pictures[entryType]!.file,
                           width: double.infinity,
