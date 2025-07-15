@@ -56,15 +56,15 @@ abstract final class AppTheme {
       primary: Color(0xFFFFEF94),
       primaryContainer: Color(0xFFFFD900),
       primaryLightRef: Color(0xFF004881), // The color of light mode primary
-      secondary: Color(0xFFFFE5E6),
-      secondaryContainer: Color(0xFFFF7477),
+      secondary: Color(0xff3d361b),
+      secondaryContainer: Color(0xff766d4e),
       secondaryLightRef: Color(0xFFAC3306), // The color of light mode secondary
-      tertiary: Color(0xFFE8E6F8),
-      tertiaryContainer: Color(0xFFB4ADEA),
+      tertiary: Color(0xff1b3d28),
+      tertiaryContainer: Color(0xff52755c),
       tertiaryLightRef: Color(0xFF006875), // The color of light mode tertiary
       appBarColor: Color(0xFFFFDBCF),
-      error: Color(0xFFFFB4AB),
-      errorContainer: Color(0xFF93000A),
+      error: Color(0xff740006),
+      errorContainer: Color(0xffcf2c27),
     ),
     // Surface color adjustments.
     surfaceMode: FlexSurfaceMode.level,
