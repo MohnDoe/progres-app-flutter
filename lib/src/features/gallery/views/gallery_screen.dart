@@ -25,9 +25,8 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     // TODO: get correct initial item
     initialItem: 1,
   );
-  // Declare them as late instance variables, initialized in initState
-  late ProgressEntry
-  _selectedEntry; // Use an underscore to denote internal state
+
+  late ProgressEntry _selectedEntry;
   late ProgressEntryType _selectedType;
 
   @override
