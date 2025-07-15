@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
+import 'package:progres/src/features/gallery/views/gallery_screen.dart';
 
 class TodayEntryHighlight extends StatefulWidget {
   const TodayEntryHighlight(this.entry, {super.key, required this.onTapEdit});
@@ -67,22 +68,32 @@ class _TodayEntryHighlightState extends State<TodayEntryHighlight> {
                     childAspectRatio: 1.0,
                     children: widget.entry.pictures.keys
                         .map(
-                          (ProgressEntryType entryType) => ClipPath(
-                            clipBehavior: Clip.antiAlias,
-                            clipper: ShapeBorderClipper(
-                              shape: ContinuousRectangleBorder(
-                                borderRadius: BorderRadius.all(
-                                  Radius.circular(48),
+                          (ProgressEntryType entryType) => InkWell(
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => GalleryScreen(
+                                  currentEntry: widget.entry,
+                                  entryType: entryType,
                                 ),
                               ),
                             ),
-                            child: Container(
-                              child: widget.entry.pictures[entryType] != null
-                                  ? Image.file(
-                                      widget.entry.pictures[entryType]!.file,
-                                      fit: BoxFit.cover,
-                                    )
-                                  : SizedBox(width: 80),
+                            child: ClipPath(
+                              clipBehavior: Clip.antiAlias,
+                              clipper: ShapeBorderClipper(
+                                shape: ContinuousRectangleBorder(
+                                  borderRadius: BorderRadius.all(
+                                    Radius.circular(48),
+                                  ),
+                                ),
+                              ),
+                              child: Container(
+                                child: widget.entry.pictures[entryType] != null
+                                    ? Image.file(
+                                        widget.entry.pictures[entryType]!.file,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : SizedBox(width: 80),
+                              ),
                             ),
                           ),
                         )
