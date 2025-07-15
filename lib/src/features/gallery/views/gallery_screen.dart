@@ -140,13 +140,14 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: ProgressEntryType.values
                 .map(
-                  (ProgressEntryType entryType) => ChoiceChip(
+                  (ProgressEntryType type) => ChoiceChip(
                     visualDensity: VisualDensity(
                       horizontal: VisualDensity.minimumDensity,
                       vertical: VisualDensity.minimumDensity,
                     ),
-
-                    label: Text(entryType.name),
+                    avatar: ProgressEntry.getIconFromType(type),
+                    iconTheme: IconThemeData(size: 16),
+                    label: Text(type.name),
                     showCheckmark: false,
                     side: BorderSide.none,
                     shape: RoundedRectangleBorder(
@@ -155,11 +156,11 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                     disabledColor: Theme.of(
                       context,
                     ).colorScheme.surfaceContainerLow,
-                    selected: _selectedType == entryType,
-                    onSelected: _firstEntry.pictures[entryType] != null
+                    selected: _selectedType == type,
+                    onSelected: _firstEntry.pictures[type] != null
                         ? (bool _) {
                             setState(() {
-                              _selectedType = entryType;
+                              _selectedType = type;
                             });
                           }
                         : null,
