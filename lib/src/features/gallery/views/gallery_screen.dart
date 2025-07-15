@@ -158,8 +158,12 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                     ).colorScheme.surfaceContainerLow,
                     selected: _selectedType == type,
                     onSelected:
-                        _firstEntry.pictures[type] != null ||
+                        // check if user can switch to side by side mode
+                        // if not both pictures available then it's disabled (in side by side view)
+                        (mode == GalleryMode.display &&
+                                _firstEntry.pictures[type] != null) ||
                             (mode == GalleryMode.sideBySide &&
+                                _firstEntry.pictures[type] != null &&
                                 _secondEntry!.pictures[type] != null)
                         ? (bool _) {
                             setState(() {
