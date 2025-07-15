@@ -129,37 +129,6 @@ class ListEntriesScreen extends ConsumerWidget {
           ],
         ),
       ),
-      // floatingActionButtonLocation: ExpandableFab.location,
-      // floatingActionButton: ExpandableFab(
-      //   // TODO: make this shit cuter
-      //   type: ExpandableFabType.up,
-      //   childrenAnimation: ExpandableFabAnimation.none,
-      //   distance: 80,
-      //   openButtonBuilder: RotateFloatingActionButtonBuilder(
-      //     child: const Icon(Icons.add),
-      //     fabSize: ExpandableFabSize.regular,
-      //     shape: const CircleBorder(),
-      //     angle: 0,
-      //   ),
-      //   children: [
-      //     FilledButton.icon(
-      //       onPressed: () {
-      //         Navigator.of(
-      //           context,
-      //         ).push(MaterialPageRoute(builder: (_) => const ImportScreen()));
-      //       },
-      //       label: Text("Import photos"),
-      //       icon: const Icon(Icons.upload),
-      //     ),
-      //     FilledButton.icon(
-      //       onPressed: () {
-      //         _displayEditEntryBottomSheet(context, null);
-      //       },
-      //       label: Text("Create entry"),
-      //       icon: const Icon(Icons.add),
-      //     ),
-      //   ],
-      // ),
     );
   }
 }
