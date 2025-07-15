@@ -121,7 +121,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         if (mode == GalleryMode.sideBySide) {
           initSideBySide();
         } else {
-          if (_activeEntry == ActiveEntry.first) {
+          if (_activeEntry == ActiveEntry.second) {
             _selectedEntry = _secondEntry!;
           }
           _activeEntry = ActiveEntry.first;
