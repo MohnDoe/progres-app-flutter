@@ -52,29 +52,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         .toList();
 
     return Scaffold(
-      appBar: AppBar(
-        // SIDE SELECTION
-        title: SegmentedButton(
-          showSelectedIcon: false,
-          segments: ProgressEntryType.values
-              .map(
-                (ProgressEntryType type) => ButtonSegment(
-                  value: type,
-                  label: Text(type.name),
-                  enabled: _selectedEntry.pictures[type] != null,
-                ),
-              )
-              .toList(),
-          selected: {_selectedType},
-          onSelectionChanged: (value) {
-            setState(() {
-              _selectedType = value.first;
-            });
-          },
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-      ),
+      appBar: AppBar(backgroundColor: Colors.transparent),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.max,
@@ -87,25 +65,50 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
           const SizedBox(height: 32),
           // BIG PICTURE
           Expanded(
-            child: Center(
-              child: ClipPath(
-                clipBehavior: Clip.antiAlias,
-                clipper: ShapeBorderClipper(
-                  shape: ContinuousRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(80)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ClipPath(
+                    clipBehavior: Clip.antiAlias,
+                    clipper: ShapeBorderClipper(
+                      shape: ContinuousRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(80)),
+                      ),
+                    ),
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: Container(
+                        child: _selectedEntry.pictures[_selectedType] != null
+                            ? Image.file(
+                                _selectedEntry.pictures[_selectedType]!.file,
+                                fit: BoxFit.cover,
+                              )
+                            : SizedBox(width: 240),
+                      ),
+                    ),
                   ),
-                ),
-                child: AspectRatio(
-                  aspectRatio: 1,
-                  child: Container(
-                    child: _selectedEntry.pictures[_selectedType] != null
-                        ? Image.file(
-                            _selectedEntry.pictures[_selectedType]!.file,
-                            fit: BoxFit.cover,
-                          )
-                        : SizedBox(width: 240),
+                  const SizedBox(height: 16),
+                  SegmentedButton(
+                    showSelectedIcon: false,
+                    segments: ProgressEntryType.values
+                        .map(
+                          (ProgressEntryType type) => ButtonSegment(
+                            value: type,
+                            label: Text(type.name),
+                            enabled: _selectedEntry.pictures[type] != null,
+                          ),
+                        )
+                        .toList(),
+                    selected: {_selectedType},
+                    onSelectionChanged: (value) {
+                      setState(() {
+                        _selectedType = value.first;
+                      });
+                    },
                   ),
-                ),
+                ],
               ),
             ),
           ),
