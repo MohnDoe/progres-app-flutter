@@ -135,12 +135,6 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.max,
         children: [
-          // DATE ENTRY
-          Text(
-            DateFormat.yMMMd().format(_selectedEntry.date),
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 32),
           // BIG PICTURE
           Expanded(
             child: Padding(
@@ -149,54 +143,83 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (mode == GalleryMode.display)
-                    PictureDisplay(
-                      picture: _selectedEntry.pictures[_selectedType]!,
-                      highlight: false,
+                    Column(
+                      children: [
+                        // DATE ENTRY
+                        Text(
+                          DateFormat.yMMMd().format(_selectedEntry.date),
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 16),
+                        PictureDisplay(
+                          picture: _selectedEntry.pictures[_selectedType]!,
+                          highlight: false,
+                        ),
+                      ],
                     ),
                   if (mode == GalleryMode.sideBySide)
                     Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisSize: MainAxisSize.max,
-                      spacing: 16,
+                      spacing: 32,
                       children: [
-                        InkWell(
-                          onTap: () {
-                            setState(() {
-                              _activeEntry = ActiveEntry.first;
-                              _carouselController.animateToItem(
-                                getIndexOfEntry(
-                                  _selectedEntry,
-                                  ActiveEntry.first,
-                                ),
-                              );
-                            });
-                          },
-                          child: PictureDisplay(
-                            picture: _selectedEntry.pictures[_selectedType]!,
-                            highlight: _activeEntry == ActiveEntry.first,
-                            width: 200,
-                            borderRadius: 64,
-                          ),
+                        Column(
+                          children: [
+                            Text(
+                              DateFormat.yMMMd().format(_selectedEntry.date),
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _activeEntry = ActiveEntry.first;
+                                  _carouselController.animateToItem(
+                                    getIndexOfEntry(
+                                      _selectedEntry,
+                                      ActiveEntry.first,
+                                    ),
+                                  );
+                                });
+                              },
+                              child: PictureDisplay(
+                                picture:
+                                    _selectedEntry.pictures[_selectedType]!,
+                                highlight: _activeEntry == ActiveEntry.first,
+                                width: 200,
+                                borderRadius: 64,
+                              ),
+                            ),
+                          ],
                         ),
-                        InkWell(
-                          onTap: () {
-                            setState(() {
-                              _activeEntry = ActiveEntry.second;
-                              _carouselController.animateToItem(
-                                getIndexOfEntry(
-                                  _secondEntry!,
-                                  ActiveEntry.second,
-                                ),
-                              );
-                            });
-                          },
-                          child: PictureDisplay(
-                            picture: _secondEntry!.pictures[_selectedType]!,
-                            highlight: _activeEntry == ActiveEntry.second,
-                            width: 200,
-                            borderRadius: 64,
-                          ),
+                        Column(
+                          children: [
+                            Text(
+                              DateFormat.yMMMd().format(_secondEntry!.date),
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _activeEntry = ActiveEntry.second;
+                                  _carouselController.animateToItem(
+                                    getIndexOfEntry(
+                                      _secondEntry!,
+                                      ActiveEntry.second,
+                                    ),
+                                  );
+                                });
+                              },
+                              child: PictureDisplay(
+                                picture: _secondEntry!.pictures[_selectedType]!,
+                                highlight: _activeEntry == ActiveEntry.second,
+                                width: 200,
+                                borderRadius: 64,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
