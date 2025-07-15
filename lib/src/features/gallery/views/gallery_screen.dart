@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/_shared/repositories/progress_entries_repository.dart';
 import 'package:progres/src/features/gallery/widget/picture_display.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 enum GalleryMode { display, sideBySide }
 
@@ -222,6 +223,10 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                           DateFormat.yMMMd().format(_firstEntry.date),
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
+                        Text(
+                          timeago.format(_firstEntry.date),
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
                         const SizedBox(height: 16),
                         PictureDisplay(
                           picture: _firstEntry.pictures[_selectedType],
@@ -241,6 +246,10 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                             Text(
                               DateFormat.yMMMd().format(_firstEntry.date),
                               style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            Text(
+                              timeago.format(_firstEntry.date),
+                              style: Theme.of(context).textTheme.titleSmall,
                             ),
                             const SizedBox(height: 8),
                             InkWell(
@@ -264,11 +273,19 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                             ),
                           ],
                         ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 40),
+                          child: Divider(),
+                        ),
                         Column(
                           children: [
                             Text(
                               DateFormat.yMMMd().format(_secondEntry!.date),
                               style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            Text(
+                              timeago.format(_secondEntry!.date),
+                              style: Theme.of(context).textTheme.titleSmall,
                             ),
                             const SizedBox(height: 8),
                             InkWell(
