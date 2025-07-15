@@ -68,15 +68,23 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       }
     }
 
-    void move(CarouselDirection direction) {
+    void move(CarouselDirection direction, {bool far = false}) {
       final currentIndex = getIndexOfEntry(_firstEntry, _activeEntry);
 
       int newIndex = currentIndex;
 
       if (direction == CarouselDirection.right) {
-        newIndex = max(currentIndex - 1, 0);
+        if (far) {
+          newIndex = 0;
+        } else {
+          newIndex = max(currentIndex - 1, 0);
+        }
       } else {
-        newIndex = min(currentIndex + 1, entries.length - 1);
+        if (far) {
+          newIndex = entries.length - 1;
+        } else {
+          newIndex = min(currentIndex + 1, entries.length - 1);
+        }
       }
       final newEntry = entries[newIndex];
 
@@ -102,6 +110,22 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         _activeEntry == ActiveEntry.first ? _firstEntry : _secondEntry!,
       );
       return index > 0;
+    }
+
+    bool isFirst() {
+      final index = entries.indexOf(
+        _activeEntry == ActiveEntry.first ? _firstEntry : _secondEntry!,
+      );
+
+      return index == entries.length - 1;
+    }
+
+    bool isLast() {
+      final index = entries.indexOf(
+        _activeEntry == ActiveEntry.first ? _firstEntry : _secondEntry!,
+      );
+
+      return index == 0;
     }
 
     void initSideBySide() {
@@ -340,12 +364,20 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // TODO: add first and last entry buttons
+            IconButton(
+              onPressed: !isFirst()
+                  ? () => move(CarouselDirection.left, far: true)
+                  : null,
+              iconSize: 16,
+              icon: const FaIcon(FontAwesomeIcons.anglesLeft),
+            ),
+            const SizedBox(width: 16),
             IconButton(
               onPressed: hasPreviousEntry()
                   ? () => move(CarouselDirection.left)
                   : null,
-              icon: const Icon(Icons.chevron_left),
+              iconSize: 16,
+              icon: const FaIcon(FontAwesomeIcons.chevronLeft),
             ),
             IconButton.filled(
               iconSize: 16,
@@ -360,7 +392,16 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
               onPressed: hasNextEntry()
                   ? () => move(CarouselDirection.right)
                   : null,
-              icon: const Icon(Icons.chevron_right),
+              iconSize: 16,
+              icon: const FaIcon(FontAwesomeIcons.chevronRight),
+            ),
+            const SizedBox(width: 16),
+            IconButton(
+              onPressed: !isLast()
+                  ? () => move(CarouselDirection.right, far: true)
+                  : null,
+              iconSize: 16,
+              icon: const FaIcon(FontAwesomeIcons.anglesRight),
             ),
           ],
         ),
