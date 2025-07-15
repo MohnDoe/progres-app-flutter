@@ -1,20 +1,33 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
-import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/features/entries/_shared/repositories/progress_entries_repository.dart';
+import 'package:progres/src/features/gallery/widget/picture_display.dart';
+
+enum GalleryMode { display, sideBySide }
+
+enum ActiveEntry { first, second }
+
+enum CarouselDirection { left, right }
 
 class GalleryScreen extends ConsumerStatefulWidget {
   const GalleryScreen({
     super.key,
     required this.currentEntry,
     this.entryType = ProgressEntryType.front,
+    this.mode = GalleryMode.display,
+    this.secondEntry,
   });
 
-  final ProgressEntry currentEntry;
   final ProgressEntryType entryType;
+  final ProgressEntry currentEntry;
+  final ProgressEntry? secondEntry;
+
+  final GalleryMode mode;
 
   @override
   ConsumerState<GalleryScreen> createState() => _GalleryScreenState();
@@ -26,16 +39,12 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     initialItem: 1,
   );
 
-  late ProgressEntry _selectedEntry;
-  late ProgressEntryType _selectedType;
+  late ProgressEntry _selectedEntry = widget.currentEntry;
+  late ProgressEntry? _secondEntry = widget.secondEntry;
+  late ProgressEntryType _selectedType = widget.entryType;
+  ActiveEntry _activeEntry = ActiveEntry.first;
 
-  @override
-  void initState() {
-    super.initState();
-    // Initialize from widget properties when the state is first created
-    _selectedEntry = widget.currentEntry;
-    _selectedType = widget.entryType;
-  }
+  late GalleryMode mode = widget.mode;
 
   @override
   void dispose() {
@@ -51,34 +60,70 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         .where((ProgressEntry entry) => entry.pictures[_selectedType] != null)
         .toList();
 
-    void previousEntry() {
-      final index = entries.indexOf(_selectedEntry);
-      if (index < entries.length - 1) {
-        setState(() {
-          _selectedEntry = entries[index + 1];
-          _carouselController.animateToItem(index + 1);
-        });
+    int getIndexOfEntry(ProgressEntry entry, ActiveEntry activeEntry) {
+      if (activeEntry == ActiveEntry.first) {
+        return entries.indexOf(_selectedEntry);
+      } else {
+        return entries.indexOf(_secondEntry!);
       }
     }
 
+    void move(CarouselDirection direction) {
+      final currentIndex = getIndexOfEntry(_selectedEntry, _activeEntry);
+
+      int newIndex = currentIndex;
+
+      if (direction == CarouselDirection.right) {
+        newIndex = max(currentIndex - 1, 0);
+      } else {
+        newIndex = min(currentIndex + 1, entries.length - 1);
+      }
+      final newEntry = entries[newIndex];
+
+      setState(() {
+        if (_activeEntry == ActiveEntry.first) {
+          _selectedEntry = newEntry;
+        } else {
+          _secondEntry = newEntry;
+        }
+        _carouselController.animateToItem(newIndex);
+      });
+    }
+
     bool hasPreviousEntry() {
-      final index = entries.indexOf(_selectedEntry);
+      final index = entries.indexOf(
+        _activeEntry == ActiveEntry.first ? _selectedEntry : _secondEntry!,
+      );
       return index < entries.length - 1;
     }
 
     bool hasNextEntry() {
-      final index = entries.indexOf(_selectedEntry);
+      final index = entries.indexOf(
+        _activeEntry == ActiveEntry.first ? _selectedEntry : _secondEntry!,
+      );
       return index > 0;
     }
 
-    void nextEntry() {
-      final index = entries.indexOf(_selectedEntry);
-      if (index > 0) {
+    void initSideBySide() {
+      if (_secondEntry == null) {
         setState(() {
-          _selectedEntry = entries[index - 1];
-          _carouselController.animateToItem(index - 1);
+          _secondEntry = _selectedEntry;
         });
       }
+    }
+
+    void toggleMode() {
+      setState(() {
+        mode == GalleryMode.display
+            ? mode = GalleryMode.sideBySide
+            : mode = GalleryMode.display;
+
+        if (mode == GalleryMode.sideBySide) {
+          initSideBySide();
+        } else {
+          _activeEntry = ActiveEntry.first;
+        }
+      });
     }
 
     return Scaffold(
@@ -100,25 +145,58 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  ClipPath(
-                    clipBehavior: Clip.antiAlias,
-                    clipper: ShapeBorderClipper(
-                      shape: ContinuousRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(80)),
-                      ),
+                  if (mode == GalleryMode.display)
+                    PictureDisplay(
+                      picture: _selectedEntry.pictures[_selectedType]!,
+                      highlight: false,
                     ),
-                    child: AspectRatio(
-                      aspectRatio: 1,
-                      child: Container(
-                        child: _selectedEntry.pictures[_selectedType] != null
-                            ? Image.file(
-                                _selectedEntry.pictures[_selectedType]!.file,
-                                fit: BoxFit.cover,
-                              )
-                            : SizedBox(width: 240),
-                      ),
+                  if (mode == GalleryMode.sideBySide)
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.max,
+                      spacing: 16,
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              _activeEntry = ActiveEntry.first;
+                              _carouselController.animateToItem(
+                                getIndexOfEntry(
+                                  _selectedEntry,
+                                  ActiveEntry.first,
+                                ),
+                              );
+                            });
+                          },
+                          child: PictureDisplay(
+                            picture: _selectedEntry.pictures[_selectedType]!,
+                            highlight: _activeEntry == ActiveEntry.first,
+                            width: 200,
+                            borderRadius: 64,
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              _activeEntry = ActiveEntry.second;
+                              _carouselController.animateToItem(
+                                getIndexOfEntry(
+                                  _secondEntry!,
+                                  ActiveEntry.second,
+                                ),
+                              );
+                            });
+                          },
+                          child: PictureDisplay(
+                            picture: _secondEntry!.pictures[_selectedType]!,
+                            highlight: _activeEntry == ActiveEntry.second,
+                            width: 200,
+                            borderRadius: 64,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
                   const SizedBox(height: 16),
                   SegmentedButton(
                     showSelectedIcon: false,
@@ -171,7 +249,10 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                           e.pictures[_selectedType]!.file,
                           fit: BoxFit.cover,
                         ),
-                        e == _selectedEntry
+                        (_activeEntry == ActiveEntry.first &&
+                                    e == _selectedEntry) ||
+                                (_activeEntry == ActiveEntry.second &&
+                                    e == _secondEntry)
                             ? Container(
                                 decoration: ShapeDecoration(
                                   shape: ContinuousRectangleBorder(
@@ -202,16 +283,24 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             IconButton(
-              onPressed: hasPreviousEntry() ? previousEntry : null,
+              onPressed: hasPreviousEntry()
+                  ? () => move(CarouselDirection.left)
+                  : null,
               icon: const Icon(Icons.chevron_left),
             ),
             IconButton.filled(
               iconSize: 16,
-              onPressed: () {},
-              icon: const FaIcon(FontAwesomeIcons.square),
+              onPressed: toggleMode,
+              icon: FaIcon(
+                mode == GalleryMode.display
+                    ? FontAwesomeIcons.square
+                    : FontAwesomeIcons.bars,
+              ),
             ),
             IconButton(
-              onPressed: hasNextEntry() ? nextEntry : null,
+              onPressed: hasNextEntry()
+                  ? () => move(CarouselDirection.right)
+                  : null,
               icon: const Icon(Icons.chevron_right),
             ),
           ],
