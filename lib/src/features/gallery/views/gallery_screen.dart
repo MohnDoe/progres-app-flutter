@@ -20,6 +20,10 @@ class GalleryScreen extends ConsumerStatefulWidget {
 }
 
 class _GalleryScreenState extends ConsumerState<GalleryScreen> {
+  final CarouselController _carouselController = CarouselController(
+    // TODO: get correct initial item
+    initialItem: 1,
+  );
   // Declare them as late instance variables, initialized in initState
   late ProgressEntry
   _selectedEntry; // Use an underscore to denote internal state
@@ -31,6 +35,12 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     // Initialize from widget properties when the state is first created
     _selectedEntry = widget.currentEntry;
     _selectedType = widget.entryType;
+  }
+
+  @override
+  void dispose() {
+    _carouselController.dispose();
+    super.dispose();
   }
 
   @override
@@ -101,38 +111,58 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
           ),
           SizedBox(
             height: 80,
-            child: ListView.separated(
-              reverse: true,
-              scrollDirection: Axis.horizontal,
-              itemCount: entries.length,
-              itemBuilder: (ctx, index) => ClipPath(
-                clipBehavior: Clip.antiAlias,
-                clipper: ShapeBorderClipper(
-                  shape: ContinuousRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(20)),
-                  ),
-                ),
-                child: InkWell(
-                  onTap: () {
-                    setState(() {
-                      _selectedEntry = entries[index];
-                    });
-                  },
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: Image.file(
-                      entries[index].pictures[_selectedType]!.file,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
+            child: CarouselView(
+              controller: _carouselController,
+              itemExtent: 80,
+              shrinkExtent: 16,
+              itemSnapping: true,
+
+              onTap: (index) {
+                setState(() {
+                  _selectedEntry = entries[index];
+                  _carouselController.animateToItem(index);
+                });
+              },
+              shape: ContinuousRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(16)),
               ),
-              separatorBuilder: (ctx, index) => const SizedBox(width: 8),
+              reverse: true,
+              children: entries
+                  .map(
+                    (e) => Stack(
+                      children: [
+                        Image.file(
+                          width: 80,
+                          height: double.infinity,
+                          e.pictures[_selectedType]!.file,
+                          fit: BoxFit.cover,
+                        ),
+                        e == _selectedEntry
+                            ? Container(
+                                decoration: ShapeDecoration(
+                                  shape: ContinuousRectangleBorder(
+                                    borderRadius: BorderRadius.all(
+                                      Radius.circular(16),
+                                    ),
+                                    side: BorderSide(
+                                      width: 4,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : const SizedBox(),
+                      ],
+                    ),
+                  )
+                  .toList(),
             ),
           ),
         ],
       ),
+      bottomNavigationBar: BottomAppBar(),
     );
   }
 }
