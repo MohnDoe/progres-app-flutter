@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/today_entry_highlight.dart';
+import 'package:progres/src/features/gallery/views/gallery_screen.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 class EntryItem extends StatefulWidget {
@@ -22,6 +23,14 @@ class EntryItem extends StatefulWidget {
 }
 
 class _EntryItemState extends State<EntryItem> {
+  void _openPictureViewer() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => GalleryScreen(currentEntry: widget.entry),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return widget.highlight
@@ -34,7 +43,10 @@ class _EntryItemState extends State<EntryItem> {
             padding: EdgeInsets.all(8),
             child: Row(
               children: [
-                EntryImages(pictures: widget.entry.pictures),
+                EntryImages(
+                  pictures: widget.entry.pictures,
+                  onPictureTap: () => _openPictureViewer(),
+                ),
                 Spacer(),
                 Text(DateFormat.yMMMd().format(widget.entry.date)),
                 const SizedBox(width: 8),
@@ -49,9 +61,15 @@ class _EntryItemState extends State<EntryItem> {
 }
 
 class EntryImages extends StatelessWidget {
-  const EntryImages({super.key, required this.pictures});
+  const EntryImages({
+    super.key,
+    required this.pictures,
+    required this.onPictureTap,
+  });
 
   final Map<ProgressEntryType, ProgressPicture> pictures;
+
+  final void Function() onPictureTap;
 
   @override
   Widget build(BuildContext context) {
@@ -73,10 +91,13 @@ class EntryImages extends StatelessWidget {
                 width: 40,
                 height: 40,
                 child: pictures[entryType] != null
-                    ? Image.file(
-                        pictures[entryType]!.file,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
+                    ? InkWell(
+                        onTap: onPictureTap,
+                        child: Image.file(
+                          pictures[entryType]!.file,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
                       )
                     : null,
               ),
