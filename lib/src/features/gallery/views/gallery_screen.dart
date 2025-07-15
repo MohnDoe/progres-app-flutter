@@ -130,7 +130,47 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.transparent),
+      appBar: AppBar(
+        title: Material(
+          color: Colors.transparent,
+          child: Row(
+            spacing: 4,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: ProgressEntryType.values
+                .map(
+                  (ProgressEntryType entryType) => ChoiceChip(
+                    visualDensity: VisualDensity(
+                      horizontal: VisualDensity.minimumDensity,
+                      vertical: VisualDensity.minimumDensity,
+                    ),
+
+                    label: Text(entryType.name),
+                    showCheckmark: false,
+                    side: BorderSide.none,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(8)),
+                    ),
+                    disabledColor: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerLow,
+                    selected: _selectedType == entryType,
+                    onSelected: _firstEntry.pictures[entryType] != null
+                        ? (bool _) {
+                            setState(() {
+                              _selectedType = entryType;
+                            });
+                          }
+                        : null,
+                  ),
+                )
+                .toList(),
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+      ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.max,
@@ -153,7 +193,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                         const SizedBox(height: 16),
                         PictureDisplay(
                           picture: _firstEntry.pictures[_selectedType]!,
-                          highlight: false,
+                          highlight: true,
                         ),
                       ],
                     ),
@@ -222,25 +262,6 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                         ),
                       ],
                     ),
-                  const SizedBox(height: 16),
-                  SegmentedButton(
-                    showSelectedIcon: false,
-                    segments: ProgressEntryType.values
-                        .map(
-                          (ProgressEntryType type) => ButtonSegment(
-                            value: type,
-                            label: Text(type.name),
-                            enabled: _firstEntry.pictures[type] != null,
-                          ),
-                        )
-                        .toList(),
-                    selected: {_selectedType},
-                    onSelectionChanged: (value) {
-                      setState(() {
-                        _selectedType = value.first;
-                      });
-                    },
-                  ),
                 ],
               ),
             ),
