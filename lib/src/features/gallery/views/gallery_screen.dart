@@ -52,6 +52,36 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         .where((ProgressEntry entry) => entry.pictures[_selectedType] != null)
         .toList();
 
+    void previousEntry() {
+      final index = entries.indexOf(_selectedEntry);
+      if (index < entries.length - 1) {
+        setState(() {
+          _selectedEntry = entries[index + 1];
+          _carouselController.animateToItem(index + 1);
+        });
+      }
+    }
+
+    bool hasPreviousEntry() {
+      final index = entries.indexOf(_selectedEntry);
+      return index < entries.length - 1;
+    }
+
+    bool hasNextEntry() {
+      final index = entries.indexOf(_selectedEntry);
+      return index > 0;
+    }
+
+    void nextEntry() {
+      final index = entries.indexOf(_selectedEntry);
+      if (index > 0) {
+        setState(() {
+          _selectedEntry = entries[index - 1];
+          _carouselController.animateToItem(index - 1);
+        });
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(backgroundColor: Colors.transparent),
       body: Column(
@@ -172,13 +202,19 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            IconButton(onPressed: () {}, icon: const Icon(Icons.chevron_left)),
+            IconButton(
+              onPressed: hasPreviousEntry() ? previousEntry : null,
+              icon: const Icon(Icons.chevron_left),
+            ),
             IconButton.filled(
               iconSize: 16,
               onPressed: () {},
               icon: const FaIcon(FontAwesomeIcons.square),
             ),
-            IconButton(onPressed: () {}, icon: const Icon(Icons.chevron_right)),
+            IconButton(
+              onPressed: hasNextEntry() ? nextEntry : null,
+              icon: const Icon(Icons.chevron_right),
+            ),
           ],
         ),
       ),
