@@ -10,7 +10,7 @@ class PictureDisplay extends StatelessWidget {
     this.borderRadius = 80,
   });
 
-  final ProgressPicture picture;
+  final ProgressPicture? picture;
   final bool highlight;
   final double width;
   final double borderRadius;
@@ -30,7 +30,14 @@ class PictureDisplay extends StatelessWidget {
             ),
             child: AspectRatio(
               aspectRatio: 1,
-              child: Image.file(picture.file, fit: BoxFit.cover),
+              child: picture == null
+                  ? Center(
+                      child: Text(
+                        "No picture.",
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                    )
+                  : Image.file(picture!.file, fit: BoxFit.cover),
             ),
           ),
           if (highlight)

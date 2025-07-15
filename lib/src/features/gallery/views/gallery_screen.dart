@@ -157,7 +157,10 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                       context,
                     ).colorScheme.surfaceContainerLow,
                     selected: _selectedType == type,
-                    onSelected: _firstEntry.pictures[type] != null
+                    onSelected:
+                        _firstEntry.pictures[type] != null ||
+                            (mode == GalleryMode.sideBySide &&
+                                _secondEntry!.pictures[type] != null)
                         ? (bool _) {
                             setState(() {
                               _selectedType = type;
@@ -193,7 +196,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                         ),
                         const SizedBox(height: 16),
                         PictureDisplay(
-                          picture: _firstEntry.pictures[_selectedType]!,
+                          picture: _firstEntry.pictures[_selectedType],
                           highlight: true,
                         ),
                       ],
@@ -225,7 +228,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                                 });
                               },
                               child: PictureDisplay(
-                                picture: _firstEntry.pictures[_selectedType]!,
+                                picture: _firstEntry.pictures[_selectedType],
                                 highlight: _activeEntry == ActiveEntry.first,
                                 width: 200,
                                 borderRadius: 64,
@@ -253,7 +256,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                                 });
                               },
                               child: PictureDisplay(
-                                picture: _secondEntry!.pictures[_selectedType]!,
+                                picture: _secondEntry!.pictures[_selectedType],
                                 highlight: _activeEntry == ActiveEntry.second,
                                 width: 200,
                                 borderRadius: 64,
