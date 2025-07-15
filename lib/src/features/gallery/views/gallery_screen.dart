@@ -116,6 +116,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
           SizedBox(
             height: 80,
             child: CarouselView(
+              // TODO : make the selected item centered
               controller: _carouselController,
               itemExtent: 80,
               shrinkExtent: 16,
