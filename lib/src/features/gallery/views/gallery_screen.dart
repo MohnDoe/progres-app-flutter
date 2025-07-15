@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
@@ -165,7 +166,21 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: BottomAppBar(),
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.transparent,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButton(onPressed: () {}, icon: const Icon(Icons.chevron_left)),
+            IconButton.filled(
+              iconSize: 16,
+              onPressed: () {},
+              icon: const FaIcon(FontAwesomeIcons.square),
+            ),
+            IconButton(onPressed: () {}, icon: const Icon(Icons.chevron_right)),
+          ],
+        ),
+      ),
     );
   }
 }
