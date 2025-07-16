@@ -81,7 +81,7 @@ class ListEntriesScreen extends ConsumerWidget {
           listItems.addAll(
             entries.map(
               (ProgressEntry entry) => EntryItem(
-                key: ValueKey(entry),
+                key: ObjectKey(entry),
                 highlight: alreadyEntryForToday && entries.indexOf(entry) == 0,
                 entry: entry,
                 onTapEdit: () {

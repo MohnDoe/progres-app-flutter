@@ -38,7 +38,15 @@ class _PictureRectangleState extends State<PictureRectangle> {
   Widget build(BuildContext context) {
     final ProgressPicture? picture = widget.picture;
     final File? file = picture?.file;
-    final int? lastModified = file?.lastModifiedSync().millisecondsSinceEpoch;
+
+    print(widget.key);
+    if (file != null) {
+      print(
+        ValueKey(
+          "${widget.key.toString()}_${file!.lastModifiedSync().millisecondsSinceEpoch}",
+        ),
+      );
+    }
 
     return SizedBox(
       width: widget.width,
@@ -61,9 +69,11 @@ class _PictureRectangleState extends State<PictureRectangle> {
                 child: InkWell(
                   onTap: widget.onTap,
                   child: picture != null
-                      ? Image.memory(
-                          key: ValueKey('${file!.path}_$lastModified'),
-                          file.readAsBytesSync(),
+                      ? Image.file(
+                          key: ValueKey(
+                            "${widget.key.toString()}_${file!.lastModifiedSync().millisecondsSinceEpoch}",
+                          ),
+                          file,
                           width: double.infinity,
                           fit: BoxFit.cover,
                         )

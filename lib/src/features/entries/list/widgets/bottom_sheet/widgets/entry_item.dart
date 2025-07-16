@@ -37,7 +37,7 @@ class _EntryItemState extends State<EntryItem> {
   Widget build(BuildContext context) {
     return widget.highlight
         ? TodayEntryHighlight(
-            key: ValueKey(widget.entry.lastModifiedTimestamp),
+            key: ObjectKey(widget.key),
             widget.entry,
             onTapEdit: widget.onTapEdit,
           )
@@ -50,7 +50,7 @@ class _EntryItemState extends State<EntryItem> {
             child: Row(
               children: [
                 EntryImages(
-                  key: ValueKey(widget.entry.lastModifiedTimestamp),
+                  key: ObjectKey(widget.key),
                   lastUpdated: widget.entry.lastModifiedTimestamp,
                   pictures: widget.entry.pictures,
                   onPictureTap: (type) => _openPictureViewer(type),
@@ -91,6 +91,7 @@ class EntryImages extends StatelessWidget {
       children: displayedTypes
           .map(
             (ProgressEntryType entryType) => PictureRectangle(
+              key: ObjectKey(pictures[entryType]),
               pictures[entryType],
               onTap: () {
                 onPictureTap(entryType);
