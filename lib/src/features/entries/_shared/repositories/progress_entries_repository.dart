@@ -24,7 +24,7 @@ class ProgressEntriesRepository {
       (ProgressEntry a, ProgressEntry b) => b.date.compareTo(a.date),
     );
 
-    return List.unmodifiable(sortedList);
+    return sortedList;
   }
 
   Future<void> addEntry(ProgressEntry entry) async {
