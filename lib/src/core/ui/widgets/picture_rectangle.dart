@@ -39,15 +39,6 @@ class _PictureRectangleState extends State<PictureRectangle> {
     final ProgressPicture? picture = widget.picture;
     final File? file = picture?.file;
 
-    print(widget.key);
-    if (file != null) {
-      print(
-        ValueKey(
-          "${widget.key.toString()}_${file!.lastModifiedSync().millisecondsSinceEpoch}",
-        ),
-      );
-    }
-
     return SizedBox(
       width: widget.width,
       child: AspectRatio(

@@ -9,6 +9,7 @@ import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/core/services/file_service.dart'
     show PicturesFileService;
+import 'package:progres/src/core/services/image_cache_service.dart';
 
 class ProgressEntriesRepository {
   List<ProgressEntry> entries = [];
@@ -190,19 +191,9 @@ class ProgressEntriesRepository {
       }
 
       // TODO: don't do this
-      // --- BEFORE updating the state that rebuilds the UI ---
-      // --- EVICT successfully overwritten images from cache ---
-      for (final fileToEvict in finalPicturesInEntry.values) {
-        final imageProvider = FileImage(fileToEvict.file);
-        final bool evicted = await PaintingBinding.instance.imageCache.evict(
-          imageProvider,
-        );
-        if (evicted) {
-          print("Evicted from cache: ${fileToEvict.file.path}");
-        } else {
-          print("Not in cache or evict failed for: ${fileToEvict.file.path}");
-        }
-      }
+      await ImageCacheService.evictPictures(
+        finalPicturesInEntry.values.toList(),
+      );
 
       // --- Pass 3: Cleanup ---
       // Delete old pictures that are no longer used AT ALL by the new entry.
