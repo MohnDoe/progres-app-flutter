@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
+import 'package:progres/src/core/ui/widgets/picture_rectangle.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/features/entries/_shared/repositories/progress_entry_provider.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/picture_source_selection_bottom_sheet.dart';
@@ -35,24 +37,21 @@ class _EntryTypePictureCardState extends ConsumerState<EntryTypePictureCard> {
       progressEntryStateNotifierProvider.notifier,
     );
 
-    Widget cardVisualContent = Container(
-      height: 80,
+    Widget cardVisualContent = PictureRectangle(
+      picture,
       width: 80,
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.all(Radius.circular(8)),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.surfaceContainerHigh,
-          width: 2,
+      height: 80,
+      borderRadius: 32,
+      highlight: picture == null,
+      highlightWidth: 2,
+      highlightColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+      onTap: () => _displayPictureSourceOptions(),
+      emptyWidget: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainer,
         ),
+        child: Center(child: ProgressEntry.getIconFromType(widget.type)),
       ),
-      child: picture != null
-          ? Image(
-              key: ObjectKey(entry),
-              image: FileImage(picture.file),
-              fit: BoxFit.cover,
-            )
-          : Center(child: ProgressEntry.getIconFromType(type)),
     );
 
     if (picture != null) {
@@ -76,8 +75,8 @@ class _EntryTypePictureCardState extends ConsumerState<EntryTypePictureCard> {
 
     return Column(
       children: [
-        Text(type.name, style: Theme.of(context).textTheme.labelLarge),
-        SizedBox(height: 4),
+        Text(type.label, style: Theme.of(context).textTheme.labelLarge),
+        SizedBox(height: 8),
         DragTarget<ProgressEntryType>(
           builder:
               (

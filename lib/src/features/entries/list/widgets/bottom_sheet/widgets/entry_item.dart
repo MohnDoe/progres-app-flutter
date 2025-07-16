@@ -3,8 +3,10 @@ import 'package:intl/intl.dart';
 
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
+import 'package:progres/src/core/ui/widgets/picture_rectangle.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/today_entry_highlight.dart';
 import 'package:progres/src/features/gallery/views/gallery_screen.dart';
+import 'package:vector_math/vector_math_64.dart';
 
 class EntryItem extends StatefulWidget {
   const EntryItem({
@@ -33,9 +35,6 @@ class _EntryItemState extends State<EntryItem> {
 
   @override
   Widget build(BuildContext context) {
-    print("EntryItem: rebuilding");
-    print(widget.entry.date);
-    print(widget.entry.lastModifiedTimestamp);
     return widget.highlight
         ? TodayEntryHighlight(
             key: ValueKey(widget.entry.lastModifiedTimestamp),
@@ -84,7 +83,6 @@ class EntryImages extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("EntryImages: rebuilding");
     var displayedTypes = ProgressEntryType.values
         .where((ProgressEntryType entryType) => pictures[entryType] != null)
         .toList();
@@ -92,33 +90,16 @@ class EntryImages extends StatelessWidget {
       spacing: 4,
       children: displayedTypes
           .map(
-            (ProgressEntryType entryType) => ClipPath(
-              clipBehavior: Clip.antiAlias,
-              clipper: ShapeBorderClipper(
-                shape: ContinuousRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(20)),
-                ),
-              ),
-              child: SizedBox(
-                width: 40,
-                height: 40,
-                child: pictures[entryType] != null
-                    ? InkWell(
-                        onTap: () => onPictureTap(entryType),
-                        child: Image.memory(
-                          pictures[entryType]!.file.readAsBytesSync(),
-                          key: ValueKey(
-                            '${pictures[entryType]!.file.path}_$lastUpdated',
-                          ),
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Icon(Icons.error),
-                        ),
-                      )
-                    : null,
-              ),
-            ),
+            (ProgressEntryType entryType) =>
+                PictureRectangle(
+                  pictures[entryType],
+                  onTap: () {
+                    onPictureTap(entryType);
+                  },
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                )
           )
           .toList(),
     );

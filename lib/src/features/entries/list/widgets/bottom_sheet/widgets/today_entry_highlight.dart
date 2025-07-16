@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
+import 'package:progres/src/core/ui/widgets/picture_rectangle.dart';
 import 'package:progres/src/features/gallery/views/gallery_screen.dart';
 
 class TodayEntryHighlight extends StatefulWidget {
@@ -58,41 +59,25 @@ class _TodayEntryHighlightState extends State<TodayEntryHighlight> {
                   const SizedBox(height: 16),
                   GridView.count(
                     primary: false,
-                    shrinkWrap:
-                        true, // Allow GridView to size itself vertically
-                    physics:
-                        const NeverScrollableScrollPhysics(), // Disable scrolling if it's not desired within this small grid
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
                     crossAxisCount: 3,
                     mainAxisSpacing: 8,
-                    crossAxisSpacing: 8, // Added for spacing between columns
+                    crossAxisSpacing: 8,
                     childAspectRatio: 1.0,
                     children: widget.entry.pictures.keys
                         .map(
-                          (ProgressEntryType entryType) => InkWell(
+                          (ProgressEntryType entryType) => PictureRectangle(
+                            widget.entry.pictures[entryType],
+                            height: 80,
+                            width: 80,
+                            borderRadius: 48,
                             onTap: () => Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (_) => GalleryScreen(
                                   currentEntry: widget.entry,
                                   entryType: entryType,
                                 ),
-                              ),
-                            ),
-                            child: ClipPath(
-                              clipBehavior: Clip.antiAlias,
-                              clipper: ShapeBorderClipper(
-                                shape: ContinuousRectangleBorder(
-                                  borderRadius: BorderRadius.all(
-                                    Radius.circular(48),
-                                  ),
-                                ),
-                              ),
-                              child: Container(
-                                child: widget.entry.pictures[entryType] != null
-                                    ? Image.file(
-                                        widget.entry.pictures[entryType]!.file,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : SizedBox(width: 80),
                               ),
                             ),
                           ),

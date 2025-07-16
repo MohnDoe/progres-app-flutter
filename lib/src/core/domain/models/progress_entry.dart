@@ -1,7 +1,17 @@
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 
-enum ProgressEntryType { front, side, back }
+enum ProgressEntryType {
+  front,
+  side,
+  back;
+
+  String get label => switch (this) {
+    ProgressEntryType.front => "Front",
+    ProgressEntryType.side => "Side",
+    ProgressEntryType.back => "Back",
+  };
+}
 
 class ProgressEntry {
   ProgressEntry({
@@ -33,5 +43,9 @@ class ProgressEntry {
       lastModifiedTimestamp:
           lastModifiedTimestamp ?? this.lastModifiedTimestamp,
     );
+  }
+
+  static String getLabelFromType(ProgressEntryType type) {
+    return type.label;
   }
 }
