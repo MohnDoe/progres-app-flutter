@@ -36,21 +36,58 @@ class GalleryScreen extends ConsumerStatefulWidget {
 
 class _GalleryScreenState extends ConsumerState<GalleryScreen> {
   final CarouselController _carouselController = CarouselController(
-    // TODO: get correct initial item
-    initialItem: 1,
+    initialItem: 0,
   );
-
-  late ProgressEntry _firstEntry = widget.currentEntry;
-  late ProgressEntry? _secondEntry = widget.secondEntry;
-  late ProgressEntryType _selectedType = widget.entryType;
   ActiveEntry _activeEntry = ActiveEntry.first;
 
-  late GalleryMode mode = widget.mode;
+  late ProgressEntry _firstEntry;
+  late ProgressEntry? _secondEntry;
+
+  late ProgressEntryType _selectedType;
+
+  late GalleryMode mode;
+
+  void _initCarousel() {
+    List<ProgressEntry> entries = ref
+        .watch(progressEntriesRepositoryProvider)
+        .orderedEntries
+        .where((ProgressEntry entry) => entry.pictures[_selectedType] != null)
+        .toList();
+
+    // Find the index of the initial _firstEntry
+    int initialIndex = entries.indexWhere(
+      (entry) => entry.date.isAtSameMomentAs(_firstEntry.date),
+    ); // Use a unique ID for comparison
+    if (initialIndex == -1 && entries.isNotEmpty) {
+      // Fallback if _firstEntry (for some reason) isn't in the initial list,
+      // though it should be if widget.currentEntry has the widget.entryType picture.
+      initialIndex = 0;
+    } else if (entries.isEmpty) {
+      initialIndex = 0; // Or handle empty list case appropriately
+    }
+
+    // Now initialize the CarouselController with the correct initialItem
+    _carouselController.animateToItem(initialIndex);
+  }
 
   @override
   void dispose() {
     _carouselController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _firstEntry = widget.currentEntry;
+    _secondEntry = widget.secondEntry;
+    _selectedType = widget.entryType;
+    mode = widget.mode;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _initCarousel();
+    });
   }
 
   @override
@@ -318,7 +355,6 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
           SizedBox(
             height: 80,
             child: CarouselView(
-              // TODO : make the selected item centered
               controller: _carouselController,
               itemExtent: 80,
               shrinkExtent: 16,
