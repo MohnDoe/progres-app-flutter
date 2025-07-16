@@ -16,4 +16,14 @@ class ProgressEntry {
       ProgressEntryType.back => FaIcon(FontAwesomeIcons.person),
     };
   }
+
+  ProgressEntry copyWith({
+    Map<ProgressEntryType, ProgressPicture>? pictures,
+    DateTime? date,
+  }) {
+    return ProgressEntry(
+      pictures: pictures ?? this.pictures,
+      date: date ?? this.date,
+    );
+  }
 }

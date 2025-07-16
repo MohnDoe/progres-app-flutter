@@ -121,6 +121,7 @@ class _EntryEditionState extends ConsumerState<EntryEdition> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // HEADER
           Stack(
             children: [
               if (widget.onClose != null)
