@@ -1,7 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 
-class PictureRectangle extends StatelessWidget {
+class PictureRectangle extends StatefulWidget {
   const PictureRectangle(
     this.picture, {
     super.key,
@@ -28,9 +30,17 @@ class PictureRectangle extends StatelessWidget {
   final Widget emptyWidget;
 
   @override
+  State<PictureRectangle> createState() => _PictureRectangleState();
+}
+
+class _PictureRectangleState extends State<PictureRectangle> {
+  @override
   Widget build(BuildContext context) {
+    final ProgressPicture? picture = widget.picture;
+    final File? file = picture?.file;
+
     return SizedBox(
-      width: width,
+      width: widget.width,
       child: AspectRatio(
         aspectRatio: 1,
         child: Stack(
@@ -39,25 +49,30 @@ class PictureRectangle extends StatelessWidget {
               clipBehavior: Clip.antiAlias,
               clipper: ShapeBorderClipper(
                 shape: ContinuousRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(widget.borderRadius),
+                  ),
                 ),
               ),
               child: SizedBox(
                 width: double.infinity,
                 height: double.infinity,
                 child: InkWell(
-                  onTap: onTap,
+                  onTap: widget.onTap,
                   child: picture != null
                       ? Image.file(
-                          picture!.file,
+                          key: ValueKey(
+                            "${widget.key.toString()}_${file!.lastModifiedSync().millisecondsSinceEpoch}",
+                          ),
+                          file,
                           width: double.infinity,
                           fit: BoxFit.cover,
                         )
-                      : emptyWidget,
+                      : widget.emptyWidget,
                 ),
               ),
             ),
-            if (highlight)
+            if (widget.highlight)
               Positioned(
                 top: 0,
                 bottom: 0,
@@ -67,11 +82,11 @@ class PictureRectangle extends StatelessWidget {
                   decoration: ShapeDecoration(
                     shape: ContinuousRectangleBorder(
                       borderRadius: BorderRadius.all(
-                        Radius.circular(borderRadius),
+                        Radius.circular(widget.borderRadius),
                       ),
                       side: BorderSide(
-                        width: highlightWidth,
-                        color: highlightColor,
+                        width: widget.highlightWidth,
+                        color: widget.highlightColor,
                       ),
                     ),
                   ),

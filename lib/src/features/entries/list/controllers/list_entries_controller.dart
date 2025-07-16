@@ -21,7 +21,6 @@ class ListEntriesController
     try {
       await _repository.initEntries();
     } catch (e, st) {
-      print(st);
       state = AsyncValue.error(e, st);
     }
   }

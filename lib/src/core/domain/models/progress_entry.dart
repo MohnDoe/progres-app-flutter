@@ -14,10 +14,15 @@ enum ProgressEntryType {
 }
 
 class ProgressEntry {
-  ProgressEntry({required this.pictures, required this.date});
+  ProgressEntry({
+    required this.pictures,
+    required this.date,
+    required this.lastModifiedTimestamp,
+  });
 
   final Map<ProgressEntryType, ProgressPicture> pictures;
   final DateTime date;
+  final int lastModifiedTimestamp;
 
   static FaIcon getIconFromType(ProgressEntryType type) {
     return switch (type) {
@@ -25,10 +30,6 @@ class ProgressEntry {
       ProgressEntryType.side => FaIcon(FontAwesomeIcons.personWalking),
       ProgressEntryType.back => FaIcon(FontAwesomeIcons.person),
     };
-  }
-
-  static String getLabelFromType(ProgressEntryType type) {
-    return type.label;
   }
 
   ProgressEntry copyWith({
@@ -39,6 +40,12 @@ class ProgressEntry {
     return ProgressEntry(
       pictures: pictures ?? this.pictures,
       date: date ?? this.date,
+      lastModifiedTimestamp:
+          lastModifiedTimestamp ?? this.lastModifiedTimestamp,
     );
+  }
+
+  static String getLabelFromType(ProgressEntryType type) {
+    return type.label;
   }
 }

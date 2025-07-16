@@ -6,6 +6,7 @@ import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/core/ui/widgets/picture_rectangle.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/today_entry_highlight.dart';
 import 'package:progres/src/features/gallery/views/gallery_screen.dart';
+import 'package:vector_math/vector_math_64.dart';
 
 class EntryItem extends StatefulWidget {
   const EntryItem({
@@ -35,7 +36,11 @@ class _EntryItemState extends State<EntryItem> {
   @override
   Widget build(BuildContext context) {
     return widget.highlight
-        ? TodayEntryHighlight(widget.entry, onTapEdit: widget.onTapEdit)
+        ? TodayEntryHighlight(
+            key: ObjectKey(widget.key),
+            widget.entry,
+            onTapEdit: widget.onTapEdit,
+          )
         : Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.all(Radius.circular(8)),
@@ -45,6 +50,8 @@ class _EntryItemState extends State<EntryItem> {
             child: Row(
               children: [
                 EntryImages(
+                  key: ObjectKey(widget.key),
+                  lastUpdated: widget.entry.lastModifiedTimestamp,
                   pictures: widget.entry.pictures,
                   onPictureTap: (type) => _openPictureViewer(type),
                 ),
@@ -66,9 +73,11 @@ class EntryImages extends StatelessWidget {
     super.key,
     required this.pictures,
     required this.onPictureTap,
+    required this.lastUpdated,
   });
 
   final Map<ProgressEntryType, ProgressPicture> pictures;
+  final int lastUpdated;
 
   final void Function(ProgressEntryType type) onPictureTap;
 
@@ -82,15 +91,14 @@ class EntryImages extends StatelessWidget {
       children: displayedTypes
           .map(
             (ProgressEntryType entryType) => PictureRectangle(
-              pictures[entryType]!,
+              key: ObjectKey(pictures[entryType]),
+              pictures[entryType],
               onTap: () {
-                print('Picture tapped');
                 onPictureTap(entryType);
               },
               width: 40,
               height: 40,
               borderRadius: 20,
-              emptyWidget: Container(),
             ),
           )
           .toList(),

@@ -35,23 +35,51 @@ class PicturesFileService {
     ProgressPicture picture,
   ) async {
     final saveDirPath = await _saveDirPath;
-    final destinationDirectory = Directory(
+    final typeSpecificDir = Directory(
       '$saveDirPath/${toFixedDate(entry.date).millisecondsSinceEpoch}/${entryType.name}',
     );
 
-    if (!await destinationDirectory.exists()) {
-      await destinationDirectory.create(recursive: true);
+    if (!await typeSpecificDir.exists()) {
+      await typeSpecificDir.create(recursive: true);
     }
 
-    final filename = '${entryType.name}${p.extension(picture.file.path)}';
+    // Define a CANONICAL filename for this type.
+    // Using entryType.name ensures it's always the same for, e.g., "front".
+    // The extension is taken from the source file.
+    final String canonicalFileName =
+        '${entryType.name}${p.extension(picture.file.path)}';
+    final String canonicalFilePath =
+        '${typeSpecificDir.path}/$canonicalFileName';
+    final File canonicalFile = File(canonicalFilePath);
 
-    final filePath = '${destinationDirectory.path}/$filename';
+    // if (await canonicalFile.exists()) {
+    //   print("Overwriting existing file at: ${canonicalFile.path}");
+    //   await canonicalFile.delete(); // Delete the old one first
+    // }
 
-    final newFile = File(filePath);
+    print(
+      "Saving picture for $entryType to: ${canonicalFile.path} from source: ${picture.file.path}",
+    );
 
-    await newFile.writeAsBytes(await picture.file.readAsBytes());
-    Logger().i('Saved file to : $filePath');
-    return newFile;
+    // Now copy the new source file to the canonical path
+    // Using writeAsBytes is one way; picture.file.copy() is another.
+    // picture.file.copy() is often simpler if picture.file is valid.
+    try {
+      await picture.file.copy(canonicalFile.path);
+    } catch (e) {
+      print(
+        "Error copying file ${picture.file.path} to ${canonicalFile.path}: $e",
+      );
+      // Fallback or rethrow if needed: writeAsBytes
+      // await canonicalFile.writeAsBytes(await sourceFile.readAsBytes());
+      rethrow; // Rethrow the error if copy fails
+    }
+
+    Logger().i('Saved file to : ${canonicalFile.path}');
+    Logger().i(
+      'Saved file to : ${canonicalFile.lastModifiedSync().millisecondsSinceEpoch}',
+    );
+    return canonicalFile;
   }
 
   DateTime toFixedDate(DateTime start) {
@@ -118,6 +146,22 @@ class PicturesFileService {
     print("Deleting entry folder : $entryDirectory");
     if (await entryDirectory.exists()) {
       await entryDirectory.delete(recursive: true);
+    }
+  }
+
+  Future<void> deletePicture(
+    ProgressEntry entry,
+    ProgressEntryType entryType,
+  ) async {
+    final saveDirPath = await _saveDirPath;
+    final entryDirectory = Directory(
+      '$saveDirPath/${entry.date.millisecondsSinceEpoch}',
+    );
+    final pictureDirectory = Directory(
+      '${entryDirectory.path}/${entryType.name}',
+    );
+    if (await pictureDirectory.exists()) {
+      await pictureDirectory.delete(recursive: true);
     }
   }
 }

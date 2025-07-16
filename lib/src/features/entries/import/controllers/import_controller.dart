@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:logger/logger.dart';
 import 'package:native_exif/native_exif.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
@@ -127,7 +126,11 @@ class ImportControllerNotifier extends StateNotifier<ImportValidityState> {
       for (ImportItem item in importItems) {
         pictures[item.type!] = item.picture;
       }
-      final progressEntry = ProgressEntry(pictures: pictures, date: day);
+      final progressEntry = ProgressEntry(
+        pictures: pictures,
+        date: day,
+        lastModifiedTimestamp: DateTime.now().microsecondsSinceEpoch,
+      );
       progressEntries.add(progressEntry);
     }
 

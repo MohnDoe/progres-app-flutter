@@ -25,6 +25,8 @@ class _NewEntryBottomSheetState extends ConsumerState<EntryBottomSheet> {
       onClosing: () {
         // resetEntry();
       },
+      enableDrag: false,
+      showDragHandle: false,
       builder: (BuildContext context) => EntryEdition(
         widget.initialEntry,
         canEditDate: widget.isNewEntry,

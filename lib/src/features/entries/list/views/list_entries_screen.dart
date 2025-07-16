@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
@@ -9,7 +8,6 @@ import 'package:progres/src/features/entries/list/controllers/list_entries_contr
 import 'package:progres/src/features/entries/list/widgets/add_today_button.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/entry_item.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/entry_bottom_sheet.dart';
-import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/today_entry_highlight.dart';
 
 /// The screen that displays the list of progress entries.
 ///
@@ -83,6 +81,7 @@ class ListEntriesScreen extends ConsumerWidget {
           listItems.addAll(
             entries.map(
               (ProgressEntry entry) => EntryItem(
+                key: ObjectKey(entry),
                 highlight: alreadyEntryForToday && entries.indexOf(entry) == 0,
                 entry: entry,
                 onTapEdit: () {
