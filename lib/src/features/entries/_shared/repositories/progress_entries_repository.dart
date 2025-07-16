@@ -238,14 +238,17 @@ class ProgressEntriesRepository {
       lastModifiedTimestamp: DateTime.now().microsecondsSinceEpoch,
     );
 
-    entries = [
+    final newEntries = [
       for (final entry in entries)
         if (entry.date.isAtSameMomentAs(fullyUpdatedEntry.date))
           fullyUpdatedEntry
         else
           entry,
     ];
-    _entriesController.add(List.unmodifiable(entries));
+
+    entries = newEntries;
+
+    _entriesController.add(orderedEntries);
 
     print("Entry edit complete for date: ${oldEntry.date}");
   }
