@@ -48,8 +48,9 @@ class PictureRectangle extends StatelessWidget {
                 child: InkWell(
                   onTap: onTap,
                   child: picture != null
-                      ? Image.file(
-                          picture!.file,
+                      ? Image.memory(
+                          key: super.key,
+                          picture!.file.readAsBytesSync(),
                           width: double.infinity,
                           fit: BoxFit.cover,
                         )
