@@ -3,9 +3,9 @@ import 'package:intl/intl.dart';
 
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
+import 'package:progres/src/core/ui/widgets/picture_rectangle.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/today_entry_highlight.dart';
 import 'package:progres/src/features/gallery/views/gallery_screen.dart';
-import 'package:vector_math/vector_math_64.dart';
 
 class EntryItem extends StatefulWidget {
   const EntryItem({
@@ -81,27 +81,16 @@ class EntryImages extends StatelessWidget {
       spacing: 4,
       children: displayedTypes
           .map(
-            (ProgressEntryType entryType) => ClipPath(
-              clipBehavior: Clip.antiAlias,
-              clipper: ShapeBorderClipper(
-                shape: ContinuousRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(20)),
-                ),
-              ),
-              child: SizedBox(
-                width: 40,
-                height: 40,
-                child: pictures[entryType] != null
-                    ? InkWell(
-                        onTap: () => onPictureTap(entryType),
-                        child: Image.file(
-                          pictures[entryType]!.file,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    : null,
-              ),
+            (ProgressEntryType entryType) => PictureRectangle(
+              pictures[entryType]!,
+              onTap: () {
+                print('Picture tapped');
+                onPictureTap(entryType);
+              },
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              emptyWidget: Container(),
             ),
           )
           .toList(),
