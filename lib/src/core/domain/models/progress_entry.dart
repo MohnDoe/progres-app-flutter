@@ -4,10 +4,15 @@ import 'package:progres/src/core/domain/models/progress_picture.dart';
 enum ProgressEntryType { front, side, back }
 
 class ProgressEntry {
-  ProgressEntry({required this.pictures, required this.date});
+  ProgressEntry({
+    required this.pictures,
+    required this.date,
+    required this.lastModifiedTimestamp,
+  });
 
   final Map<ProgressEntryType, ProgressPicture> pictures;
   final DateTime date;
+  final int lastModifiedTimestamp;
 
   static FaIcon getIconFromType(ProgressEntryType type) {
     return switch (type) {
@@ -20,10 +25,13 @@ class ProgressEntry {
   ProgressEntry copyWith({
     Map<ProgressEntryType, ProgressPicture>? pictures,
     DateTime? date,
+    int? lastModifiedTimestamp,
   }) {
     return ProgressEntry(
       pictures: pictures ?? this.pictures,
       date: date ?? this.date,
+      lastModifiedTimestamp:
+          lastModifiedTimestamp ?? this.lastModifiedTimestamp,
     );
   }
 }

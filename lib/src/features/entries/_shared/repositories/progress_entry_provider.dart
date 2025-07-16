@@ -4,7 +4,13 @@ import 'package:progres/src/core/domain/models/progress_picture.dart';
 
 class ProgressEntryNotifier extends StateNotifier<ProgressEntry> {
   ProgressEntryNotifier()
-    : super(ProgressEntry(pictures: {}, date: DateTime.now()));
+    : super(
+        ProgressEntry(
+          pictures: {},
+          date: DateTime.now(),
+          lastModifiedTimestamp: DateTime.now().microsecondsSinceEpoch,
+        ),
+      );
 
   void setProgressPictureToType(
     ProgressEntryType entryType,
@@ -13,24 +19,37 @@ class ProgressEntryNotifier extends StateNotifier<ProgressEntry> {
     state = ProgressEntry(
       pictures: {...state.pictures, entryType: progressPicture},
       date: state.date,
+      lastModifiedTimestamp: DateTime.now().microsecondsSinceEpoch,
     );
   }
 
   void setEntry(ProgressEntry entry) => state = entry;
 
   void setDate(DateTime date) {
-    state = ProgressEntry(pictures: state.pictures, date: date);
+    state = ProgressEntry(
+      pictures: state.pictures,
+      date: date,
+      lastModifiedTimestamp: DateTime.now().microsecondsSinceEpoch,
+    );
   }
 
   void removePicture(ProgressEntryType entryType) {
     final newPictures = Map.of(state.pictures);
     newPictures.remove(entryType);
 
-    state = ProgressEntry(pictures: newPictures, date: state.date);
+    state = ProgressEntry(
+      pictures: newPictures,
+      date: state.date,
+      lastModifiedTimestamp: DateTime.now().microsecondsSinceEpoch,
+    );
   }
 
   void reset() {
-    state = ProgressEntry(pictures: {}, date: DateTime.now());
+    state = ProgressEntry(
+      pictures: {},
+      date: DateTime.now(),
+      lastModifiedTimestamp: DateTime.now().microsecondsSinceEpoch,
+    );
   }
 
   void movePicture({

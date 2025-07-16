@@ -127,7 +127,11 @@ class ImportControllerNotifier extends StateNotifier<ImportValidityState> {
       for (ImportItem item in importItems) {
         pictures[item.type!] = item.picture;
       }
-      final progressEntry = ProgressEntry(pictures: pictures, date: day);
+      final progressEntry = ProgressEntry(
+        pictures: pictures,
+        date: day,
+        lastModifiedTimestamp: DateTime.now().microsecondsSinceEpoch,
+      );
       progressEntries.add(progressEntry);
     }
 

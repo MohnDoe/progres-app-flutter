@@ -48,7 +48,11 @@ class _EntryTypePictureCardState extends ConsumerState<EntryTypePictureCard> {
         ),
       ),
       child: picture != null
-          ? Image(image: FileImage(picture.file), fit: BoxFit.cover)
+          ? Image(
+              key: ObjectKey(entry),
+              image: FileImage(picture.file),
+              fit: BoxFit.cover,
+            )
           : Center(child: ProgressEntry.getIconFromType(type)),
     );
 

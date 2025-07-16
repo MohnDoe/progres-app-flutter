@@ -34,8 +34,15 @@ class _EntryItemState extends State<EntryItem> {
 
   @override
   Widget build(BuildContext context) {
+    print("EntryItem: rebuilding");
+    print(widget.entry.date);
+    print(widget.entry.lastModifiedTimestamp);
     return widget.highlight
-        ? TodayEntryHighlight(widget.entry, onTapEdit: widget.onTapEdit)
+        ? TodayEntryHighlight(
+            key: ValueKey(widget.entry.lastModifiedTimestamp),
+            widget.entry,
+            onTapEdit: widget.onTapEdit,
+          )
         : Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.all(Radius.circular(8)),
@@ -45,6 +52,8 @@ class _EntryItemState extends State<EntryItem> {
             child: Row(
               children: [
                 EntryImages(
+                  key: ValueKey(widget.entry.lastModifiedTimestamp),
+                  lastUpdated: widget.entry.lastModifiedTimestamp,
                   pictures: widget.entry.pictures,
                   onPictureTap: (type) => _openPictureViewer(type),
                 ),
@@ -66,14 +75,17 @@ class EntryImages extends StatelessWidget {
     super.key,
     required this.pictures,
     required this.onPictureTap,
+    required this.lastUpdated,
   });
 
   final Map<ProgressEntryType, ProgressPicture> pictures;
+  final int lastUpdated;
 
   final void Function(ProgressEntryType type) onPictureTap;
 
   @override
   Widget build(BuildContext context) {
+    print("EntryImages: rebuilding");
     var displayedTypes = ProgressEntryType.values
         .where((ProgressEntryType entryType) => pictures[entryType] != null)
         .toList();
@@ -94,10 +106,15 @@ class EntryImages extends StatelessWidget {
                 child: pictures[entryType] != null
                     ? InkWell(
                         onTap: () => onPictureTap(entryType),
-                        child: Image.file(
-                          pictures[entryType]!.file,
+                        child: Image.memory(
+                          pictures[entryType]!.file.readAsBytesSync(),
+                          key: ValueKey(
+                            '${pictures[entryType]!.file.path}_$lastUpdated',
+                          ),
                           width: double.infinity,
                           fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Icon(Icons.error),
                         ),
                       )
                     : null,
