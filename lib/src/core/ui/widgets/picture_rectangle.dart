@@ -11,6 +11,8 @@ class PictureRectangle extends StatelessWidget {
     required this.borderRadius,
     this.emptyWidget = const Placeholder(),
     this.highlight = false,
+    this.highlightWidth = 4,
+    this.highlightColor = Colors.white,
   });
 
   final ProgressPicture? picture;
@@ -20,6 +22,8 @@ class PictureRectangle extends StatelessWidget {
   final double borderRadius;
 
   final bool highlight;
+  final double highlightWidth;
+  final Color highlightColor;
 
   final Widget emptyWidget;
 
@@ -66,8 +70,8 @@ class PictureRectangle extends StatelessWidget {
                         Radius.circular(borderRadius),
                       ),
                       side: BorderSide(
-                        width: 4,
-                        color: Theme.of(context).colorScheme.primary,
+                        width: highlightWidth,
+                        color: highlightColor,
                       ),
                     ),
                   ),

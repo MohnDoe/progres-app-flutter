@@ -24,6 +24,8 @@ class PictureDisplay extends StatelessWidget {
       width: width,
       height: double.infinity,
       borderRadius: borderRadius,
+      highlightWidth: 4,
+      highlightColor: Theme.of(context).colorScheme.primary,
       emptyWidget: Center(
         child: Text(
           "No picture.",
