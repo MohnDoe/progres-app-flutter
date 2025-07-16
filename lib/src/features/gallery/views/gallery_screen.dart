@@ -209,7 +209,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                     ),
                     avatar: ProgressEntry.getIconFromType(type),
                     iconTheme: IconThemeData(size: 16),
-                    label: Text(type.name),
+                    label: Text(type.label),
                     showCheckmark: false,
                     side: BorderSide.none,
                     shape: RoundedRectangleBorder(

@@ -31,7 +31,7 @@ class _EntryTypePictureCardState extends ConsumerState<EntryTypePictureCard> {
 
     return Column(
       children: [
-        Text(widget.type.name, style: Theme.of(context).textTheme.labelLarge),
+        Text(widget.type.label, style: Theme.of(context).textTheme.labelLarge),
         SizedBox(height: 4),
         InkWell(
           onTap: () => _displayPictureSourceOptions(),

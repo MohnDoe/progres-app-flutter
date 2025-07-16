@@ -105,7 +105,7 @@ class _ImportCardState extends ConsumerState<ImportCard> {
                         horizontal: VisualDensity.minimumDensity,
                         vertical: VisualDensity.minimumDensity,
                       ),
-                      label: Text(entryType.name),
+                      label: Text(entryType.label),
                       showCheckmark: false,
                       side: BorderSide.none,
                       shape: RoundedRectangleBorder(
