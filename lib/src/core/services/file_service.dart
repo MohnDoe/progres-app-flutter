@@ -52,10 +52,10 @@ class PicturesFileService {
         '${typeSpecificDir.path}/$canonicalFileName';
     final File canonicalFile = File(canonicalFilePath);
 
-    if (await canonicalFile.exists()) {
-      print("Overwriting existing file at: ${canonicalFile.path}");
-      await canonicalFile.delete(); // Delete the old one first
-    }
+    // if (await canonicalFile.exists()) {
+    //   print("Overwriting existing file at: ${canonicalFile.path}");
+    //   await canonicalFile.delete(); // Delete the old one first
+    // }
 
     print(
       "Saving picture for $entryType to: ${canonicalFile.path} from source: ${picture.file.path}",
@@ -76,6 +76,9 @@ class PicturesFileService {
     }
 
     Logger().i('Saved file to : ${canonicalFile.path}');
+    Logger().i(
+      'Saved file to : ${canonicalFile.lastModifiedSync().millisecondsSinceEpoch}',
+    );
     return canonicalFile;
   }
 
