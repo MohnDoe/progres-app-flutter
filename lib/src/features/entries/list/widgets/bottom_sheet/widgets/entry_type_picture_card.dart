@@ -55,14 +55,21 @@ class _EntryTypePictureCardState extends ConsumerState<EntryTypePictureCard> {
 
     if (picture != null) {
       Widget draggableCard = LongPressDraggable<ProgressEntryType>(
+        delay: Duration(milliseconds: 150),
         data: type,
         feedback: Material(
           color: Colors.transparent,
-          child: Opacity(
-            opacity: 0.75,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 100, maxHeight: 100),
-              child: cardVisualContent,
+          child: Transform.scale(
+            scale: 1.2,
+            child: Opacity(
+              opacity: 0.75,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: 100,
+                  maxHeight: 100,
+                ),
+                child: cardVisualContent,
+              ),
             ),
           ),
         ),
