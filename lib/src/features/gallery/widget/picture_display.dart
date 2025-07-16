@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
+import 'package:progres/src/core/ui/widgets/picture_rectangle.dart';
 
 class PictureDisplay extends StatelessWidget {
   const PictureDisplay({
@@ -17,50 +18,17 @@ class PictureDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return PictureRectangle(
+      picture,
+      highlight: highlight,
       width: width,
-      child: Stack(
-        children: [
-          ClipPath(
-            clipBehavior: Clip.antiAlias,
-            clipper: ShapeBorderClipper(
-              shape: ContinuousRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
-              ),
-            ),
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: picture == null
-                  ? Center(
-                      child: Text(
-                        "No picture.",
-                        style: Theme.of(context).textTheme.labelMedium,
-                      ),
-                    )
-                  : Image.file(picture!.file, fit: BoxFit.cover),
-            ),
-          ),
-          if (highlight)
-            Positioned(
-              top: 0,
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                decoration: ShapeDecoration(
-                  shape: ContinuousRectangleBorder(
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(borderRadius),
-                    ),
-                    side: BorderSide(
-                      width: 4,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
+      height: double.infinity,
+      borderRadius: borderRadius,
+      emptyWidget: Center(
+        child: Text(
+          "No picture.",
+          style: Theme.of(context).textTheme.labelMedium,
+        ),
       ),
     );
   }
