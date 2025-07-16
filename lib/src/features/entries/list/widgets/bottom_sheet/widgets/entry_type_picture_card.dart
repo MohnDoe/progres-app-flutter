@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/ui/widgets/picture_rectangle.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
@@ -57,11 +56,14 @@ class _EntryTypePictureCardState extends ConsumerState<EntryTypePictureCard> {
     if (picture != null) {
       Widget draggableCard = LongPressDraggable<ProgressEntryType>(
         data: type,
-        feedback: Opacity(
-          opacity: 0.75,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 100, maxHeight: 100),
-            child: cardVisualContent,
+        feedback: Material(
+          color: Colors.transparent,
+          child: Opacity(
+            opacity: 0.75,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 100, maxHeight: 100),
+              child: cardVisualContent,
+            ),
           ),
         ),
         childWhenDragging: Opacity(opacity: 0.4, child: cardVisualContent),
