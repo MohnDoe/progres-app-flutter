@@ -19,7 +19,6 @@ class EntryEdition extends ConsumerStatefulWidget {
 
   final ProgressEntry? initialEntry;
   final void Function()? onClose;
-  // TODO: add initialDate and make it so that creating a new entry (not today) display "Select a date"
   final bool canEditDate;
 
   @override
