@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
+import 'package:progres/src/core/ui/widgets/picture_rectangle.dart';
 import 'package:progres/src/features/entries/_shared/repositories/progress_entry_provider.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/picture_source_selection_bottom_sheet.dart';
 
@@ -32,26 +33,21 @@ class _EntryTypePictureCardState extends ConsumerState<EntryTypePictureCard> {
     return Column(
       children: [
         Text(widget.type.label, style: Theme.of(context).textTheme.labelLarge),
-        SizedBox(height: 4),
-        InkWell(
+        const SizedBox(height: 8),
+        PictureRectangle(
+          entry.pictures[widget.type],
+          width: 80,
+          height: 80,
+          borderRadius: 32,
+          highlight: entry.pictures[widget.type] == null,
+          highlightWidth: 2,
+          highlightColor: Theme.of(context).colorScheme.surfaceContainerHighest,
           onTap: () => _displayPictureSourceOptions(),
-          child: Container(
-            height: 80,
-            width: 80,
+          emptyWidget: Container(
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.all(Radius.circular(8)),
-              border: Border.all(
-                color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                width: 2,
-              ),
+              color: Theme.of(context).colorScheme.surfaceContainer,
             ),
-            child: entry.pictures[widget.type] != null
-                ? Image(
-                    image: FileImage(entry.pictures[widget.type]!.file),
-                    fit: BoxFit.cover,
-                  )
-                : Center(child: ProgressEntry.getIconFromType(widget.type)),
+            child: Center(child: ProgressEntry.getIconFromType(widget.type)),
           ),
         ),
       ],
