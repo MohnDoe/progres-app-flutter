@@ -48,6 +48,7 @@ dependencies:
   flex_color_scheme: ^8.2.0
   timeago: ^3.7.1
   go_router: ^16.0.0
+  subtitle_toolkit: ^0.0.2
 
 dev_dependencies:
   flutter_test:

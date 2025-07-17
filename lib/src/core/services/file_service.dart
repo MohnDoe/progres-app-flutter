@@ -90,20 +90,30 @@ class PicturesFileService {
   Future<List<ProgressPicture>> listPicturesForEntryType(
     ProgressEntryType type,
   ) async {
-    final List<ProgressEntry> entries =
-        await ProgressEntriesRepository.listEntries();
+    final List<ProgressEntry> correspondingEntries =
+        await listEntriesWithPictureOfType(type);
     List<ProgressPicture> pictures = [];
 
-    entries.sort(
-      (ProgressEntry a, ProgressEntry b) => a.date.compareTo(b.date),
-    );
-
-    pictures = entries
-        .where((ProgressEntry entry) => entry.pictures.containsKey(type))
+    pictures = correspondingEntries
         .map((ProgressEntry entry) => entry.pictures[type]!)
         .toList();
 
     return pictures;
+  }
+
+  static Future<List<ProgressEntry>> listEntriesWithPictureOfType(
+    ProgressEntryType type,
+  ) async {
+    final List<ProgressEntry> correspondingEntries =
+        await ProgressEntriesRepository.listEntries();
+
+    correspondingEntries.sort(
+      (ProgressEntry a, ProgressEntry b) => a.date.compareTo(b.date),
+    );
+
+    return correspondingEntries
+        .where((ProgressEntry entry) => entry.pictures.containsKey(type))
+        .toList();
   }
 
   Future<List<Directory>> listEntriesDirectory() async {

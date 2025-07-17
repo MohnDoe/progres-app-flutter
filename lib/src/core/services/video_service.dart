@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
 
 import 'package:ffmpeg_kit_flutter_new/return_code.dart';
+import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
@@ -11,6 +12,7 @@ import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/core/services/file_service.dart';
 import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart';
+import 'package:subtitle_toolkit/subtitle_toolkit.dart';
 
 const kStabilizedVideoPrefix = 'timelapse_stabilized';
 const kStabilizedVideoExt = 'mp4';
@@ -25,6 +27,8 @@ class VideoService {
       p.join((await _framesDirectory).path, 'frame_%04d.jpg');
   Future<String> get _transformsFilePath async =>
       p.join((await _temporaryDirectory).path, 'transforms.trf');
+  Future<String> get _subtitlesFilePath async =>
+      p.join((await _temporaryDirectory).path, 'subtitles.srt');
 
   Future<void> _initFramesDirectory() async {
     final framesDirectory = await _framesDirectory;
@@ -71,6 +75,45 @@ class VideoService {
     }
   }
 
+  Future<void> _generateSubtitles(List<ProgressEntry> entries, int fps) async {
+    print('Generating subtitles');
+    final subtitlesFilePath = await _subtitlesFilePath;
+    await _deleteFile(subtitlesFilePath);
+
+    final subtitles = _getSubtitleEntries(entries, fps);
+
+    await SubtitleParser.writeToFile(subtitles, subtitlesFilePath);
+
+    print('Subtitles generated');
+  }
+
+  List<SubtitleEntry> _getSubtitleEntries(
+    List<ProgressEntry> entries,
+    int fps,
+  ) {
+    List<SubtitleEntry> subtitles = [];
+    int index = 0;
+    double frameDurationInMilliseconds = 1000 / fps;
+    for (ProgressEntry entry in entries) {
+      final startTime = Duration(
+        milliseconds: (frameDurationInMilliseconds * index).toInt(),
+      );
+      final SubtitleEntry subtitleEntry = SubtitleEntry(
+        index: index,
+        startTime: startTime,
+        endTime:
+            startTime +
+            Duration(milliseconds: frameDurationInMilliseconds.toInt()),
+        text: DateFormat.yMMMd().format(entry.date),
+      );
+
+      subtitles.add(subtitleEntry);
+      index++;
+    }
+
+    return subtitles;
+  }
+
   Stream<VideoGenerationProgress> _stabilizeVideo(
     String stabilizedVideoPath,
     int frameCount,
@@ -78,11 +121,29 @@ class VideoService {
     Logger().i('Stabilizing video.');
     final framesInputPattern = await _framesInputPattern;
     final transformsFilePath = await _transformsFilePath;
+    final subtitlesFilePath = await _subtitlesFilePath;
+
+    final String primaryColorSubtitle = "\&H0000FFFF"; // Opaque Yellow
+    final String outlineColorSubtitle = "\&H00000000";
+    final String forceStyle =
+        "Fontsize=36," // Bigger font
+        "FontName='Arial',"
+        "PrimaryColour=$primaryColorSubtitle,"
+        "BorderStyle=1," // Enable border/box
+        "Outline=2,"
+        "OutlineColour=$outlineColorSubtitle," // Black outline
+        "BackColour=\&H80000000";
+
+    final String filterGraph =
+        "vidstabtransform=input='$transformsFilePath':smoothing=10,"
+        "subtitles=filename='$subtitlesFilePath'"
+        ":force_style='$forceStyle'"
+        ",";
 
     final String stabilizeCommand =
         "-i $framesInputPattern "
-        "-vf vidstabtransform=input=\"$transformsFilePath\":smoothing=10,"
-        "fps=10 "
+        "-vf \"$filterGraph\" "
+        "-r 10 "
         "-c:v libx264 -pix_fmt yuv420p "
         "$stabilizedVideoPath";
 
@@ -101,8 +162,14 @@ class VideoService {
     ProgressEntryType entryType,
   ) async* {
     Logger().i('Creating video.');
+    final fps = 10;
     final List<ProgressPicture> listPictures = await PicturesFileService()
         .listPicturesForEntryType(entryType);
+
+    await _generateSubtitles(
+      await PicturesFileService.listEntriesWithPictureOfType(entryType),
+      fps,
+    );
 
     final totalStepCount = VideoGenerationStep.values.length - 1; // -1 for done
     final oneStepCompletedProgress = 1 / totalStepCount;
@@ -121,7 +188,6 @@ class VideoService {
       temporaryDirectory.path,
       kStabilizedVideoFilename,
     );
-    await _deleteFile(stabilizedVideoPath);
     VideoGenerationProgress globalProgress = VideoGenerationProgress(
       VideoGenerationStep.analyzing,
       oneStepCompletedProgress,
@@ -139,6 +205,8 @@ class VideoService {
       VideoGenerationStep.stabilizing,
       globalProgress.progress,
     );
+
+    await _deleteFile(stabilizedVideoPath);
     await for (final stabilizationProgress in _stabilizeVideo(
       stabilizedVideoPath,
       listPictures.length,
@@ -168,7 +236,7 @@ class VideoService {
         final returnCode = await session.getReturnCode();
 
         if (ReturnCode.isSuccess(returnCode)) {
-          Logger().i('Command done.');
+          Logger().i('Command done. : $command');
           controller.close();
         } else {
           final allLogs = await session.getAllLogsAsString();
