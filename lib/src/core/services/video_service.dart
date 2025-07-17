@@ -64,7 +64,7 @@ class VideoService {
 
     final String analyzeCommand =
         "-i $framesInputPattern "
-        "-vf vidstabdetect=shakiness=5:accuracy=15:result=\"$transformsFilePath\":tripod=1 "
+        "-vf vidstabdetect=shakiness=1:accuracy=15:result=\"$transformsFilePath\" "
         "-f null -";
     await for (final p in _executeCommand(analyzeCommand)) {
       yield VideoGenerationProgress(VideoGenerationStep.analyzing, p);
@@ -81,9 +81,7 @@ class VideoService {
     final String stabilizeCommand =
         "-i $framesInputPattern "
         "-vf vidstabtransform=input=\"$transformsFilePath\":smoothing=10,"
-        "scale=512:512:force_original_aspect_ratio=decrease,"
-        "pad=ceil(iw/2)*2:ceil(ih/2)*2,"
-        "fps=60 "
+        "fps=10 "
         "-c:v libx264 -pix_fmt yuv420p "
         "$stabilizedVideoPath";
 
