@@ -94,6 +94,10 @@ class PicturesFileService {
         await ProgressEntriesRepository.listEntries();
     List<ProgressPicture> pictures = [];
 
+    entries.sort(
+      (ProgressEntry a, ProgressEntry b) => a.date.compareTo(b.date),
+    );
+
     pictures = entries
         .where((ProgressEntry entry) => entry.pictures.containsKey(type))
         .map((ProgressEntry entry) => entry.pictures[type]!)
