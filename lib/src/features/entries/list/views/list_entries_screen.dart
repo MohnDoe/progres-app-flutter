@@ -61,7 +61,7 @@ class ListEntriesScreen extends ConsumerWidget {
               PopupMenuItem(
                 child: TextButton.icon(
                   icon: FaIcon(FontAwesomeIcons.upload, size: 16),
-                  onPressed: () => context.goNamed(ImportScreen.name),
+                  onPressed: () => context.pushNamed(ImportScreen.name),
                   label: Text("Import photos"),
                 ),
               ),

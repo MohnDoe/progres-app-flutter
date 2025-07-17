@@ -26,7 +26,7 @@ class EntryItem extends StatefulWidget {
 
 class _EntryItemState extends State<EntryItem> {
   void _openPictureViewer(ProgressEntryType type) {
-    context.goNamed(
+    context.pushNamed(
       GalleryScreen.name,
       extra: widget.entry,
       pathParameters: {

@@ -76,7 +76,7 @@ class _TodayEntryHighlightState extends State<TodayEntryHighlight> {
                             height: 80,
                             width: 80,
                             borderRadius: 48,
-                            onTap: () => context.goNamed(
+                            onTap: () => context.pushNamed(
                               GalleryScreen.name,
                               extra: widget.entry,
                               pathParameters: {'entryType': entryType.name},
