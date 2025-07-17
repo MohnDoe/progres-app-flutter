@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
-import 'package:ffmpeg_kit_flutter_new/ffprobe_kit.dart';
 
 import 'package:ffmpeg_kit_flutter_new/return_code.dart';
 import 'package:logger/logger.dart';
@@ -10,7 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/services/file_service.dart';
-import 'package:progres/src/features/video/generation/models/video_generation_progress.dart';
+import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart';
 
 const kStabilizedVideoPrefix = 'timelapse_stabilized';
 const kStabilizedVideoExt = 'mp4';
