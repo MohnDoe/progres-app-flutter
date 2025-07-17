@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
+import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit_config.dart';
 
 import 'package:ffmpeg_kit_flutter_new/return_code.dart';
 import 'package:intl/intl.dart';
@@ -11,6 +13,7 @@ import 'package:path/path.dart' as p;
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/core/services/file_service.dart';
+import 'package:progres/src/core/services/font_service.dart';
 import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart';
 import 'package:subtitle_toolkit/subtitle_toolkit.dart';
 
@@ -64,12 +67,13 @@ class VideoService {
     Logger().i('Analysing video.');
     final framesInputPattern = await _framesInputPattern;
     final transformsFilePath = await _transformsFilePath;
-    await _deleteFile(transformsFilePath);
 
     final String analyzeCommand =
         "-i $framesInputPattern "
         "-vf vidstabdetect=shakiness=1:accuracy=15:result=\"$transformsFilePath\" "
         "-f null -";
+
+    await _deleteFile(transformsFilePath);
     await for (final p in _executeCommand(analyzeCommand, frameCount)) {
       yield VideoGenerationProgress(VideoGenerationStep.analyzing, p);
     }
@@ -82,7 +86,11 @@ class VideoService {
 
     final subtitles = _getSubtitleEntries(entries, fps);
 
-    await SubtitleParser.writeToFile(subtitles, subtitlesFilePath);
+    // await SubtitleParser.writeToFile(subtitles, subtitlesFilePath);
+    await File(subtitlesFilePath).writeAsString(
+      SubtitleParser.entriesToString(subtitles).replaceAll('\x00', ''),
+      encoding: Encoding.getByName('utf-8')!,
+    );
 
     print('Subtitles generated');
   }
@@ -95,6 +103,20 @@ class VideoService {
     int index = 0;
     double frameDurationInMilliseconds = 1000 / fps;
     for (ProgressEntry entry in entries) {
+      String rawDateText = DateFormat.yMMMd().format(
+        entry.date,
+      ); // Or whatever text you use
+      String cleanedDateText = rawDateText.replaceAll(
+        '\x00',
+        '',
+      ); // Remove NULL characters
+
+      if (rawDateText.length != cleanedDateText.length) {
+        // Log if you found and removed NULL characters - good for debugging
+        print(
+          "WARNING: Removed NULL characters from subtitle text for entry date: ${entry.date}",
+        );
+      }
       final startTime = Duration(
         milliseconds: (frameDurationInMilliseconds * index).toInt(),
       );
@@ -104,7 +126,7 @@ class VideoService {
         endTime:
             startTime +
             Duration(milliseconds: frameDurationInMilliseconds.toInt()),
-        text: DateFormat.yMMMd().format(entry.date),
+        text: cleanedDateText,
       );
 
       subtitles.add(subtitleEntry);
@@ -114,6 +136,60 @@ class VideoService {
     return subtitles;
   }
 
+  Stream<VideoGenerationProgress> _addSubtitle(
+    String stabilizedVideoPath,
+    String outputVideoPath,
+    int frameCount,
+  ) async* {
+    Logger().i('Adding subtitles.');
+
+    final subtitlesFilePath = await _subtitlesFilePath;
+    final String appFontDirPath =
+        await FontService.getAppFontDirectoryPath(); // Assume this method exists
+    final String actualFontPathOnDevice = p.join(
+      appFontDirPath,
+      'Roboto-Regular.ttf',
+    );
+    final String fontFileForFilter = actualFontPathOnDevice.replaceAll(
+      '\\',
+      '/',
+    );
+
+    // Verify the file exists just before using it
+    if (!await File(actualFontPathOnDevice).exists()) {
+      Logger().e(
+        "CRITICAL: Bundled font not found at $actualFontPathOnDevice for FFmpeg command!",
+      );
+      // Handle error - maybe don't add subtitles if font is missing
+    }
+    final String primaryColorSubtitle = "&H0000FFFF"; // Opaque Yellow
+    final String outlineColorSubtitle = "&H00000000";
+    final String forceStyle =
+        "Fontsize=36," // Bigger font
+        "Fontfile=$fontFileForFilter"
+        // "PrimaryColour=$primaryColorSubtitle,"
+        // "BorderStyle=1," // Enable border/box
+        // "Outline=2,"
+        // "OutlineColour=$outlineColorSubtitle," // Black outline
+        // "BackColour=\&H80000000"
+        "";
+
+    final String filterGraph =
+        "subtitles=filename='$subtitlesFilePath'"
+        ":force_style='$forceStyle'";
+
+    final String command =
+        "-i $stabilizedVideoPath "
+        "-vf \"$filterGraph\" "
+        "-c:a copy "
+        "$outputVideoPath";
+    Logger().i("Executing FFmpeg command with font: $command");
+    await _deleteFile(outputVideoPath);
+    await for (final p in _executeCommand(command, frameCount)) {
+      yield VideoGenerationProgress(VideoGenerationStep.subtitling, p);
+    }
+  }
+
   Stream<VideoGenerationProgress> _stabilizeVideo(
     String stabilizedVideoPath,
     int frameCount,
@@ -121,24 +197,9 @@ class VideoService {
     Logger().i('Stabilizing video.');
     final framesInputPattern = await _framesInputPattern;
     final transformsFilePath = await _transformsFilePath;
-    final subtitlesFilePath = await _subtitlesFilePath;
-
-    final String primaryColorSubtitle = "\&H0000FFFF"; // Opaque Yellow
-    final String outlineColorSubtitle = "\&H00000000";
-    final String forceStyle =
-        "Fontsize=36," // Bigger font
-        "FontName='Arial',"
-        "PrimaryColour=$primaryColorSubtitle,"
-        "BorderStyle=1," // Enable border/box
-        "Outline=2,"
-        "OutlineColour=$outlineColorSubtitle," // Black outline
-        "BackColour=\&H80000000";
 
     final String filterGraph =
-        "vidstabtransform=input='$transformsFilePath':smoothing=10,"
-        "subtitles=filename='$subtitlesFilePath'"
-        ":force_style='$forceStyle'"
-        ",";
+        "vidstabtransform=input='$transformsFilePath':smoothing=10,";
 
     final String stabilizeCommand =
         "-i $framesInputPattern "
@@ -147,6 +208,7 @@ class VideoService {
         "-c:v libx264 -pix_fmt yuv420p "
         "$stabilizedVideoPath";
 
+    await _deleteFile(stabilizedVideoPath);
     await for (final p in _executeCommand(stabilizeCommand, frameCount)) {
       yield VideoGenerationProgress(VideoGenerationStep.stabilizing, p);
     }
@@ -163,72 +225,115 @@ class VideoService {
   ) async* {
     Logger().i('Creating video.');
     final fps = 10;
-    final List<ProgressPicture> listPictures = await PicturesFileService()
-        .listPicturesForEntryType(entryType);
-
-    await _generateSubtitles(
-      await PicturesFileService.listEntriesWithPictureOfType(entryType),
-      fps,
-    );
-
     final totalStepCount = VideoGenerationStep.values.length - 1; // -1 for done
     final oneStepCompletedProgress = 1 / totalStepCount;
-    yield VideoGenerationProgress(VideoGenerationStep.preparingFrames, 0);
-    await for (final progress in _prepareFrames(listPictures)) {
-      yield VideoGenerationProgress(
-        progress.step,
-        progress.progress / totalStepCount,
-      );
-    }
-
     final temporaryDirectory = await _temporaryDirectory;
     final kStabilizedVideoFilename =
         '${kStabilizedVideoPrefix}_${entryType.name}.$kStabilizedVideoExt';
+
+    final kOutputVideoFilename =
+        'output_${entryType.name}.$kStabilizedVideoExt';
+    final String outputVideoPath = p.join(
+      temporaryDirectory.path,
+      kOutputVideoFilename,
+    );
+
     final String stabilizedVideoPath = p.join(
       temporaryDirectory.path,
       kStabilizedVideoFilename,
     );
-    VideoGenerationProgress globalProgress = VideoGenerationProgress(
-      VideoGenerationStep.analyzing,
-      oneStepCompletedProgress,
-    );
-    yield globalProgress;
-    await for (final analyseProgress in _analyseVideo(listPictures.length)) {
-      globalProgress = VideoGenerationProgress(
-        analyseProgress.step,
-        oneStepCompletedProgress + analyseProgress.progress / totalStepCount,
-      );
-      yield globalProgress;
-    }
 
-    yield VideoGenerationProgress(
-      VideoGenerationStep.stabilizing,
-      globalProgress.progress,
-    );
+    List<ProgressPicture> listPictures = await PicturesFileService()
+        .listPicturesForEntryType(entryType);
+    // TODO: delete this
+    listPictures = listPictures.take(5).toList();
 
-    await _deleteFile(stabilizedVideoPath);
-    await for (final stabilizationProgress in _stabilizeVideo(
+    List<ProgressEntry> entries =
+        await PicturesFileService.listEntriesWithPictureOfType(entryType);
+
+    // TODO: delete this
+    entries = entries.take(5).toList();
+
+    // GENERATE SUBTITLES FILE
+    await _generateSubtitles(entries, fps);
+
+    // PREPARING FRAMES : PUTTING THEM IN TEMP FOLDER IN ORDER
+
+    // yield VideoGenerationProgress(VideoGenerationStep.preparingFrames, 0);
+    // await for (final progress in _prepareFrames(listPictures)) {
+    //   yield VideoGenerationProgress(
+    //     progress.step,
+    //     progress.progress / totalStepCount,
+    //   );
+    // }
+
+    // PREPARING FRAMES DONE
+
+    // ANALYZING
+
+    // VideoGenerationProgress globalProgress = VideoGenerationProgress(
+    //   VideoGenerationStep.analyzing,
+    //   oneStepCompletedProgress,
+    // );
+    // yield globalProgress;
+    // await for (final analyseProgress in _analyseVideo(listPictures.length)) {
+    //   globalProgress = VideoGenerationProgress(
+    //     analyseProgress.step,
+    //     oneStepCompletedProgress + analyseProgress.progress / totalStepCount,
+    //   );
+    //   yield globalProgress;
+    // }
+
+    // ANALYZING DONE
+
+    // STABILIZING
+
+    // yield VideoGenerationProgress(
+    //   VideoGenerationStep.stabilizing,
+    //   globalProgress.progress,
+    // );
+    // await for (final stabilizationProgress in _stabilizeVideo(
+    //   stabilizedVideoPath,
+    //   listPictures.length,
+    // )) {
+    //   globalProgress = VideoGenerationProgress(
+    //     stabilizationProgress.step,
+    //     oneStepCompletedProgress * 2 + // *2 because it's the second step
+    //         stabilizationProgress.progress / totalStepCount,
+    //   );
+    //   yield globalProgress;
+    // }
+
+    // STABILIZING DONE
+
+    // ADDING SUBTITLE
+    yield VideoGenerationProgress(VideoGenerationStep.subtitling, 0);
+    await for (final subtitlingProcess in _addSubtitle(
       stabilizedVideoPath,
+      outputVideoPath,
       listPictures.length,
     )) {
-      globalProgress = VideoGenerationProgress(
-        stabilizationProgress.step,
-        oneStepCompletedProgress * 2 + // *2 because it's the second step
-            stabilizationProgress.progress / totalStepCount,
+      yield VideoGenerationProgress(
+        subtitlingProcess.step,
+        oneStepCompletedProgress * 3 + // *2 because it's the second step
+            subtitlingProcess.progress / totalStepCount,
       );
-      yield globalProgress;
+      // yield globalProgress;
     }
+    // ADDING SUBTITLES DONES
 
-    print('Video generation complete. : $stabilizedVideoPath');
+    print('Video generation complete. : $outputVideoPath');
     yield VideoGenerationProgress(
       VideoGenerationStep.done,
       1,
-      videoPath: stabilizedVideoPath,
+      videoPath: outputVideoPath,
     );
   }
 
   Stream<double> _executeCommand(String command, int frameCount) {
     final controller = StreamController<double>();
+
+    FFmpegKitConfig.setFontDirectoryList(["/system/fonts", "/assets/fonts"]);
 
     FFmpegKit.executeAsync(
       command,

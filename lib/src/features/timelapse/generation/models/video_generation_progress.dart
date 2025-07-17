@@ -2,6 +2,7 @@ enum VideoGenerationStep {
   preparingFrames,
   analyzing,
   stabilizing,
+  subtitling,
   done,
 }
 
