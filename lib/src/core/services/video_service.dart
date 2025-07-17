@@ -104,9 +104,14 @@ class VideoService {
     final List<ProgressPicture> listPictures = await PicturesFileService()
         .listPicturesForEntryType(entryType);
 
+    final totalStepCount = VideoGenerationStep.values.length - 1; // -1 for done
+    final oneStepCompletedProgress = 1 / totalStepCount;
     yield VideoGenerationProgress(VideoGenerationStep.preparingFrames, 0);
     await for (final progress in _prepareFrames(listPictures)) {
-      yield progress;
+      yield VideoGenerationProgress(
+        progress.step,
+        progress.progress / totalStepCount,
+      );
     }
 
     final temporaryDirectory = await _temporaryDirectory;
@@ -119,13 +124,13 @@ class VideoService {
     await _deleteFile(stabilizedVideoPath);
     VideoGenerationProgress globalProgress = VideoGenerationProgress(
       VideoGenerationStep.analyzing,
-      0,
+      oneStepCompletedProgress,
     );
     yield globalProgress;
     await for (final analyseProgress in _analyseVideo(listPictures.length)) {
       globalProgress = VideoGenerationProgress(
         analyseProgress.step,
-        analyseProgress.progress / 2,
+        oneStepCompletedProgress + analyseProgress.progress / totalStepCount,
       );
       yield globalProgress;
     }
@@ -140,7 +145,8 @@ class VideoService {
     )) {
       globalProgress = VideoGenerationProgress(
         stabilizationProgress.step,
-        .5 + stabilizationProgress.progress / 2,
+        oneStepCompletedProgress * 2 + // *2 because it's the second step
+            stabilizationProgress.progress / totalStepCount,
       );
       yield globalProgress;
     }
