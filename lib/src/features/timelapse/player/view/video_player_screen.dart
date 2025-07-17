@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:progres/src/core/ui/widgets/picture_rectangle.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
@@ -39,11 +40,17 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   Widget build(BuildContext context) {
     return Center(
       child: _controller.value.isInitialized
-          ? AspectRatio(
-              aspectRatio: _controller.value.aspectRatio,
-              child: VideoPlayer(_controller),
+          ? Material(
+              child: PictureRectangle(
+                null,
+                width: double.infinity,
+                height: double.infinity,
+                borderRadius: 64,
+                highlight: true,
+                emptyWidget: VideoPlayer(_controller),
+              ),
             )
-          : CircularProgressIndicator(),
+          : const CircularProgressIndicator(),
     );
   }
 }
