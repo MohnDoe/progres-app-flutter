@@ -56,7 +56,7 @@ class VideoService {
     }
   }
 
-  Stream<VideoGenerationProgress> _analyseVideo() async* {
+  Stream<VideoGenerationProgress> _analyseVideo(int frameCount) async* {
     Logger().i('Analysing video.');
     final framesInputPattern = await _framesInputPattern;
     final transformsFilePath = await _transformsFilePath;
@@ -66,13 +66,14 @@ class VideoService {
         "-i $framesInputPattern "
         "-vf vidstabdetect=shakiness=1:accuracy=15:result=\"$transformsFilePath\" "
         "-f null -";
-    await for (final p in _executeCommand(analyzeCommand)) {
+    await for (final p in _executeCommand(analyzeCommand, frameCount)) {
       yield VideoGenerationProgress(VideoGenerationStep.analyzing, p);
     }
   }
 
   Stream<VideoGenerationProgress> _stabilizeVideo(
     String stabilizedVideoPath,
+    int frameCount,
   ) async* {
     Logger().i('Stabilizing video.');
     final framesInputPattern = await _framesInputPattern;
@@ -85,7 +86,7 @@ class VideoService {
         "-c:v libx264 -pix_fmt yuv420p "
         "$stabilizedVideoPath";
 
-    await for (final p in _executeCommand(stabilizeCommand)) {
+    await for (final p in _executeCommand(stabilizeCommand, frameCount)) {
       yield VideoGenerationProgress(VideoGenerationStep.stabilizing, p);
     }
   }
@@ -118,13 +119,16 @@ class VideoService {
     await _deleteFile(stabilizedVideoPath);
 
     yield VideoGenerationProgress(VideoGenerationStep.analyzing, 0);
-    await for (final progress in _analyseVideo()) {
+    await for (final progress in _analyseVideo(listPictures.length)) {
       yield progress;
     }
     yield VideoGenerationProgress(VideoGenerationStep.analyzing, 1);
 
     yield VideoGenerationProgress(VideoGenerationStep.stabilizing, 0);
-    await for (final progress in _stabilizeVideo(stabilizedVideoPath)) {
+    await for (final progress in _stabilizeVideo(
+      stabilizedVideoPath,
+      listPictures.length,
+    )) {
       yield progress;
     }
 
@@ -136,9 +140,8 @@ class VideoService {
     );
   }
 
-  Stream<double> _executeCommand(String command) {
+  Stream<double> _executeCommand(String command, int frameCount) {
     final controller = StreamController<double>();
-    final _duration = 0;
 
     FFmpegKit.executeAsync(
       command,
@@ -160,8 +163,7 @@ class VideoService {
       (statistics) {
         // First step is analysis, which does not provide progress updates.
         if (statistics.getVideoFrameNumber() > 0) {
-          final progress =
-              statistics.getVideoFrameNumber() / statistics.getVideoFps();
+          final progress = statistics.getVideoFrameNumber() / frameCount;
           controller.add(progress);
         }
       },
