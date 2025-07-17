@@ -261,7 +261,12 @@ class ProgressEntriesRepository {
   }
 
   Future<void> initEntries() async {
-    entries = [];
+    entries = await listEntries();
+    _entriesController.add(orderedEntries);
+  }
+
+  Future<List<ProgressEntry>> listEntries() async {
+    final List<ProgressEntry> result = [];
     final List<Directory> matchingDirectories = await PicturesFileService()
         .listEntriesDirectory();
 
@@ -282,9 +287,10 @@ class ProgressEntriesRepository {
         lastModifiedTimestamp: DateTime.now().microsecondsSinceEpoch,
       );
 
-      entries.add(newEntry);
+      result.add(newEntry);
     }
-    _entriesController.add(orderedEntries);
+
+    return result;
   }
 
   Future<void> deleteEntry(ProgressEntry entry) async {
