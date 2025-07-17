@@ -129,9 +129,11 @@ class VideoService {
       );
       yield globalProgress;
     }
-    yield VideoGenerationProgress(VideoGenerationStep.analyzing, 1);
 
-    yield VideoGenerationProgress(VideoGenerationStep.stabilizing, 0);
+    yield VideoGenerationProgress(
+      VideoGenerationStep.stabilizing,
+      globalProgress.progress,
+    );
     await for (final stabilizationProgress in _stabilizeVideo(
       stabilizedVideoPath,
       listPictures.length,
