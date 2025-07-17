@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart';
 import 'package:progres/src/features/timelapse/generation/viewmodels/video_generation_view_model.dart';
 import 'package:progres/src/features/timelapse/player/view/video_player_screen.dart';
@@ -21,11 +22,9 @@ class GenerationScreen extends ConsumerWidget {
           data: (progress) {
             if (progress.step == VideoGenerationStep.done) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        VideoPlayerScreen(videoPath: progress.videoPath!),
-                  ),
+                context.pushNamed(
+                  VideoPlayerScreen.name,
+                  extra: progress.videoPath,
                 );
               });
               return const CircularProgressIndicator();

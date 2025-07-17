@@ -127,7 +127,6 @@ class VideoService {
         analyseProgress.step,
         analyseProgress.progress / 2,
       );
-      print(globalProgress.progress);
       yield globalProgress;
     }
     yield VideoGenerationProgress(VideoGenerationStep.analyzing, 1);

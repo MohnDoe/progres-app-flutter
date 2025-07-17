@@ -5,6 +5,10 @@ import 'package:video_player/video_player.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
   const VideoPlayerScreen({super.key, required this.videoPath});
+
+  static const String name = 'timelapse-player';
+  static const String path = '/timelapse';
+
   final String videoPath;
 
   @override

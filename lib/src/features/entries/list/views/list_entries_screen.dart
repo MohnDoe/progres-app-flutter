@@ -68,7 +68,7 @@ class ListEntriesScreen extends ConsumerWidget {
               ),
               PopupMenuItem(
                 child: TextButton.icon(
-                  onPressed: () => context.pushNamed(GenerationScreen.name),
+                  onPressed: () => context.goNamed(GenerationScreen.name),
                   label: Text("Generation"),
                 ),
               ),
