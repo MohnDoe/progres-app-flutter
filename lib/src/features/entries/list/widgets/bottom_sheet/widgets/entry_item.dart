@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import 'package:progres/src/core/domain/models/progress_entry.dart';
@@ -25,11 +26,13 @@ class EntryItem extends StatefulWidget {
 
 class _EntryItemState extends State<EntryItem> {
   void _openPictureViewer(ProgressEntryType type) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) =>
-            GalleryScreen(currentEntry: widget.entry, entryType: type),
-      ),
+    context.goNamed(
+      GalleryScreen.name,
+      extra: widget.entry,
+      pathParameters: {
+        'entryType': type.name,
+        'mode': GalleryMode.display.name,
+      },
     );
   }
 

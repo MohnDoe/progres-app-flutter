@@ -23,6 +23,8 @@ class GalleryScreen extends ConsumerStatefulWidget {
     this.mode = GalleryMode.display,
     this.secondEntry,
   });
+  static const String name = 'gallery';
+  static final String path = '/gallery/:entryType/:mode';
 
   final ProgressEntryType entryType;
   final ProgressEntry currentEntry;

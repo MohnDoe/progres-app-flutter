@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/ui/widgets/picture_rectangle.dart';
 import 'package:progres/src/features/gallery/views/gallery_screen.dart';
@@ -75,13 +76,10 @@ class _TodayEntryHighlightState extends State<TodayEntryHighlight> {
                             height: 80,
                             width: 80,
                             borderRadius: 48,
-                            onTap: () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => GalleryScreen(
-                                  currentEntry: widget.entry,
-                                  entryType: entryType,
-                                ),
-                              ),
+                            onTap: () => context.goNamed(
+                              GalleryScreen.name,
+                              extra: widget.entry,
+                              pathParameters: {'entryType': entryType.name},
                             ),
                           ),
                         )
