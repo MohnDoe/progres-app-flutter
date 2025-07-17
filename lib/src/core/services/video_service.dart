@@ -8,6 +8,7 @@ import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:progres/src/core/domain/models/progress_entry.dart';
+import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/core/services/file_service.dart';
 import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart';
 
@@ -33,7 +34,7 @@ class VideoService {
   }
 
   Stream<VideoGenerationProgress> _prepareFrames(
-    List<File> listPictures,
+    List<ProgressPicture> listPictures,
   ) async* {
     Logger().i('Preparing frames');
     final framesDirectory = await _framesDirectory;
@@ -47,7 +48,7 @@ class VideoService {
         framesDirectory.path,
         'frame_${i.toString().padLeft(4, '0')}.jpg',
       );
-      await listPictures[i].copy(framePath);
+      await listPictures[i].file.copy(framePath);
       yield VideoGenerationProgress(
         VideoGenerationStep.preparingFrames,
         (i + 1) / listPictures.length,
@@ -101,9 +102,8 @@ class VideoService {
     ProgressEntryType entryType,
   ) async* {
     Logger().i('Creating video.');
-    final List<File> listPictures = await PicturesFileService().listPictures(
-      entryType,
-    );
+    final List<ProgressPicture> listPictures = await PicturesFileService()
+        .listPicturesForEntryType(entryType);
 
     yield VideoGenerationProgress(VideoGenerationStep.preparingFrames, 0);
     await for (final progress in _prepareFrames(listPictures)) {
@@ -112,7 +112,7 @@ class VideoService {
 
     final temporaryDirectory = await _temporaryDirectory;
     final kStabilizedVideoFilename =
-        '${kStabilizedVideoPrefix}_$entryType.$kStabilizedVideoExt';
+        '${kStabilizedVideoPrefix}_${entryType.name}.$kStabilizedVideoExt';
     final String stabilizedVideoPath = p.join(
       temporaryDirectory.path,
       kStabilizedVideoFilename,
@@ -129,6 +129,8 @@ class VideoService {
     await for (final progress in _stabilizeVideo(stabilizedVideoPath)) {
       yield progress;
     }
+
+    print('Video generation complete. : $stabilizedVideoPath');
     yield VideoGenerationProgress(
       VideoGenerationStep.done,
       1,
@@ -158,15 +160,11 @@ class VideoService {
       // (log) => Logger().i(log.getMessage()),
       null,
       (statistics) {
-        Logger().i('getVideoFrameNumber ${statistics.getVideoFrameNumber()}');
-        Logger().i('getVideoFPS ${statistics.getVideoFps()}');
-        Logger().i('getTime ${statistics.getTime()}');
         // First step is analysis, which does not provide progress updates.
         if (statistics.getVideoFrameNumber() > 0) {
           final progress =
               statistics.getVideoFrameNumber() / statistics.getVideoFps();
           controller.add(progress);
-          Logger().i(progress);
         }
       },
     );

@@ -265,7 +265,7 @@ class ProgressEntriesRepository {
     _entriesController.add(orderedEntries);
   }
 
-  Future<List<ProgressEntry>> listEntries() async {
+  static Future<List<ProgressEntry>> listEntries() async {
     final List<ProgressEntry> result = [];
     final List<Directory> matchingDirectories = await PicturesFileService()
         .listEntriesDirectory();
