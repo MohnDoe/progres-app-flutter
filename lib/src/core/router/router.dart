@@ -4,6 +4,8 @@ import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/import/views/import_screen.dart';
 import 'package:progres/src/features/entries/list/views/list_entries_screen.dart';
 import 'package:progres/src/features/gallery/views/gallery_screen.dart';
+import 'package:progres/src/features/timelapse/generation/view/generation_screen.dart';
+import 'package:progres/src/features/timelapse/player/view/video_player_screen.dart';
 
 final router = GoRouter(
   initialLocation: ListEntriesScreen.path,
@@ -38,6 +40,17 @@ final router = GoRouter(
       name: ImportScreen.name,
       path: ImportScreen.path,
       builder: (context, state) => const ImportScreen(),
+    ),
+    GoRoute(
+      name: GenerationScreen.name,
+      path: GenerationScreen.path,
+      builder: (context, state) => const GenerationScreen(),
+    ),
+    GoRoute(
+      name: VideoPlayerScreen.name,
+      path: VideoPlayerScreen.path,
+      builder: (context, state) =>
+          VideoPlayerScreen(videoPath: state.extra as String),
     ),
   ],
 );

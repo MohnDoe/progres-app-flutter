@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -261,7 +260,12 @@ class ProgressEntriesRepository {
   }
 
   Future<void> initEntries() async {
-    entries = [];
+    entries = await listEntries();
+    _entriesController.add(orderedEntries);
+  }
+
+  static Future<List<ProgressEntry>> listEntries() async {
+    final List<ProgressEntry> result = [];
     final List<Directory> matchingDirectories = await PicturesFileService()
         .listEntriesDirectory();
 
@@ -282,9 +286,10 @@ class ProgressEntriesRepository {
         lastModifiedTimestamp: DateTime.now().microsecondsSinceEpoch,
       );
 
-      entries.add(newEntry);
+      result.add(newEntry);
     }
-    _entriesController.add(orderedEntries);
+
+    return result;
   }
 
   Future<void> deleteEntry(ProgressEntry entry) async {

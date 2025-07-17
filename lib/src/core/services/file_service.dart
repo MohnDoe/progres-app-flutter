@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
+import 'package:progres/src/features/entries/_shared/repositories/progress_entries_repository.dart';
 
 const kProjectId = '1';
 
@@ -86,15 +87,23 @@ class PicturesFileService {
     return DateTime(start.year, start.month, start.day);
   }
 
-  Future<List<File>> listPictures(ProgressEntryType type) async {
-    List<File> files = [];
-    final filesDir = "${await _saveDirPath}/$type";
+  Future<List<ProgressPicture>> listPicturesForEntryType(
+    ProgressEntryType type,
+  ) async {
+    final List<ProgressEntry> entries =
+        await ProgressEntriesRepository.listEntries();
+    List<ProgressPicture> pictures = [];
 
-    for (FileSystemEntity fileEntity in Directory(filesDir).listSync()) {
-      files.add(File(fileEntity.path));
-    }
+    entries.sort(
+      (ProgressEntry a, ProgressEntry b) => a.date.compareTo(b.date),
+    );
 
-    return files;
+    pictures = entries
+        .where((ProgressEntry entry) => entry.pictures.containsKey(type))
+        .map((ProgressEntry entry) => entry.pictures[type]!)
+        .toList();
+
+    return pictures;
   }
 
   Future<List<Directory>> listEntriesDirectory() async {

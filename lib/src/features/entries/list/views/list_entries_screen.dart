@@ -9,6 +9,7 @@ import 'package:progres/src/features/entries/list/controllers/list_entries_contr
 import 'package:progres/src/features/entries/list/widgets/add_today_button.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/entry_item.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/entry_bottom_sheet.dart';
+import 'package:progres/src/features/timelapse/generation/view/generation_screen.dart';
 
 /// The screen that displays the list of progress entries.
 ///
@@ -63,6 +64,12 @@ class ListEntriesScreen extends ConsumerWidget {
                   icon: FaIcon(FontAwesomeIcons.upload, size: 16),
                   onPressed: () => context.pushNamed(ImportScreen.name),
                   label: Text("Import photos"),
+                ),
+              ),
+              PopupMenuItem(
+                child: TextButton.icon(
+                  onPressed: () => context.goNamed(GenerationScreen.name),
+                  label: Text("Generation"),
                 ),
               ),
             ],
