@@ -117,19 +117,31 @@ class VideoService {
       kStabilizedVideoFilename,
     );
     await _deleteFile(stabilizedVideoPath);
-
-    yield VideoGenerationProgress(VideoGenerationStep.analyzing, 0);
-    await for (final progress in _analyseVideo(listPictures.length)) {
-      yield progress;
+    VideoGenerationProgress globalProgress = VideoGenerationProgress(
+      VideoGenerationStep.analyzing,
+      0,
+    );
+    yield globalProgress;
+    await for (final analyseProgress in _analyseVideo(listPictures.length)) {
+      globalProgress = VideoGenerationProgress(
+        analyseProgress.step,
+        analyseProgress.progress / 2,
+      );
+      print(globalProgress.progress);
+      yield globalProgress;
     }
     yield VideoGenerationProgress(VideoGenerationStep.analyzing, 1);
 
     yield VideoGenerationProgress(VideoGenerationStep.stabilizing, 0);
-    await for (final progress in _stabilizeVideo(
+    await for (final stabilizationProgress in _stabilizeVideo(
       stabilizedVideoPath,
       listPictures.length,
     )) {
-      yield progress;
+      globalProgress = VideoGenerationProgress(
+        stabilizationProgress.step,
+        .5 + stabilizationProgress.progress / 2,
+      );
+      yield globalProgress;
     }
 
     print('Video generation complete. : $stabilizedVideoPath');
