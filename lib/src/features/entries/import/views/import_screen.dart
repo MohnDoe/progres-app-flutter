@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/features/entries/_shared/repositories/picker/picker.dart';
-import 'package:progres/src/features/entries/_shared/repositories/progress_entries_repository.dart';
 import 'package:progres/src/features/entries/import/controllers/import_controller.dart';
 import 'package:progres/src/features/entries/import/views/widgets/import_day_group.dart';
-import 'package:progres/src/features/entries/import/views/widgets/import_card.dart';
-import 'package:progres/src/features/entries/list/controllers/list_entries_controller.dart';
 
 class ImportScreen extends ConsumerStatefulWidget {
+  static const String name = 'import';
+  static const String path = '/import';
+
   const ImportScreen({super.key});
 
   @override

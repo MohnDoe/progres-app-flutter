@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/_shared/repositories/entry_status_provider.dart';
 import 'package:progres/src/features/entries/import/views/import_screen.dart';
@@ -14,6 +15,9 @@ import 'package:progres/src/features/entries/list/widgets/bottom_sheet/entry_bot
 /// This widget is a [ConsumerWidget], which means it can listen to providers.
 /// It listens to the [listEntriesControllerProvider] to get the state of the entries list.
 class ListEntriesScreen extends ConsumerWidget {
+  static const String name = 'list-entries';
+  static const String path = '/list';
+
   const ListEntriesScreen({super.key});
 
   void _displayEditEntryBottomSheet(
@@ -57,12 +61,7 @@ class ListEntriesScreen extends ConsumerWidget {
               PopupMenuItem(
                 child: TextButton.icon(
                   icon: FaIcon(FontAwesomeIcons.upload, size: 16),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const ImportScreen()),
-                    );
-                  },
+                  onPressed: () => context.pushNamed(ImportScreen.name),
                   label: Text("Import photos"),
                 ),
               ),

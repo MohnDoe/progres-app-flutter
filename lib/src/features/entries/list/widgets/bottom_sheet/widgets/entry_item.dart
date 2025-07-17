@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import 'package:progres/src/core/domain/models/progress_entry.dart';
@@ -6,7 +7,6 @@ import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/core/ui/widgets/picture_rectangle.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/today_entry_highlight.dart';
 import 'package:progres/src/features/gallery/views/gallery_screen.dart';
-import 'package:vector_math/vector_math_64.dart';
 
 class EntryItem extends StatefulWidget {
   const EntryItem({
@@ -25,11 +25,13 @@ class EntryItem extends StatefulWidget {
 
 class _EntryItemState extends State<EntryItem> {
   void _openPictureViewer(ProgressEntryType type) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) =>
-            GalleryScreen(currentEntry: widget.entry, entryType: type),
-      ),
+    context.pushNamed(
+      GalleryScreen.name,
+      extra: widget.entry,
+      pathParameters: {
+        'entryType': type.name,
+        'mode': GalleryMode.display.name,
+      },
     );
   }
 
