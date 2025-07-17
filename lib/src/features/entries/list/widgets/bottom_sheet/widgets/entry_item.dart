@@ -7,7 +7,6 @@ import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/core/ui/widgets/picture_rectangle.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/today_entry_highlight.dart';
 import 'package:progres/src/features/gallery/views/gallery_screen.dart';
-import 'package:vector_math/vector_math_64.dart';
 
 class EntryItem extends StatefulWidget {
   const EntryItem({
