@@ -69,6 +69,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                       borderRadius: 64,
                       highlightColor: Theme.of(context).colorScheme.primary,
                       highlight: true,
+                      aspectRatio: _controller.value.aspectRatio,
                       emptyWidget: VideoPlayer(_controller),
                     ),
                   )
