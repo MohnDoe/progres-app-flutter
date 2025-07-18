@@ -16,10 +16,10 @@ import 'package:progres/src/core/services/file_service.dart';
 import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart';
 import 'package:subtitle_toolkit/subtitle_toolkit.dart';
 
-const kOutputVideoPrefix = 'generated_timelapse';
-const kOutputVideoExt = 'mp4';
-
 class VideoService {
+  static final kOutputVideoPrefix = 'generated_timelapse';
+  static final kOutputVideoExt = 'mp4';
+
   Future<Directory> get _temporaryDirectory async =>
       await getTemporaryDirectory();
   Future<Directory> get _framesDirectory async =>
