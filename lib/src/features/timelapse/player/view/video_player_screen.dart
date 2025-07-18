@@ -192,8 +192,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       ),
       bottomNavigationBar: BottomAppBar(
         child: Row(
+          mainAxisSize: MainAxisSize.max,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            const Spacer(),
             TextButton.icon(
               icon: _isDownloading
                   ? SizedBox(
@@ -208,12 +210,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               label: Text(!_isDownloading ? "Save to gallery" : "Saving..."),
               onPressed: !_isDownloading ? _downloadVideo : null,
             ),
-            const Spacer(),
             IconButton(
               icon: const FaIcon(FontAwesomeIcons.shareNodes),
               onPressed: _shareVideo,
             ),
-            const Spacer(),
           ],
         ),
       ),
