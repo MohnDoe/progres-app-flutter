@@ -16,8 +16,8 @@ import 'package:progres/src/core/services/file_service.dart';
 import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart';
 import 'package:subtitle_toolkit/subtitle_toolkit.dart';
 
-const kStabilizedVideoPrefix = 'timelapse_stabilized';
-const kStabilizedVideoExt = 'mp4';
+const kOutputVideoPrefix = 'generated_timelapse';
+const kOutputVideoExt = 'mp4';
 
 class VideoService {
   Future<Directory> get _temporaryDirectory async =>
@@ -63,7 +63,28 @@ class VideoService {
     }
   }
 
-  Stream<VideoGenerationProgress> _analyseVideo(
+  Stream<VideoGenerationProgress> _generateBasicVideo(
+    String outputVideoPath,
+    int fps,
+    int frameCount,
+  ) async* {
+    Logger().i('Generating basic video.');
+    final framesInputPattern = await _framesInputPattern;
+
+    final String compilingCommand =
+        "-framerate $fps "
+        "-i $framesInputPattern "
+        "-r $fps "
+        "-c:v libx264 -pix_fmt yuv420p "
+        "$outputVideoPath";
+
+    await _deleteFile(outputVideoPath);
+    await for (final p in _executeCommand(compilingCommand, frameCount)) {
+      yield VideoGenerationProgress(VideoGenerationStep.generating, p);
+    }
+  }
+
+  Stream<VideoGenerationProgress> _analyseFrames(
     int fps,
     int frameCount,
   ) async* {
@@ -85,7 +106,10 @@ class VideoService {
     }
   }
 
-  Future<void> _generateSubtitles(List<ProgressEntry> entries, int fps) async {
+  Future<void> _generateSubtitlesFile(
+    List<ProgressEntry> entries,
+    int fps,
+  ) async {
     print('Generating subtitles');
     final subtitlesFilePath = await _subtitlesFilePath;
     await _deleteFile(subtitlesFilePath);
@@ -106,32 +130,23 @@ class VideoService {
     int fps,
   ) {
     List<SubtitleEntry> subtitles = [];
-    int index = 0;
-    double frameDurationInMilliseconds = 1000 / fps;
-    for (ProgressEntry entry in entries) {
-      String rawDateText = DateFormat.yMMMd().format(
-        entry.date,
-      ); // Or whatever text you use
-      String cleanedDateText = rawDateText.replaceAll(
-        '\x00',
-        '',
-      ); // Remove NULL characters
+    Duration frameDuration = Duration(milliseconds: (1000 / fps).toInt());
 
-      if (rawDateText.length != cleanedDateText.length) {
-        // Log if you found and removed NULL characters - good for debugging
-        print(
-          "WARNING: Removed NULL characters from subtitle text for entry date: ${entry.date}",
-        );
-      }
+    int index = 0;
+    for (ProgressEntry entry in entries) {
+      String cleanedDateText = DateFormat.yMMMd()
+          .format(entry.date)
+          .replaceAll('\x00', ''); // Remove NULL characters
+
       final startTime = Duration(
-        milliseconds: (frameDurationInMilliseconds * index).toInt(),
+        milliseconds: (frameDuration.inMilliseconds * index),
       );
+      final endTime = startTime + frameDuration;
+
       final SubtitleEntry subtitleEntry = SubtitleEntry(
         index: index,
         startTime: startTime,
-        endTime:
-            startTime +
-            Duration(milliseconds: frameDurationInMilliseconds.toInt()),
+        endTime: endTime,
         text: cleanedDateText,
       );
 
@@ -155,33 +170,33 @@ class VideoService {
     return filterGraph;
   }
 
-  Stream<VideoGenerationProgress> _stabilizeVideo(
-    String stabilizedVideoPath,
-    int fps,
-    int frameCount,
-  ) async* {
-    Logger().i('Stabilizing video.');
-    final framesInputPattern = await _framesInputPattern;
-    final transformsFilePath = await _transformsFilePath;
-
-    final String vidstabFilterGraph =
-        "vidstabtransform=input='$transformsFilePath':smoothing=10";
-
-    final subtitleFilterGraph = await getSubtitleCommand();
-
-    final String stabilizeCommand =
-        "-framerate $fps "
-        "-i $framesInputPattern "
-        "-vf \"$vidstabFilterGraph,$subtitleFilterGraph\" "
-        "-r $fps "
-        "-c:v libx264 -pix_fmt yuv420p "
-        "$stabilizedVideoPath";
-
-    await _deleteFile(stabilizedVideoPath);
-    await for (final p in _executeCommand(stabilizeCommand, frameCount)) {
-      yield VideoGenerationProgress(VideoGenerationStep.stabilizing, p);
-    }
-  }
+  // Stream<VideoGenerationProgress> _stabilizeVideo(
+  //   String stabilizedVideoPath,
+  //   int fps,
+  //   int frameCount,
+  // ) async* {
+  //   Logger().i('Stabilizing video.');
+  //   final framesInputPattern = await _framesInputPattern;
+  //   final transformsFilePath = await _transformsFilePath;
+  //
+  //   final String vidstabFilterGraph =
+  //       "vidstabtransform=input='$transformsFilePath':smoothing=10";
+  //
+  //   final subtitleFilterGraph = await getSubtitleCommand();
+  //
+  //   final String stabilizeCommand =
+  //       "-framerate $fps "
+  //       "-i $framesInputPattern "
+  //       "-vf \"$vidstabFilterGraph,$subtitleFilterGraph\" "
+  //       "-r $fps "
+  //       "-c:v libx264 -pix_fmt yuv420p "
+  //       "$stabilizedVideoPath";
+  //
+  //   await _deleteFile(stabilizedVideoPath);
+  //   await for (final p in _executeCommand(stabilizeCommand, frameCount)) {
+  //     yield VideoGenerationProgress(VideoGenerationStep.stabilizing, p);
+  //   }
+  // }
 
   Future<void> _deleteFile(String path) async {
     if (await File(path).exists()) {
@@ -194,31 +209,28 @@ class VideoService {
     int fps,
   ) async* {
     Logger().i('Creating video.');
-    final totalStepCount = VideoGenerationStep.values.length - 1; // -1 for done
+    final totalStepCount = [
+      VideoGenerationStep.preparingFrames,
+      VideoGenerationStep.generating,
+    ].length;
     final oneStepCompletedProgress = 1 / totalStepCount;
     final temporaryDirectory = await _temporaryDirectory;
-    final kStabilizedVideoFilename =
-        '${kStabilizedVideoPrefix}_${entryType.name}.$kStabilizedVideoExt';
+    final kOutputVideoFilename =
+        '${kOutputVideoPrefix}_${entryType.name}.$kOutputVideoExt';
 
-    final String stabilizedVideoPath = p.join(
+    final String outputVideoPath = p.join(
       temporaryDirectory.path,
-      kStabilizedVideoFilename,
+      kOutputVideoFilename,
     );
-
-    final String outputVideoPath = stabilizedVideoPath;
 
     List<ProgressPicture> listPictures = await PicturesFileService()
         .listPicturesForEntryType(entryType);
 
-    List<ProgressEntry> entries =
-        await PicturesFileService.listEntriesWithPictureOfType(entryType);
-
     // GENERATE SUBTITLES FILE
-    await _generateSubtitles(entries, fps);
+    // await _generateSubtitles(entries, fps);
 
     // PREPARING FRAMES : PUTTING THEM IN TEMP FOLDER IN ORDER
 
-    yield VideoGenerationProgress(VideoGenerationStep.preparingFrames, 0);
     await for (final progress in _prepareFrames(listPictures)) {
       yield VideoGenerationProgress(
         progress.step,
@@ -227,47 +239,21 @@ class VideoService {
     }
 
     // PREPARING FRAMES DONE
-
-    // ANALYZING
-
-    VideoGenerationProgress globalProgress = VideoGenerationProgress(
-      VideoGenerationStep.analyzing,
+    yield VideoGenerationProgress(
+      VideoGenerationStep.generating,
       oneStepCompletedProgress,
     );
-    yield globalProgress;
-    await for (final analyseProgress in _analyseVideo(
+    await for (final basicGenerationProgress in _generateBasicVideo(
+      outputVideoPath,
       fps,
       listPictures.length,
     )) {
-      globalProgress = VideoGenerationProgress(
-        analyseProgress.step,
-        oneStepCompletedProgress + analyseProgress.progress / totalStepCount,
+      yield VideoGenerationProgress(
+        basicGenerationProgress.step,
+        oneStepCompletedProgress +
+            basicGenerationProgress.progress / totalStepCount,
       );
-      yield globalProgress;
     }
-
-    // ANALYZING DONE
-
-    // STABILIZING
-
-    yield VideoGenerationProgress(
-      VideoGenerationStep.stabilizing,
-      globalProgress.progress,
-    );
-    await for (final stabilizationProgress in _stabilizeVideo(
-      stabilizedVideoPath,
-      fps,
-      listPictures.length,
-    )) {
-      globalProgress = VideoGenerationProgress(
-        stabilizationProgress.step,
-        oneStepCompletedProgress * 2 + // *2 because it's the second step
-            stabilizationProgress.progress / totalStepCount,
-      );
-      yield globalProgress;
-    }
-
-    // STABILIZING DONE
 
     print('Video generation complete. : $outputVideoPath');
     yield VideoGenerationProgress(
