@@ -25,12 +25,13 @@ class VideoService {
   Future<Directory> get _framesDirectory async =>
       Directory(p.join((await _temporaryDirectory).path, 'frames'));
 
-  Future<String> get _framesInputPattern async =>
-      p.join((await _framesDirectory).path, 'frame_%04d.jpg');
   Future<String> get _transformsFilePath async =>
       p.join((await _temporaryDirectory).path, 'transforms.trf');
   Future<String> get _subtitlesFilePath async =>
       p.join((await _temporaryDirectory).path, 'subtitles.srt');
+
+  Future<String> get _framesInputPattern async =>
+      p.join((await _framesDirectory).path, 'frame_%04d.jpg');
 
   Future<void> _initFramesDirectory() async {
     final framesDirectory = await _framesDirectory;
@@ -62,14 +63,20 @@ class VideoService {
     }
   }
 
-  Stream<VideoGenerationProgress> _analyseVideo(int frameCount) async* {
+  Stream<VideoGenerationProgress> _analyseVideo(
+    int fps,
+    int frameCount,
+  ) async* {
     Logger().i('Analysing video.');
     final framesInputPattern = await _framesInputPattern;
     final transformsFilePath = await _transformsFilePath;
 
     final String analyzeCommand =
+        "-framerate $fps "
         "-i $framesInputPattern "
-        "-vf vidstabdetect=shakiness=1:accuracy=15:result=\"$transformsFilePath\" "
+        "-vf vidstabdetect=shakiness=1"
+        ":accuracy=15"
+        ":result=\"$transformsFilePath\" "
         "-f null -";
 
     await _deleteFile(transformsFilePath);
@@ -138,17 +145,9 @@ class VideoService {
   Future<String> getSubtitleCommand() async {
     final subtitlesFilePath = await _subtitlesFilePath;
 
-    final String primaryColorSubtitle = "&H0000FFFF"; // Opaque Yellow
-    final String outlineColorSubtitle = "&H00000000";
     final String forceStyle =
-        "Fontsize=36,"
-        "FontName=Roboto-Regular" // Bigger font
-        "PrimaryColour=$primaryColorSubtitle,"
-        "BorderStyle=1," // Enable border/box
-        "Outline=2,"
-        "OutlineColour=$outlineColorSubtitle," // Black outline
-        "BackColour=&H80000000"
-        "";
+        "Fontsize=14,"
+        "FontName=Roboto-Regular"; // Bigger font
     final String filterGraph =
         "subtitles=filename='$subtitlesFilePath'"
         ":force_style='$forceStyle'";
@@ -158,6 +157,7 @@ class VideoService {
 
   Stream<VideoGenerationProgress> _stabilizeVideo(
     String stabilizedVideoPath,
+    int fps,
     int frameCount,
   ) async* {
     Logger().i('Stabilizing video.');
@@ -170,9 +170,10 @@ class VideoService {
     final subtitleFilterGraph = await getSubtitleCommand();
 
     final String stabilizeCommand =
+        "-framerate $fps "
         "-i $framesInputPattern "
         "-vf \"$vidstabFilterGraph,$subtitleFilterGraph\" "
-        "-r 10 "
+        "-r $fps "
         "-c:v libx264 -pix_fmt yuv420p "
         "$stabilizedVideoPath";
 
@@ -190,26 +191,21 @@ class VideoService {
 
   Stream<VideoGenerationProgress> createVideo(
     ProgressEntryType entryType,
+    int fps,
   ) async* {
     Logger().i('Creating video.');
-    final fps = 10;
     final totalStepCount = VideoGenerationStep.values.length - 1; // -1 for done
     final oneStepCompletedProgress = 1 / totalStepCount;
     final temporaryDirectory = await _temporaryDirectory;
     final kStabilizedVideoFilename =
         '${kStabilizedVideoPrefix}_${entryType.name}.$kStabilizedVideoExt';
 
-    final kOutputVideoFilename =
-        'output_${entryType.name}.$kStabilizedVideoExt';
-    final String outputVideoPath = p.join(
-      temporaryDirectory.path,
-      kOutputVideoFilename,
-    );
-
     final String stabilizedVideoPath = p.join(
       temporaryDirectory.path,
       kStabilizedVideoFilename,
     );
+
+    final String outputVideoPath = stabilizedVideoPath;
 
     List<ProgressPicture> listPictures = await PicturesFileService()
         .listPicturesForEntryType(entryType);
@@ -244,7 +240,10 @@ class VideoService {
       oneStepCompletedProgress,
     );
     yield globalProgress;
-    await for (final analyseProgress in _analyseVideo(listPictures.length)) {
+    await for (final analyseProgress in _analyseVideo(
+      fps,
+      listPictures.length,
+    )) {
       globalProgress = VideoGenerationProgress(
         analyseProgress.step,
         oneStepCompletedProgress + analyseProgress.progress / totalStepCount,
@@ -262,6 +261,7 @@ class VideoService {
     );
     await for (final stabilizationProgress in _stabilizeVideo(
       stabilizedVideoPath,
+      fps,
       listPictures.length,
     )) {
       globalProgress = VideoGenerationProgress(

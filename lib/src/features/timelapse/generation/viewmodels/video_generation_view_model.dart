@@ -5,5 +5,5 @@ import 'package:progres/src/features/timelapse/generation/models/video_generatio
 
 final videoGenerationViewModelProvider =
     StreamProvider<VideoGenerationProgress>((ref) {
-      return VideoService().createVideo(ProgressEntryType.front);
+      return VideoService().createVideo(ProgressEntryType.front, 10);
     });
