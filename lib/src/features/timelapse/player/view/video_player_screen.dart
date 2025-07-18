@@ -180,8 +180,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   },
                   icon: FaIcon(
                     _controller?.value.isLooping ?? false
-                        ? FontAwesomeIcons.solidRepeat
-                        : FontAwesomeIcons.solidRepeat1,
+                        ? FontAwesomeIcons.solidRepeat1
+                        : FontAwesomeIcons.solidRepeat,
                     color: _controller?.value.isLooping ?? false
                         ? Theme.of(context).colorScheme.onPrimary
                         : null,
