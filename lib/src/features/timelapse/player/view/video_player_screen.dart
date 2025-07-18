@@ -25,6 +25,8 @@ class VideoPlayerScreen extends StatefulWidget {
 class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   late String videoPath;
 
+  bool _isDownloading = false;
+
   VideoPlayerController? _controller;
 
   @override
@@ -46,6 +48,26 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         // Ensure the first frame is shown after the video is initialized, even before the video is played.
         if (mounted) setState(() {});
       });
+  }
+
+  Future<void> _downloadVideo() async {
+    setState(() {
+      _isDownloading = true;
+    });
+    await FileSaver.instance.saveFile(
+      name: "${VideoService.kOutputVideoPrefix}_front",
+      file: File(videoPath),
+      fileExtension: VideoService.kOutputVideoExt,
+      mimeType: MimeType.mp4Video,
+    );
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Video saved to gallery")));
+    }
+    setState(() {
+      _isDownloading = false;
+    });
   }
 
   @override
@@ -154,34 +176,29 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 32),
-            FilledButton.icon(
-              icon: const FaIcon(FontAwesomeIcons.download),
-              label: const Text("Download"),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 16,
-                ),
-              ),
-              onPressed: () async {
-                await FileSaver.instance.saveFile(
-                  name: "${VideoService.kOutputVideoPrefix}_front",
-                  file: File(videoPath),
-                  fileExtension: VideoService.kOutputVideoExt,
-                  mimeType: MimeType.mp4Video,
-                );
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Video saved to gallery")),
-                  );
-                }
-              },
+          ],
+        ),
+      ),
+      bottomNavigationBar: BottomAppBar(
+        child: Row(
+          children: [
+            TextButton.icon(
+              icon: _isDownloading
+                  ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    )
+                  : const FaIcon(FontAwesomeIcons.floppyDisk),
+              label: Text(!_isDownloading ? "Save to gallery" : "Saving..."),
+              onPressed: !_isDownloading ? _downloadVideo : null,
             ),
           ],
         ),
       ),
-      bottomNavigationBar: BottomAppBar(),
     );
   }
 }
