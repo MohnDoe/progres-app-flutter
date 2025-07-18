@@ -156,7 +156,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   },
                   icon: FaIcon(
                     _controller?.value.isPlaying ?? false
-                        ? FontAwesomeIcons.pause
+                        ? FontAwesomeIcons.solidPause
                         : FontAwesomeIcons.play,
                   ),
                 ),
@@ -179,7 +179,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                     });
                   },
                   icon: FaIcon(
-                    FontAwesomeIcons.repeat,
+                    _controller?.value.isLooping ?? false
+                        ? FontAwesomeIcons.solidRepeat
+                        : FontAwesomeIcons.solidRepeat1,
                     color: _controller?.value.isLooping ?? false
                         ? Theme.of(context).colorScheme.onPrimary
                         : null,
@@ -211,7 +213,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               onPressed: !_isDownloading ? _downloadVideo : null,
             ),
             IconButton(
-              icon: const FaIcon(FontAwesomeIcons.shareNodes),
+              iconSize: 16,
+              icon: const FaIcon(FontAwesomeIcons.arrowUpFromBracket),
               onPressed: _shareVideo,
             ),
           ],
