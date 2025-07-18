@@ -2,8 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:progres/font_awesome_flutter/lib/font_awesome_flutter.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/_shared/repositories/progress_entries_repository.dart';
 import 'package:progres/src/features/gallery/widget/picture_display.dart';
@@ -424,7 +424,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                   ? () => move(CarouselDirection.left, far: true)
                   : null,
               iconSize: 16,
-              icon: const FaIcon(FontAwesomeIcons.anglesLeft),
+              icon: const FaIcon(FontAwesomeIcons.solidAnglesLeft),
             ),
             const SizedBox(width: 16),
             IconButton(
@@ -432,7 +432,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                   ? () => move(CarouselDirection.left)
                   : null,
               iconSize: 16,
-              icon: const FaIcon(FontAwesomeIcons.chevronLeft),
+              icon: const FaIcon(FontAwesomeIcons.solidChevronLeft),
             ),
             IconButton.filled(
               iconSize: 16,
@@ -440,7 +440,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
               icon: FaIcon(
                 mode == GalleryMode.display
                     ? FontAwesomeIcons.square
-                    : FontAwesomeIcons.bars,
+                    : FontAwesomeIcons.rectangleWide,
               ),
             ),
             IconButton(
@@ -448,7 +448,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                   ? () => move(CarouselDirection.right)
                   : null,
               iconSize: 16,
-              icon: const FaIcon(FontAwesomeIcons.chevronRight),
+              icon: const FaIcon(FontAwesomeIcons.solidChevronRight),
             ),
             const SizedBox(width: 16),
             IconButton(
@@ -456,7 +456,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                   ? () => move(CarouselDirection.right, far: true)
                   : null,
               iconSize: 16,
-              icon: const FaIcon(FontAwesomeIcons.anglesRight),
+              icon: const FaIcon(FontAwesomeIcons.solidAnglesRight),
             ),
           ],
         ),
