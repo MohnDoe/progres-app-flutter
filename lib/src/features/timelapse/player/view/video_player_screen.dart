@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:path_provider/path_provider.dart';
@@ -40,7 +41,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
     _controller = VideoPlayerController.file(File(videoPath))
       ..initialize().then((_) {
-        setState(() {});
         _controller.play();
         _controller.setLooping(true);
       });
@@ -79,6 +79,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               _controller,
               allowScrubbing: true,
               colors: VideoProgressColors(
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerLow,
                 playedColor: Theme.of(context).colorScheme.primary,
                 bufferedColor: Theme.of(
                   context,
@@ -146,6 +149,30 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 32),
+            FilledButton.icon(
+              icon: const FaIcon(FontAwesomeIcons.download),
+              label: const Text("Download"),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 16,
+                ),
+              ),
+              onPressed: () async {
+                await FileSaver.instance.saveFile(
+                  name: "${VideoService.kOutputVideoPrefix}_front",
+                  file: File(videoPath),
+                  fileExtension: VideoService.kOutputVideoExt,
+                  mimeType: MimeType.mp4Video,
+                );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Video saved to gallery")),
+                  );
+                }
+              },
             ),
           ],
         ),
