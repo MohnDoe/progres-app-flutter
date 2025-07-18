@@ -146,7 +146,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                     vertical: 16,
                   ),
                   onPressed:
-                      _controller != null && !_controller!.value.isInitialized
+                      _controller != null && _controller!.value.isInitialized
                       ? () {
                           setState(() {
                             if (_controller?.value.isPlaying ?? false) {
