@@ -53,8 +53,6 @@ class GenerationScreen extends ConsumerWidget {
         return 'Analyzing Video';
       case VideoGenerationStep.stabilizing:
         return 'Stabilizing Video';
-      case VideoGenerationStep.subtitling:
-        return 'Adding dates';
       case VideoGenerationStep.done:
         return 'Done';
     }

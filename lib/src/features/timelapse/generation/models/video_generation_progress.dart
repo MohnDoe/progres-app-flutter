@@ -1,10 +1,4 @@
-enum VideoGenerationStep {
-  preparingFrames,
-  analyzing,
-  stabilizing,
-  subtitling,
-  done,
-}
+enum VideoGenerationStep { preparingFrames, analyzing, stabilizing, done }
 
 class VideoGenerationProgress {
   final VideoGenerationStep step;

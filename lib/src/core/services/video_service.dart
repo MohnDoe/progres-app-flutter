@@ -13,7 +13,6 @@ import 'package:path/path.dart' as p;
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/core/services/file_service.dart';
-import 'package:progres/src/core/services/font_service.dart';
 import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart';
 import 'package:subtitle_toolkit/subtitle_toolkit.dart';
 
@@ -136,58 +135,25 @@ class VideoService {
     return subtitles;
   }
 
-  Stream<VideoGenerationProgress> _addSubtitle(
-    String stabilizedVideoPath,
-    String outputVideoPath,
-    int frameCount,
-  ) async* {
-    Logger().i('Adding subtitles.');
-
+  Future<String> getSubtitleCommand() async {
     final subtitlesFilePath = await _subtitlesFilePath;
-    final String appFontDirPath =
-        await FontService.getAppFontDirectoryPath(); // Assume this method exists
-    final String actualFontPathOnDevice = p.join(
-      appFontDirPath,
-      'Roboto-Regular.ttf',
-    );
-    final String fontFileForFilter = actualFontPathOnDevice.replaceAll(
-      '\\',
-      '/',
-    );
 
-    // Verify the file exists just before using it
-    if (!await File(actualFontPathOnDevice).exists()) {
-      Logger().e(
-        "CRITICAL: Bundled font not found at $actualFontPathOnDevice for FFmpeg command!",
-      );
-      // Handle error - maybe don't add subtitles if font is missing
-    }
     final String primaryColorSubtitle = "&H0000FFFF"; // Opaque Yellow
     final String outlineColorSubtitle = "&H00000000";
     final String forceStyle =
-        "Fontsize=36," // Bigger font
-        "Fontfile=$fontFileForFilter"
-        // "PrimaryColour=$primaryColorSubtitle,"
-        // "BorderStyle=1," // Enable border/box
-        // "Outline=2,"
-        // "OutlineColour=$outlineColorSubtitle," // Black outline
-        // "BackColour=\&H80000000"
+        "Fontsize=36,"
+        "FontName=Roboto-Regular" // Bigger font
+        "PrimaryColour=$primaryColorSubtitle,"
+        "BorderStyle=1," // Enable border/box
+        "Outline=2,"
+        "OutlineColour=$outlineColorSubtitle," // Black outline
+        "BackColour=&H80000000"
         "";
-
     final String filterGraph =
         "subtitles=filename='$subtitlesFilePath'"
         ":force_style='$forceStyle'";
 
-    final String command =
-        "-i $stabilizedVideoPath "
-        "-vf \"$filterGraph\" "
-        "-c:a copy "
-        "$outputVideoPath";
-    Logger().i("Executing FFmpeg command with font: $command");
-    await _deleteFile(outputVideoPath);
-    await for (final p in _executeCommand(command, frameCount)) {
-      yield VideoGenerationProgress(VideoGenerationStep.subtitling, p);
-    }
+    return filterGraph;
   }
 
   Stream<VideoGenerationProgress> _stabilizeVideo(
@@ -198,12 +164,14 @@ class VideoService {
     final framesInputPattern = await _framesInputPattern;
     final transformsFilePath = await _transformsFilePath;
 
-    final String filterGraph =
-        "vidstabtransform=input='$transformsFilePath':smoothing=10,";
+    final String vidstabFilterGraph =
+        "vidstabtransform=input='$transformsFilePath':smoothing=10";
+
+    final subtitleFilterGraph = await getSubtitleCommand();
 
     final String stabilizeCommand =
         "-i $framesInputPattern "
-        "-vf \"$filterGraph\" "
+        "-vf \"$vidstabFilterGraph,$subtitleFilterGraph\" "
         "-r 10 "
         "-c:v libx264 -pix_fmt yuv420p "
         "$stabilizedVideoPath";
@@ -259,68 +227,52 @@ class VideoService {
 
     // PREPARING FRAMES : PUTTING THEM IN TEMP FOLDER IN ORDER
 
-    // yield VideoGenerationProgress(VideoGenerationStep.preparingFrames, 0);
-    // await for (final progress in _prepareFrames(listPictures)) {
-    //   yield VideoGenerationProgress(
-    //     progress.step,
-    //     progress.progress / totalStepCount,
-    //   );
-    // }
+    yield VideoGenerationProgress(VideoGenerationStep.preparingFrames, 0);
+    await for (final progress in _prepareFrames(listPictures)) {
+      yield VideoGenerationProgress(
+        progress.step,
+        progress.progress / totalStepCount,
+      );
+    }
 
     // PREPARING FRAMES DONE
 
     // ANALYZING
 
-    // VideoGenerationProgress globalProgress = VideoGenerationProgress(
-    //   VideoGenerationStep.analyzing,
-    //   oneStepCompletedProgress,
-    // );
-    // yield globalProgress;
-    // await for (final analyseProgress in _analyseVideo(listPictures.length)) {
-    //   globalProgress = VideoGenerationProgress(
-    //     analyseProgress.step,
-    //     oneStepCompletedProgress + analyseProgress.progress / totalStepCount,
-    //   );
-    //   yield globalProgress;
-    // }
+    VideoGenerationProgress globalProgress = VideoGenerationProgress(
+      VideoGenerationStep.analyzing,
+      oneStepCompletedProgress,
+    );
+    yield globalProgress;
+    await for (final analyseProgress in _analyseVideo(listPictures.length)) {
+      globalProgress = VideoGenerationProgress(
+        analyseProgress.step,
+        oneStepCompletedProgress + analyseProgress.progress / totalStepCount,
+      );
+      yield globalProgress;
+    }
 
     // ANALYZING DONE
 
     // STABILIZING
 
-    // yield VideoGenerationProgress(
-    //   VideoGenerationStep.stabilizing,
-    //   globalProgress.progress,
-    // );
-    // await for (final stabilizationProgress in _stabilizeVideo(
-    //   stabilizedVideoPath,
-    //   listPictures.length,
-    // )) {
-    //   globalProgress = VideoGenerationProgress(
-    //     stabilizationProgress.step,
-    //     oneStepCompletedProgress * 2 + // *2 because it's the second step
-    //         stabilizationProgress.progress / totalStepCount,
-    //   );
-    //   yield globalProgress;
-    // }
-
-    // STABILIZING DONE
-
-    // ADDING SUBTITLE
-    yield VideoGenerationProgress(VideoGenerationStep.subtitling, 0);
-    await for (final subtitlingProcess in _addSubtitle(
+    yield VideoGenerationProgress(
+      VideoGenerationStep.stabilizing,
+      globalProgress.progress,
+    );
+    await for (final stabilizationProgress in _stabilizeVideo(
       stabilizedVideoPath,
-      outputVideoPath,
       listPictures.length,
     )) {
-      yield VideoGenerationProgress(
-        subtitlingProcess.step,
-        oneStepCompletedProgress * 3 + // *2 because it's the second step
-            subtitlingProcess.progress / totalStepCount,
+      globalProgress = VideoGenerationProgress(
+        stabilizationProgress.step,
+        oneStepCompletedProgress * 2 + // *2 because it's the second step
+            stabilizationProgress.progress / totalStepCount,
       );
-      // yield globalProgress;
+      yield globalProgress;
     }
-    // ADDING SUBTITLES DONES
+
+    // STABILIZING DONE
 
     print('Video generation complete. : $outputVideoPath');
     yield VideoGenerationProgress(
@@ -331,6 +283,7 @@ class VideoService {
   }
 
   Stream<double> _executeCommand(String command, int frameCount) {
+    Logger().i('Executing command: $command');
     final controller = StreamController<double>();
 
     FFmpegKitConfig.setFontDirectoryList(["/system/fonts", "/assets/fonts"]);
