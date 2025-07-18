@@ -26,9 +26,9 @@ class ProgressEntry {
 
   static FaIcon getIconFromType(ProgressEntryType type) {
     return switch (type) {
-      ProgressEntryType.front => FaIcon(FontAwesomeIcons.childReaching),
-      ProgressEntryType.side => FaIcon(FontAwesomeIcons.personWalking),
-      ProgressEntryType.back => FaIcon(FontAwesomeIcons.person),
+      ProgressEntryType.front => FaIcon(FontAwesomeIcons.solidChildReaching),
+      ProgressEntryType.side => FaIcon(FontAwesomeIcons.solidPersonWalking),
+      ProgressEntryType.back => FaIcon(FontAwesomeIcons.solidPerson),
     };
   }
 

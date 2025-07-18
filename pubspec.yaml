@@ -52,6 +52,9 @@ dependencies:
   file_saver: ^0.3.1
   share_plus: ^11.0.0
 
+dependency_overrides:
+  font_awesome_flutter:
+    path: lib/font_awesome_flutter
 dev_dependencies:
   flutter_test:
     sdk: flutter
