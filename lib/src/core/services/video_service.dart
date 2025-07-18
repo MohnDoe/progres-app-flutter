@@ -209,14 +209,9 @@ class VideoService {
 
     List<ProgressPicture> listPictures = await PicturesFileService()
         .listPicturesForEntryType(entryType);
-    // TODO: delete this
-    listPictures = listPictures.take(5).toList();
 
     List<ProgressEntry> entries =
         await PicturesFileService.listEntriesWithPictureOfType(entryType);
-
-    // TODO: delete this
-    entries = entries.take(5).toList();
 
     // GENERATE SUBTITLES FILE
     await _generateSubtitles(entries, fps);
