@@ -11,7 +11,7 @@ final router = GoRouter(
   initialExtra: '', // TODO : delete this before merging
   // TODO: change this back
   initialLocation: VideoPlayerScreen.path,
-  // initialLocation: GalleryScreen.path,
+  // initialLocation: ListEntriesScreen.path,
   routes: [
     GoRoute(
       name: GalleryScreen.name,
