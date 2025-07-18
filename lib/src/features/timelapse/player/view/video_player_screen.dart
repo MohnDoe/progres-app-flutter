@@ -145,19 +145,22 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                     horizontal: 32,
                     vertical: 16,
                   ),
-                  onPressed: () {
-                    setState(() {
-                      if (_controller?.value.isPlaying ?? false) {
-                        _controller?.pause();
-                      } else {
-                        _controller?.play();
-                      }
-                    });
-                  },
+                  onPressed:
+                      _controller != null && !_controller!.value.isInitialized
+                      ? () {
+                          setState(() {
+                            if (_controller?.value.isPlaying ?? false) {
+                              _controller?.pause();
+                            } else {
+                              _controller?.play();
+                            }
+                          });
+                        }
+                      : null,
                   icon: FaIcon(
                     _controller?.value.isPlaying ?? false
-                        ? FontAwesomeIcons.solidPause
-                        : FontAwesomeIcons.play,
+                        ? FontAwesomeIcons.pause
+                        : FontAwesomeIcons.solidPlay,
                   ),
                 ),
                 IconButton.filledTonal(
