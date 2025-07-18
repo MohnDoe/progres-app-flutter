@@ -25,7 +25,7 @@ class VideoPlayerScreen extends StatefulWidget {
 class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   late String videoPath;
 
-  late VideoPlayerController _controller;
+  VideoPlayerController? _controller;
 
   @override
   void initState() {
@@ -41,14 +41,16 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
     _controller = VideoPlayerController.file(File(videoPath))
       ..initialize().then((_) {
-        _controller.play();
-        _controller.setLooping(true);
+        _controller?.play();
+        _controller?.setLooping(true);
+        // Ensure the first frame is shown after the video is initialized, even before the video is played.
+        if (mounted) setState(() {});
       });
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
@@ -69,25 +71,26 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               borderRadius: 64,
               highlightColor: Theme.of(context).colorScheme.primary,
               highlight: true,
-              aspectRatio: _controller.value.aspectRatio,
-              emptyWidget: _controller.value.isInitialized
-                  ? VideoPlayer(_controller)
+              aspectRatio: _controller?.value.aspectRatio ?? 1,
+              emptyWidget: _controller?.value.isInitialized ?? false
+                  ? VideoPlayer(_controller!)
                   : const Center(child: CircularProgressIndicator()),
             ),
             const SizedBox(height: 32),
-            VideoProgressIndicator(
-              _controller,
-              allowScrubbing: true,
-              colors: VideoProgressColors(
-                backgroundColor: Theme.of(
-                  context,
-                ).colorScheme.surfaceContainerLow,
-                playedColor: Theme.of(context).colorScheme.primary,
-                bufferedColor: Theme.of(
-                  context,
-                ).colorScheme.surfaceContainerHighest,
+            if (_controller != null)
+              VideoProgressIndicator(
+                _controller!,
+                allowScrubbing: true,
+                colors: VideoProgressColors(
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerLow,
+                  playedColor: Theme.of(context).colorScheme.primary,
+                  bufferedColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest,
+                ),
               ),
-            ),
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -100,7 +103,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                     vertical: 16,
                   ),
                   onPressed: () {
-                    _controller.seekTo(Duration.zero);
+                    _controller?.seekTo(Duration.zero);
                   },
                   icon: const FaIcon(FontAwesomeIcons.backwardFast),
                 ),
@@ -111,15 +114,15 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   ),
                   onPressed: () {
                     setState(() {
-                      if (_controller.value.isPlaying) {
-                        _controller.pause();
+                      if (_controller?.value.isPlaying ?? false) {
+                        _controller?.pause();
                       } else {
-                        _controller.play();
+                        _controller?.play();
                       }
                     });
                   },
                   icon: FaIcon(
-                    _controller.value.isPlaying
+                    _controller?.value.isPlaying ?? false
                         ? FontAwesomeIcons.pause
                         : FontAwesomeIcons.play,
                   ),
@@ -129,7 +132,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                     horizontal: 16,
                     vertical: 16,
                   ),
-                  style: _controller.value.isLooping
+                  style: _controller?.value.isLooping ?? false
                       ? IconButton.styleFrom(
                           backgroundColor: Theme.of(
                             context,
@@ -138,12 +141,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                       : null,
                   onPressed: () {
                     setState(() {
-                      _controller.setLooping(!_controller.value.isLooping);
+                      final isLooping = _controller?.value.isLooping ?? false;
+                      _controller?.setLooping(!isLooping);
                     });
                   },
                   icon: FaIcon(
                     FontAwesomeIcons.repeat,
-                    color: _controller.value.isLooping
+                    color: _controller?.value.isLooping ?? false
                         ? Theme.of(context).colorScheme.onPrimary
                         : null,
                   ),
