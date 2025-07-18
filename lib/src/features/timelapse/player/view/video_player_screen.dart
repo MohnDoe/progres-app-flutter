@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:progres/src/core/services/video_service.dart';
 import 'package:progres/src/core/ui/widgets/picture_rectangle.dart';
 import 'package:video_player/video_player.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'package:path/path.dart' as p;
 
@@ -68,6 +69,16 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     setState(() {
       _isDownloading = false;
     });
+  }
+
+  Future<void> _shareVideo() async {
+    await SharePlus.instance.share(
+      ShareParams(
+        title: 'Body timelapse video',
+        files: [XFile(videoPath)],
+        previewThumbnail: XFile(videoPath),
+      ),
+    );
   }
 
   @override
@@ -182,6 +193,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       bottomNavigationBar: BottomAppBar(
         child: Row(
           children: [
+            const Spacer(),
             TextButton.icon(
               icon: _isDownloading
                   ? SizedBox(
@@ -192,10 +204,16 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                         color: Theme.of(context).colorScheme.primary,
                       ),
                     )
-                  : const FaIcon(FontAwesomeIcons.floppyDisk),
+                  : null,
               label: Text(!_isDownloading ? "Save to gallery" : "Saving..."),
               onPressed: !_isDownloading ? _downloadVideo : null,
             ),
+            const Spacer(),
+            IconButton(
+              icon: const FaIcon(FontAwesomeIcons.shareNodes),
+              onPressed: _shareVideo,
+            ),
+            const Spacer(),
           ],
         ),
       ),
