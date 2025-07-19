@@ -200,8 +200,9 @@ class MLKitService {
         // Choose a single scale factor. Average can be a good compromise,
         // or prioritize one (e.g., spine length).
         // Using spine for now as it's often more stable for body size.
-        double overallScaleFactor = scaleFactorSpine;
-        // Or: double overallScaleFactor = (scaleFactorSpine + scaleFactorShoulder) / 2.0;
+        // double overallScaleFactor = scaleFactorSpine;
+        double overallScaleFactor = scaleFactorShoulder;
+        // double overallScaleFactor = (scaleFactorSpine + scaleFactorShoulder) / 2.0;
 
         if ((overallScaleFactor - 1.0).abs() > 0.01) {
           // Apply if significant
