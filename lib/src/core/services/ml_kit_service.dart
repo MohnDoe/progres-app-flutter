@@ -324,11 +324,11 @@ class MLKitService {
         x: crossCenter.x.round(),
         y: crossCenter.y.round(),
         color: img.ColorRgb8(0, 0, 255),
-        radius: 15,
+        radius: 10,
       );
     }
     final paint = img.ColorRgb8(255, 0, 0); // Red color for landmarks
-    const radius = 20; // Radius of the circle for each landmark
+    const radius = 10; // Radius of the circle for each landmark
 
     final typesToDraw = [
       PoseLandmarkType.leftShoulder,
@@ -388,7 +388,7 @@ class MLKitService {
         x2: rightShoulder.x.round(),
         y2: rightShoulder.y.round(),
         color: img.ColorRgb8(0, 255, 0),
-        thickness: 7,
+        thickness: 3,
       );
       // Spine line
       newImage = img.drawLine(
@@ -398,7 +398,7 @@ class MLKitService {
         x2: midShoulderX.round(),
         y2: midShoulderY.round(),
         color: img.ColorRgb8(0, 255, 255),
-        thickness: 7,
+        thickness: 3,
       );
     }
     logger.d('Finished drawing landmarks.');
