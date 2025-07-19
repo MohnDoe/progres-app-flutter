@@ -1,5 +1,6 @@
 enum VideoGenerationStep {
   preparingFrames,
+  aligningFrames,
   generating,
   analyzing,
   stabilizing,

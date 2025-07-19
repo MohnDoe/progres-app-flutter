@@ -13,6 +13,7 @@ import 'package:path/path.dart' as p;
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/core/services/file_service.dart';
+import 'package:progres/src/core/services/ml_kit_service.dart';
 import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart';
 import 'package:subtitle_toolkit/subtitle_toolkit.dart';
 
@@ -25,6 +26,9 @@ class VideoService {
   Future<Directory> get _framesDirectory async =>
       Directory(p.join((await _temporaryDirectory).path, 'frames'));
 
+  Future<Directory> get alignedFramesDirectory async =>
+      Directory(p.join((await _temporaryDirectory).path, 'aligned_frames'));
+
   Future<String> get _transformsFilePath async =>
       p.join((await _temporaryDirectory).path, 'transforms.trf');
   Future<String> get _subtitlesFilePath async =>
@@ -32,6 +36,9 @@ class VideoService {
 
   Future<String> get _framesInputPattern async =>
       p.join((await _framesDirectory).path, 'frame_%04d.jpg');
+
+  Future<String> get _alignedFramesInputPattern async =>
+      p.join((await alignedFramesDirectory).path, 'frame_%04d.jpg');
 
   Future<void> _initFramesDirectory() async {
     final framesDirectory = await _framesDirectory;
@@ -70,6 +77,27 @@ class VideoService {
   ) async* {
     Logger().i('Generating basic video.');
     final framesInputPattern = await _framesInputPattern;
+
+    final String compilingCommand =
+        "-framerate $fps "
+        "-i $framesInputPattern "
+        "-r $fps "
+        "-c:v libx264 -pix_fmt yuv420p "
+        "$outputVideoPath";
+
+    await _deleteFile(outputVideoPath);
+    await for (final p in _executeCommand(compilingCommand, frameCount)) {
+      yield VideoGenerationProgress(VideoGenerationStep.generating, p);
+    }
+  }
+
+  Stream<VideoGenerationProgress> _generateVideoUsingAlignedFrames(
+    String outputVideoPath,
+    int fps,
+    int frameCount,
+  ) async* {
+    Logger().i('Generating basic video.');
+    final framesInputPattern = await _alignedFramesInputPattern;
 
     final String compilingCommand =
         "-framerate $fps "
@@ -231,7 +259,16 @@ class VideoService {
 
     // PREPARING FRAMES : PUTTING THEM IN TEMP FOLDER IN ORDER
 
-    await for (final progress in _prepareFrames(listPictures)) {
+    // await for (final progress in _prepareFrames(listPictures)) {
+    //   yield VideoGenerationProgress(
+    //     progress.step,
+    //     progress.progress / totalStepCount,
+    //   );
+    // }
+
+    await for (final progress in MLKitService.generateAlignedImages(
+      listPictures,
+    )) {
       yield VideoGenerationProgress(
         progress.step,
         progress.progress / totalStepCount,
@@ -243,11 +280,12 @@ class VideoService {
       VideoGenerationStep.generating,
       oneStepCompletedProgress,
     );
-    await for (final basicGenerationProgress in _generateBasicVideo(
-      outputVideoPath,
-      fps,
-      listPictures.length,
-    )) {
+    await for (final basicGenerationProgress
+        in _generateVideoUsingAlignedFrames(
+          outputVideoPath,
+          fps,
+          listPictures.length,
+        )) {
       yield VideoGenerationProgress(
         basicGenerationProgress.step,
         oneStepCompletedProgress +

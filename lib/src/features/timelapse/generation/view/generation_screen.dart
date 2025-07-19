@@ -51,6 +51,8 @@ class GenerationScreen extends ConsumerWidget {
         return 'Collecting entries';
       case VideoGenerationStep.generating:
         return 'Generating video';
+      case VideoGenerationStep.aligningFrames:
+        return 'Aligning frames';
       case VideoGenerationStep.analyzing:
         return 'Analyzing pictures';
       case VideoGenerationStep.stabilizing:
