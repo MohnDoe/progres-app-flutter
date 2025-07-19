@@ -29,12 +29,11 @@ class MLKitService {
       ),
     );
 
-    // --- Reference Pose Properties ---
-    img.Point? targetCenter; // Target center for final translation
-    double? targetPoseHeight; // For scaling
-    double? targetShoulderWidth; // For width scaling
-    double? targetHipWidth; // For width scaling
-    double? targetPoseAngle; // For rotation
+    img.Point? targetCrossCenter; // Mid-shoulder of the reference pose
+    double? targetSpineLength; // Mid-hip to mid-shoulder
+    double? targetShoulderWidth;
+    double? targetSpineAngleDeg; // Angle of the spine (mid-hip to mid-shoulder)
+
     int? referenceImageWidth;
     int? referenceImageHeight;
 
@@ -59,329 +58,244 @@ class MLKitService {
         Logger().e('Error processing image $imagePath: $e');
       }
 
-      if (poses.isEmpty) {
-        Logger().w('No poses detected in $imagePath. Saving original.');
-        // Optionally copy the original image if no pose is found, or skip
+      if (poses.isEmpty || poses.first.landmarks.isEmpty) {
+        Logger().w('No pose detected in $imagePath. Skipping.');
+        // Optionally, save the original image or a blank frame
         final originalBytes = await File(imagePath).readAsBytes();
-        await File(framePath).writeAsBytes(originalBytes);
-        yield VideoGenerationProgress(
-          VideoGenerationStep.aligningFrames,
-          (i + 1) / listPictures.length,
-        );
+        img.Image? originalImage = img.decodeImage(originalBytes);
+        if (originalImage != null) {
+          if (referenceImageWidth != null &&
+              referenceImageHeight != null &&
+              (originalImage.width != referenceImageWidth ||
+                  originalImage.height != referenceImageHeight)) {
+            // If reference dimensions are set, create a canvas and center the image
+            final canvas = img.Image(
+              width: referenceImageWidth,
+              height: referenceImageHeight,
+            );
+            img.fill(canvas, color: img.ColorRgb8(0, 0, 0)); // Black background
+            img.compositeImage(
+              canvas,
+              originalImage,
+              dstX: (referenceImageWidth - originalImage.width) ~/ 2,
+              dstY: (referenceImageHeight - originalImage.height) ~/ 2,
+            );
+            await File(framePath).writeAsBytes(img.encodeJpg(canvas));
+          } else {
+            await File(framePath).writeAsBytes(img.encodeJpg(originalImage));
+          }
+        }
         continue;
       }
+
       final pose = poses.first;
 
       // Key landmarks for torso and head
-      final leftShoulder = pose.landmarks[PoseLandmarkType.leftShoulder]!;
-      final rightShoulder = pose.landmarks[PoseLandmarkType.rightShoulder]!;
-      final leftHip = pose.landmarks[PoseLandmarkType.leftHip]!;
-      final rightHip = pose.landmarks[PoseLandmarkType.rightHip]!;
-      final leftEar = pose.landmarks[PoseLandmarkType.leftEar];
-      final rightEar = pose.landmarks[PoseLandmarkType.rightEar];
+      final leftShoulder = pose.landmarks[PoseLandmarkType.leftShoulder];
+      final rightShoulder = pose.landmarks[PoseLandmarkType.rightShoulder];
+      final leftHip = pose.landmarks[PoseLandmarkType.leftHip];
+      final rightHip = pose.landmarks[PoseLandmarkType.rightHip];
+      // final leftEar = pose.landmarks[PoseLandmarkType.leftEar];
+      // final rightEar = pose.landmarks[PoseLandmarkType.rightEar];
 
-      // Estimate head center (e.g., average of eyes and mouth, or approximate from nose)
-      // For simplicity, using nose as a proxy for head position for angle calculation.
-      // More robust: use multiple head landmarks if available and consistently detected.
-      final nose = pose.landmarks[PoseLandmarkType.nose]!;
-      double headCenterX = nose.x;
-      double headCenterY = nose.y;
+      if (leftShoulder == null ||
+          rightShoulder == null ||
+          leftHip == null ||
+          rightHip == null) {
+        Logger().w('Essential landmarks missing in $imagePath. Skipping.');
+        continue;
+      }
+      final currentMidShoulderX = (leftShoulder.x + rightShoulder.x) / 2;
+      final currentMidShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+      final currentMidShoulderPt = img.Point(currentMidShoulderX, currentMidShoulderY);
 
-      if (leftEar != null && rightEar != null) {
-        headCenterX = (nose.x + leftEar.x + rightEar.x) / 3;
-        headCenterY = (nose.y + leftEar.y + rightEar.y) / 3;
+      final currentMidHipX = (leftHip.x + rightHip.x) / 2;
+      final currentMidHipY = (leftHip.y + rightHip.y) / 2;
+
+      final currentSpineLength = math.sqrt(
+        math.pow(currentMidShoulderX - currentMidHipX, 2) +
+            math.pow(currentMidShoulderY - currentMidHipY, 2),
+      );
+      if (currentSpineLength < 1.0) {
+        // Avoid division by zero or tiny values
+        Logger().w('Spine length too small in $imagePath. Skipping.');
+        continue;
       }
 
-      // --- Calculate current pose properties ---
-      final midShoulderX = (leftShoulder.x + rightShoulder.x) / 2;
-      final midShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
-
-      final midHipX = (leftHip.x + rightHip.x) / 2;
-      final midHipY = (leftHip.y + rightHip.y) / 2;
-
-      final currentTorsoCenterX = (midShoulderX + midHipX) / 2;
-      final currentTorsoCenterY = (midShoulderY + midHipY) / 2;
-
-      final currentCenterPt = img.Point(currentTorsoCenterX, currentTorsoCenterY);
-      // Calculate pose height (distance between mid-shoulder and mid-hip)
-      final currentPoseHeight = math.sqrt(
-        math.pow(midShoulderX - midHipX, 2) + math.pow(midShoulderY - midHipY, 2),
-      );
-      // Calculate current shoulder width and hip width
       final currentShoulderWidth = math.sqrt(
         math.pow(leftShoulder.x - rightShoulder.x, 2) +
             math.pow(leftShoulder.y - rightShoulder.y, 2),
       );
-      final currentHipWidth = math.sqrt(
-        math.pow(leftHip.x - rightHip.x, 2) + math.pow(leftHip.y - rightHip.y, 2),
-      );
+      if (currentShoulderWidth < 1.0) {
+        Logger().w('Shoulder width too small in $imagePath. Skipping.');
+        continue;
+      }
 
-      // Calculate pose angle using a line from the middle of the hips to the head center.
-      // Angle with respect to positive X-axis, then convert to degrees
-      final currentPoseAngleRad = math.atan2(
-        headCenterY - midHipY, // Rise (Y difference between head and mid-hips)
-        headCenterX - midHipX, // Run (X difference between head and mid-hips)
-        // Ensure the angle points upwards, typically by ensuring atan2 input reflects
-        // the vector from hips (lower point) to head (upper point).
-        // If midHipY is typically larger than headCenterY (image coordinates),
-        // then (headCenterY - midHipY) will be negative for an upright pose.
+      // Spine angle: from mid-hip (origin) to mid-shoulder (point)
+      final currentSpineAngleRad = math.atan2(
+        currentMidShoulderY - currentMidHipY,
+        currentMidShoulderX - currentMidHipX,
       );
-
-      final currentPoseAngleDeg = currentPoseAngleRad * (180 / math.pi);
+      final currentSpineAngleDeg = currentSpineAngleRad * (180 / math.pi);
 
       // --- Load original image using 'image' package ---
       final originalBytes = await File(imagePath).readAsBytes();
-      img.Image? originalImage = img.decodeImage(originalBytes);
+      img.Image? workingImage = img.decodeImage(originalBytes);
 
-      if (originalImage == null) {
+      if (workingImage == null) {
         Logger().e('Could not decode image $imagePath. Skipping.');
         continue;
       }
 
-      // Draw landmarks for debugging/visualization if needed
-      originalImage = _drawLandmarksOnImage(originalImage, pose.landmarks);
-
-      originalImage = img.drawLine(
-        originalImage,
-        x1: leftShoulder.x.round(),
-        y1: leftShoulder.y.round(),
-        x2: rightShoulder.x.round(),
-        y2: rightShoulder.y.round(),
-        color: img.ColorRgb8(0, 255, 0), // Green for shoulder line
-        thickness: 5,
+      workingImage = _drawLandmarksOnImage(
+        workingImage,
+        pose.landmarks,
+        crossCenter: currentMidShoulderPt,
       );
 
-      // Draw the line used for pose angle calculation (mid-hip to head center)
-      originalImage = img.drawLine(
-        originalImage,
-        x1: midHipX.round(),
-        y1: midHipY.round(),
-        x2: headCenterX.round(),
-        y2: headCenterY.round(),
-        color: img.ColorRgb8(255, 255, 0), // Yellow for pose angle line
-        thickness: 6,
-      );
+      // --- Point to track: currentMidShoulderPt (its coordinates are relative to original image) ---
+      // We need to find where this point ends up after transformations on `workingImage`.
+      double trackedMidShoulderX = currentMidShoulderPt.x.toDouble();
+      double trackedMidShoulderY = currentMidShoulderPt.y.toDouble();
+      // These are relative to the top-left of the CURRENT `workingImage`
 
-      img.Image transformedImage = originalImage; // Start with the original
+      // Store original dimensions for later use if needed for point transformation calculations
+      final originalImageWidthForCalc = workingImage.width;
+      final originalImageHeightForCalc = workingImage.height;
 
-      if (targetCenter == null ||
-          targetPoseHeight == null ||
-          targetPoseAngle == null ||
-          targetShoulderWidth == null ||
-          targetHipWidth == null) {
-        // This is the first image, establish it as the reference
-        targetCenter = currentCenterPt;
-        targetPoseHeight = currentPoseHeight;
+      if (i == 0) {
+        // This is the reference image
+        targetCrossCenter = currentMidShoulderPt; // Store as img.Point for consistency
+        targetSpineLength = currentSpineLength;
         targetShoulderWidth = currentShoulderWidth;
-        targetHipWidth = currentHipWidth;
-        targetPoseAngle = currentPoseAngleDeg;
+        targetSpineAngleDeg = currentSpineAngleDeg;
+        referenceImageWidth = workingImage.width;
+        referenceImageHeight = workingImage.height;
+
         Logger().i(
-          'Reference SET: Center=(${targetCenter.x.toStringAsFixed(2)}, ${targetCenter.y.toStringAsFixed(2)}), '
-          'Height=${targetPoseHeight.toStringAsFixed(2)}, ShoulderWidth=${targetShoulderWidth.toStringAsFixed(2)}, '
-          'HipWidth=${targetHipWidth.toStringAsFixed(2)}, Angle=${targetPoseAngle.toStringAsFixed(2)}deg',
+          'Reference SET: Center=(${targetCrossCenter.x.toStringAsFixed(2)}, ${targetCrossCenter.y.toStringAsFixed(2)}), '
+          'SpineLen=${targetSpineLength.toStringAsFixed(2)}, ShoulderWid=${targetShoulderWidth.toStringAsFixed(2)}, '
+          'SpineAngle=${targetSpineAngleDeg.toStringAsFixed(2)}deg',
         );
-        // The reference image itself doesn't need transformation relative to itself
+        // Save the reference image as is (already on its own canvas implicitly)
+        await File(framePath).writeAsBytes(img.encodeJpg(workingImage));
       } else {
-        // This block executes for i > 0 (non-reference images)
-        // Ensure reference dimensions are set (should have been from i=0)
-        if (referenceImageWidth == null || referenceImageHeight == null) {
-          // This should ideally not happen if the first image was processed.
-          // Fallback or error handling needed here. For now, log and potentially skip.
-          Logger().e(
-            'Reference image dimensions not set. Skipping alignment for $imagePath',
-          );
+        // Subsequent images: Align to reference
+        if (targetCrossCenter == null ||
+            targetSpineLength == null ||
+            targetShoulderWidth == null ||
+            targetSpineAngleDeg == null ||
+            referenceImageWidth == null ||
+            referenceImageHeight == null) {
+          Logger().e('Reference properties not set. Cannot align $imagePath. Skipping.');
+
           continue;
         }
-        // --- Apply transformations for subsequent images ---
 
-        // 1. SCALING
-        // Height scaling based on poseHeight
-        if (targetPoseHeight > 0 && currentPoseHeight > 0) {
-          double scaleFactorHeight = targetPoseHeight / currentPoseHeight;
-          // Limit scaling to prevent extreme distortions (e.g., max 2x zoom in or out)
+        // --- 1. SCALING ---
+        // Uniform scaling based on spine length (primary) and shoulder width (secondary, if desired)
+        double scaleFactorSpine = targetSpineLength! / currentSpineLength;
+        double scaleFactorShoulder = targetShoulderWidth! / currentShoulderWidth;
 
-          if ((scaleFactorHeight - 1.0).abs() > 0.01) {
-            // Apply only if significant scale difference
-            Logger().d(
-              'Scaling Height by $scaleFactorHeight. TargetH: $targetPoseHeight, CurrentH: $currentPoseHeight',
-            );
-            transformedImage = img.copyResize(
-              transformedImage,
-              height: (transformedImage.height * scaleFactorHeight).round(),
-              interpolation: img.Interpolation.linear, // Or linear for speed
-            );
-          }
-        }
+        // Choose a single scale factor. Average can be a good compromise,
+        // or prioritize one (e.g., spine length).
+        // Using spine for now as it's often more stable for body size.
+        double overallScaleFactor = scaleFactorSpine;
+        // Or: double overallScaleFactor = (scaleFactorSpine + scaleFactorShoulder) / 2.0;
 
-        // Width scaling based on shoulder and hip width (average or max, choose one strategy)
-        // Using average of shoulder and hip width for overall body width scaling
-        double currentAvgBodyWidth = (currentShoulderWidth + currentHipWidth) / 2;
-        double targetAvgBodyWidth = (targetShoulderWidth + targetHipWidth) / 2;
+        if ((overallScaleFactor - 1.0).abs() > 0.01) {
+          // Apply if significant
+          Logger().d(
+            'Scaling image for $imagePath by ${overallScaleFactor.toStringAsFixed(3)}',
+          );
+          int newWidth = (workingImage.width * overallScaleFactor).round();
+          int newHeight = (workingImage.height * overallScaleFactor).round();
 
-        if (targetAvgBodyWidth > 0 && currentAvgBodyWidth > 0) {
-          double scaleFactorWidth = targetAvgBodyWidth / currentAvgBodyWidth;
-          if ((scaleFactorWidth - 1.0).abs() > 0.01) {
-            Logger().d(
-              'Scaling Width by $scaleFactorWidth. TargetAvgW: $targetAvgBodyWidth, CurrentAvgW: $currentAvgBodyWidth',
-            );
-            transformedImage = img.copyResize(
-              transformedImage,
-              width: (transformedImage.width * scaleFactorWidth).round(),
+          if (newWidth <= 0 || newHeight <= 0) {
+            Logger().w("Invalid scale dimensions for $imagePath. Skipping scale.");
+          } else {
+            // Update the tracked point's coordinates due to whole-image scaling
+            // The scaling is applied from (0,0) of the image.
+            trackedMidShoulderX *= overallScaleFactor;
+            trackedMidShoulderY *= overallScaleFactor;
+
+            workingImage = img.copyResize(
+              workingImage,
+              width: newWidth,
+              height: newHeight,
               interpolation: img.Interpolation.linear,
             );
-            // After resizing, the effective center point's coordinates within the new image change
-            // The *relative* position of the torso center within the image should be preserved.
-            // However, since we are scaling THE ENTIRE IMAGE, the absolute pixel values of currentCenterPt
-            // (which were from the *original* image dimensions) need to be scaled too if we were to use them
-            // on this newly scaled 'transformedImage'.
-            // For simplicity in this step-by-step transformation, we are applying transformations
-            // globally. The key is that the *final translation* will use the targetCenter
-            // from the *original reference image dimensions* and align the *final transformed image's center* to it.
-
-            // The 'currentCenterPt' was calculated on the 'originalImage'.
-            // For the purpose of being the *pivot* for rotation and translation,
-            // we need its coordinates *in the context of the currently transformed image*.
-            // Since scaling was applied to the whole image, the center point also scaled.
-            // currentCenterPt = img.Point(currentCenterPt.x * scaleFactor, currentCenterPt.y * scaleFactor);
-            // This update is complex because currentCenterPt might be used as a pivot.
-            // Let's simplify: the image is scaled. The features within it are scaled.
-            // The *relative* positions of landmarks are the same.
           }
         }
 
-        // 2. ROTATION
-        final angleDifferenceDeg = targetPoseAngle - currentPoseAngleDeg;
-        if (angleDifferenceDeg.abs() > 0.5) {
-          Logger().d(
-            'Rotating by ${angleDifferenceDeg.toStringAsFixed(2)}deg. TargetA: $targetPoseAngle, CurrentA: $currentPoseAngleDeg',
-          );
-          // The 'image' package rotates around the center of the image.
-          // For more precise body-centered rotation, we'd ideally want to rotate
-          // around the 'currentCenterPt' of the body *within the current state of transformedImage*.
-          // This is hard with 'copyRotate' directly if that point isn't the image center.
+        // --- 2. ROTATION ---
+        double angleDifferenceDeg = targetSpineAngleDeg! - currentSpineAngleDeg;
+        // Normalize angle to be between -180 and 180 if needed, though atan2 usually handles it well.
 
-          // Simpler approach for now: rotate the whole image.
-          // More advanced: translate body center to origin, rotate, translate back.
-          transformedImage = img.copyRotate(
-            transformedImage,
+        if (angleDifferenceDeg.abs() > 0.5) {
+          // Apply if significant rotation
+          Logger().d(
+            'Rotating image for $imagePath by ${angleDifferenceDeg.toStringAsFixed(2)} deg',
+          );
+
+          // `copyRotate` rotates around the center of `workingImage`.
+          // We need to calculate how `trackedMidShoulder` moves due to this.
+          final imageCenterX = workingImage!.width / 2.0;
+          final imageCenterY = workingImage.height / 2.0;
+
+          // Translate tracked point to be relative to image center
+          double pX = trackedMidShoulderX - imageCenterX;
+          double pY = trackedMidShoulderY - imageCenterY;
+
+          // Rotate the point
+          double angleRad = angleDifferenceDeg * (math.pi / 180.0);
+          double cosA = math.cos(angleRad);
+          double sinA = math.sin(angleRad);
+          double pRotX = pX * cosA - pY * sinA;
+          double pRotY = pX * sinA + pY * cosA;
+
+          // Translate point back from image center
+          trackedMidShoulderX = pRotX + imageCenterX;
+          trackedMidShoulderY = pRotY + imageCenterY;
+
+          workingImage = img.copyRotate(
+            workingImage,
             angle: angleDifferenceDeg,
             interpolation: img.Interpolation.linear,
           );
         }
+        // --- 3. TRANSLATION (COMPOSITING) ---
+        // Create the final canvas with reference dimensions
+        img.Image finalImage = img.Image(
+          width: referenceImageWidth,
+          height: referenceImageHeight,
+        );
+        finalImage = img.fill(
+          finalImage,
+          color: img.ColorRgb8(0, 0, 0),
+        ); // Black background
 
-        // After scaling and rotating, the image dimensions and content have changed.
-        // We need to re-evaluate the pose on this *partially transformed image*
-        // to get the *new* currentCenter for the final translation step.
-        // This is the most robust way but adds processing time.
-
-        // --- Option B: Approximate new center (less accurate, but simpler than re-detection) ---
-        // This is complex because rotation and scaling affect the coordinates.
-        // The original `currentCenterPt` was in the coordinate system of `originalImage`.
-        // After scaling and rotating `transformedImage`, that point is now somewhere else.
-        // If we want to align to `targetCenter` (which is in the reference image's coordinate system),
-        // we need to know where the body's center *is now* in the `transformedImage`.
-
-        // For now, let's stick to the core idea:
-        // The goal is that after all transformations, the body in `transformedImage`
-        // should align with where the body was in the reference image if it were
-        // placed at `targetCenter`.
-
-        // The dx/dy for final compositing should be based on the *target reference dimensions*.
-        // We need to figure out the offset to move `transformedImage` so its body aligns with `targetCenter`.
-        // This requires knowing the new position of `currentCenterPt` within `transformedImage`.
-
-        // This is where using an affine transformation matrix shines, as it handles all this.
-        // With sequential operations in the `image` package, it's harder.
-
-        // Let's make a simplifying assumption for the final translation:
-        // The `targetCenter` is where we want the body center of the *final output image* to be.
-        // The `currentCenterPt` was the body center in the *original input image*.
-        // We have scaled and rotated `transformedImage`.
-        // If we assume `targetCenter` is a point on a final canvas of the reference image's size,
-        // and we want to place the `transformedImage` (which now has a scaled/rotated body)
-        // such that its body center (which was originally `currentCenterPt`) ends up at `targetCenter`.
-
-        // The `compositeImage` function takes dstX, dstY for the top-left of the source image.
-        // We want: targetCenter.x = dstX + transformedImage.width / 2 (approx if body is centered in transformedImage)
-        // We want: targetCenter.y = dstY + transformedImage.height / 2
-
-        // This is still not quite right. The `currentCenterPt` is where the body was.
-        // After scaling and rotation of the *whole image*, if those operations were
-        // perfectly body-centric, the body would still be at a similar *relative* position
-        // within `transformedImage`.
-
-        // Let's refine the final translation step:
-        // The `targetCenter` is the absolute coordinate from the reference frame.
-        // The `currentCenterPt` is the absolute coordinate from the current original frame.
-        // The offset `dx = targetCenter.x - currentCenterPt.x` and `dy = targetCenter.y - currentCenterPt.y`
-        // was what we used before.
-        // This offset should be applied to the `transformedImage` (which has been scaled and rotated).
-
-        // The issue is that `dx` and `dy` are based on original image coordinates.
-        // `compositeImage` applies to `transformedImage`.
-
-        // Simplest interpretation for now for the final translation:
-        // Assume `targetCenter` is the desired final position for the body's original center point.
-        final dx = targetCenter.x - currentCenterPt.x; // Offset based on original centers
-        final dy = targetCenter.y - currentCenterPt.y;
+        // We want `trackedMidShoulder` (which is now in the coordinate system of the
+        // scaled and rotated `workingImage`) to land at `targetCrossCenter`
+        // (which is in the coordinate system of the reference/final image).
+        final dstX = targetCrossCenter.x - trackedMidShoulderX;
+        final dstY = targetCrossCenter.y - trackedMidShoulderY;
 
         Logger().d(
-          'Final Translation dx=${dx.toStringAsFixed(2)}, dy=${dy.toStringAsFixed(2)}',
+          'Compositing $imagePath: trackedMidShoulder=(${trackedMidShoulderX.toStringAsFixed(2)}, ${trackedMidShoulderY.toStringAsFixed(2)}), '
+          'targetCrossCenter=(${targetCrossCenter.x.toStringAsFixed(2)}, ${targetCrossCenter.y.toStringAsFixed(2)}), '
+          'dst=(${dstX.toStringAsFixed(2)}, ${dstY.toStringAsFixed(2)})',
         );
 
-        // Use the stored reference image dimensions for the canvas
-        final int determinedCanvasWidth = referenceImageWidth;
-        final int determinedCanvasHeight = referenceImageHeight;
+        finalImage = img.compositeImage(
+          finalImage,
+          workingImage,
+          dstX: dstX.round(),
+          dstY: dstY.round(),
+        );
 
-        // This part is for i > 0
-        img.Image imageToSave;
-
-        if (i == 0) {
-          // For the first frame (reference frame), no further compositing is needed.
-          // transformedImage is the original image, which is already correctly sized.
-          imageToSave = transformedImage;
-        } else {
-          // For subsequent frames, create the final canvas using reference dimensions
-          // and composite the scaled/rotated 'transformedImage' onto it.
-
-          // For subsequent frames, create the final canvas and composite the
-          // scaled/rotated 'transformedImage' onto it.
-          img.Image finalImage = img.Image(
-            width: determinedCanvasWidth,
-            height: determinedCanvasHeight,
-          );
-
-          finalImage = img.fill(
-            finalImage,
-            color: img.ColorRgb8(0, 0, 0),
-          ); // Fill with black
-
-          // The dx, dy calculation for translation
-          final dx = targetCenter.x - currentCenterPt.x;
-          final dy = targetCenter.y - currentCenterPt.y;
-          Logger().d(
-            'Final Translation dx=${dx.toStringAsFixed(2)}, dy=${dy.toStringAsFixed(2)} for frame $i',
-          );
-
-          imageToSave = img.compositeImage(
-            finalImage,
-            transformedImage, // This is the image already scaled and rotated
-            dstX: dx.round(),
-            dstY: dy.round(),
-          );
-        }
+        await File(framePath).writeAsBytes(img.encodeJpg(finalImage));
       }
-
-      // If this is the first image, store its dimensions as reference
-      if (i == 0) {
-        referenceImageWidth = transformedImage.width;
-        referenceImageHeight = transformedImage.height;
-      }
-
-      // Save the new, aligned frame
-      await File(framePath).writeAsBytes(img.encodeJpg(transformedImage));
-      Logger().i('Saved processed frame to $framePath');
-
       yield VideoGenerationProgress(
         VideoGenerationStep.aligningFrames,
         (i + 1) / listPictures.length,
@@ -396,13 +310,23 @@ class MLKitService {
   // Helper method to draw landmarks on the image
   static img.Image _drawLandmarksOnImage(
     img.Image image,
-    Map<PoseLandmarkType, PoseLandmark> landmarks,
-  ) {
+    Map<PoseLandmarkType, PoseLandmark> landmarks, {
+    img.Point? crossCenter,
+  }) {
     final logger = Logger();
+    img.Image newImage = img.Image.from(image);
     logger.d(
       'Drawing landmarks on image. Image dimensions: ${image.width}x${image.height}',
     );
-
+    if (crossCenter != null) {
+      newImage = img.fillCircle(
+        newImage,
+        x: crossCenter.x.round(),
+        y: crossCenter.y.round(),
+        color: img.ColorRgb8(0, 0, 255),
+        radius: 15,
+      );
+    }
     final paint = img.ColorRgb8(255, 0, 0); // Red color for landmarks
     const radius = 10; // Radius of the circle for each landmark
 
@@ -425,8 +349,8 @@ class MLKitService {
             landmark.x < image.width &&
             landmark.y >= 0 &&
             landmark.y < image.height) {
-          image = img.fillCircle(
-            image,
+          newImage = img.fillCircle(
+            newImage,
             x: landmark.x.round(),
             y: landmark.y.round(),
             radius: radius,
@@ -441,6 +365,41 @@ class MLKitService {
       } else {
         logger.w('Landmark ${type.toString()} not found.');
       }
+    }
+    // Draw spine and shoulder lines based on midpoints for clarity
+    final leftShoulder = landmarks[PoseLandmarkType.leftShoulder];
+    final rightShoulder = landmarks[PoseLandmarkType.rightShoulder];
+    final leftHip = landmarks[PoseLandmarkType.leftHip];
+    final rightHip = landmarks[PoseLandmarkType.rightHip];
+    if (leftShoulder != null &&
+        rightShoulder != null &&
+        leftHip != null &&
+        rightHip != null) {
+      final midShoulderX = (leftShoulder.x + rightShoulder.x) / 2;
+      final midShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+      final midHipX = (leftHip.x + rightHip.x) / 2;
+      final midHipY = (leftHip.y + rightHip.y) / 2;
+
+      // Shoulder line
+      newImage = img.drawLine(
+        newImage,
+        x1: leftShoulder.x.round(),
+        y1: leftShoulder.y.round(),
+        x2: rightShoulder.x.round(),
+        y2: rightShoulder.y.round(),
+        color: img.ColorRgb8(0, 255, 0),
+        thickness: 3,
+      );
+      // Spine line
+      newImage = img.drawLine(
+        newImage,
+        x1: midHipX.round(),
+        y1: midHipY.round(),
+        x2: midShoulderX.round(),
+        y2: midShoulderY.round(),
+        color: img.ColorRgb8(0, 255, 255),
+        thickness: 3,
+      );
     }
     logger.d('Finished drawing landmarks.');
     return image;
