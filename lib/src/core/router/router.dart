@@ -8,10 +8,7 @@ import 'package:progres/src/features/timelapse/generation/view/generation_screen
 import 'package:progres/src/features/timelapse/player/view/video_player_screen.dart';
 
 final router = GoRouter(
-  initialExtra: '', // TODO : delete this before merging
-  // TODO: change this back
-  initialLocation: VideoPlayerScreen.path,
-  // initialLocation: ListEntriesScreen.path,
+  initialLocation: ListEntriesScreen.path,
   routes: [
     GoRoute(
       name: GalleryScreen.name,
