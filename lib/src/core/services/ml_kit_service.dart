@@ -1,7 +1,5 @@
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:typed_data';
-import 'dart:ui';
 
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'package:logger/logger.dart';
@@ -34,6 +32,8 @@ class MLKitService {
     // --- Reference Pose Properties ---
     img.Point? targetCenter; // Target center for final translation
     double? targetPoseHeight; // For scaling
+    double? targetShoulderWidth; // For width scaling
+    double? targetHipWidth; // For width scaling
     double? targetPoseAngle; // For rotation
     int? referenceImageWidth;
     int? referenceImageHeight;
@@ -77,13 +77,13 @@ class MLKitService {
       final rightShoulder = pose.landmarks[PoseLandmarkType.rightShoulder]!;
       final leftHip = pose.landmarks[PoseLandmarkType.leftHip]!;
       final rightHip = pose.landmarks[PoseLandmarkType.rightHip]!;
-      final nose = pose.landmarks[PoseLandmarkType.nose]!;
-      // Estimate head center (e.g., average of eyes and mouth, or approximate from nose)
-      // For simplicity, using nose as a proxy for head position for angle calculation.
-      // More robust: use multiple head landmarks if available and consistently detected.
       final leftEar = pose.landmarks[PoseLandmarkType.leftEar];
       final rightEar = pose.landmarks[PoseLandmarkType.rightEar];
 
+      // Estimate head center (e.g., average of eyes and mouth, or approximate from nose)
+      // For simplicity, using nose as a proxy for head position for angle calculation.
+      // More robust: use multiple head landmarks if available and consistently detected.
+      final nose = pose.landmarks[PoseLandmarkType.nose]!;
       double headCenterX = nose.x;
       double headCenterY = nose.y;
 
@@ -95,24 +95,38 @@ class MLKitService {
       // --- Calculate current pose properties ---
       final midShoulderX = (leftShoulder.x + rightShoulder.x) / 2;
       final midShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+
       final midHipX = (leftHip.x + rightHip.x) / 2;
       final midHipY = (leftHip.y + rightHip.y) / 2;
+
       final currentTorsoCenterX = (midShoulderX + midHipX) / 2;
       final currentTorsoCenterY = (midShoulderY + midHipY) / 2;
+
       final currentCenterPt = img.Point(currentTorsoCenterX, currentTorsoCenterY);
       // Calculate pose height (distance between mid-shoulder and mid-hip)
       final currentPoseHeight = math.sqrt(
         math.pow(midShoulderX - midHipX, 2) + math.pow(midShoulderY - midHipY, 2),
       );
-
-      // Calculate pose angle (angle of the line from mid-hips to mid-shoulders)
-      // Angle with respect to positive X-axis, then convert to degrees
-      // Using a line from torso center to head center for a more "upright" orientation
-      final currentPoseAngleRad = math.atan2(
-        // Y component first for atan2
-        headCenterY - currentTorsoCenterY, // Rise
-        headCenterX - currentTorsoCenterX, // Run
+      // Calculate current shoulder width and hip width
+      final currentShoulderWidth = math.sqrt(
+        math.pow(leftShoulder.x - rightShoulder.x, 2) +
+            math.pow(leftShoulder.y - rightShoulder.y, 2),
       );
+      final currentHipWidth = math.sqrt(
+        math.pow(leftHip.x - rightHip.x, 2) + math.pow(leftHip.y - rightHip.y, 2),
+      );
+
+      // Calculate pose angle using a line from the middle of the hips to the head center.
+      // Angle with respect to positive X-axis, then convert to degrees
+      final currentPoseAngleRad = math.atan2(
+        headCenterY - midHipY, // Rise (Y difference between head and mid-hips)
+        headCenterX - midHipX, // Run (X difference between head and mid-hips)
+        // Ensure the angle points upwards, typically by ensuring atan2 input reflects
+        // the vector from hips (lower point) to head (upper point).
+        // If midHipY is typically larger than headCenterY (image coordinates),
+        // then (headCenterY - midHipY) will be negative for an upright pose.
+      );
+
       final currentPoseAngleDeg = currentPoseAngleRad * (180 / math.pi);
 
       // --- Load original image using 'image' package ---
@@ -123,16 +137,48 @@ class MLKitService {
         Logger().e('Could not decode image $imagePath. Skipping.');
         continue;
       }
+
+      // Draw landmarks for debugging/visualization if needed
+      originalImage = _drawLandmarksOnImage(originalImage, pose.landmarks);
+
+      originalImage = img.drawLine(
+        originalImage,
+        x1: leftShoulder.x.round(),
+        y1: leftShoulder.y.round(),
+        x2: rightShoulder.x.round(),
+        y2: rightShoulder.y.round(),
+        color: img.ColorRgb8(0, 255, 0), // Green for shoulder line
+        thickness: 5,
+      );
+
+      // Draw the line used for pose angle calculation (mid-hip to head center)
+      originalImage = img.drawLine(
+        originalImage,
+        x1: midHipX.round(),
+        y1: midHipY.round(),
+        x2: headCenterX.round(),
+        y2: headCenterY.round(),
+        color: img.ColorRgb8(255, 255, 0), // Yellow for pose angle line
+        thickness: 6,
+      );
+
       img.Image transformedImage = originalImage; // Start with the original
 
-      if (targetCenter == null || targetPoseHeight == null || targetPoseAngle == null) {
+      if (targetCenter == null ||
+          targetPoseHeight == null ||
+          targetPoseAngle == null ||
+          targetShoulderWidth == null ||
+          targetHipWidth == null) {
         // This is the first image, establish it as the reference
         targetCenter = currentCenterPt;
         targetPoseHeight = currentPoseHeight;
+        targetShoulderWidth = currentShoulderWidth;
+        targetHipWidth = currentHipWidth;
         targetPoseAngle = currentPoseAngleDeg;
         Logger().i(
-          'Reference SET: Center=(${targetCenter.x.toStringAsFixed(2)}, ${targetCenter.y.toStringAsFixed(2)}), ' +
-              'Height=${targetPoseHeight!.toStringAsFixed(2)}, Angle=${targetPoseAngle!.toStringAsFixed(2)}deg',
+          'Reference SET: Center=(${targetCenter.x.toStringAsFixed(2)}, ${targetCenter.y.toStringAsFixed(2)}), '
+          'Height=${targetPoseHeight.toStringAsFixed(2)}, ShoulderWidth=${targetShoulderWidth.toStringAsFixed(2)}, '
+          'HipWidth=${targetHipWidth.toStringAsFixed(2)}, Angle=${targetPoseAngle.toStringAsFixed(2)}deg',
         );
         // The reference image itself doesn't need transformation relative to itself
       } else {
@@ -149,20 +195,39 @@ class MLKitService {
         // --- Apply transformations for subsequent images ---
 
         // 1. SCALING
+        // Height scaling based on poseHeight
         if (targetPoseHeight > 0 && currentPoseHeight > 0) {
-          double scaleFactor = targetPoseHeight / currentPoseHeight;
+          double scaleFactorHeight = targetPoseHeight / currentPoseHeight;
           // Limit scaling to prevent extreme distortions (e.g., max 2x zoom in or out)
 
-          if ((scaleFactor - 1.0).abs() > 0.01) {
+          if ((scaleFactorHeight - 1.0).abs() > 0.01) {
             // Apply only if significant scale difference
             Logger().d(
-              'Scaling by $scaleFactor. TargetH: $targetPoseHeight, CurrentH: $currentPoseHeight',
+              'Scaling Height by $scaleFactorHeight. TargetH: $targetPoseHeight, CurrentH: $currentPoseHeight',
             );
             transformedImage = img.copyResize(
               transformedImage,
-              width: (transformedImage.width * scaleFactor).round(),
-              height: (transformedImage.height * scaleFactor).round(),
+              height: (transformedImage.height * scaleFactorHeight).round(),
               interpolation: img.Interpolation.linear, // Or linear for speed
+            );
+          }
+        }
+
+        // Width scaling based on shoulder and hip width (average or max, choose one strategy)
+        // Using average of shoulder and hip width for overall body width scaling
+        double currentAvgBodyWidth = (currentShoulderWidth + currentHipWidth) / 2;
+        double targetAvgBodyWidth = (targetShoulderWidth + targetHipWidth) / 2;
+
+        if (targetAvgBodyWidth > 0 && currentAvgBodyWidth > 0) {
+          double scaleFactorWidth = targetAvgBodyWidth / currentAvgBodyWidth;
+          if ((scaleFactorWidth - 1.0).abs() > 0.01) {
+            Logger().d(
+              'Scaling Width by $scaleFactorWidth. TargetAvgW: $targetAvgBodyWidth, CurrentAvgW: $currentAvgBodyWidth',
+            );
+            transformedImage = img.copyResize(
+              transformedImage,
+              width: (transformedImage.width * scaleFactorWidth).round(),
+              interpolation: img.Interpolation.linear,
             );
             // After resizing, the effective center point's coordinates within the new image change
             // The *relative* position of the torso center within the image should be preserved.
@@ -186,8 +251,7 @@ class MLKitService {
 
         // 2. ROTATION
         final angleDifferenceDeg = targetPoseAngle - currentPoseAngleDeg;
-        if (angleDifferenceDeg.abs() > 1.0) {
-          // Apply only if significant angle difference (e.g., > 1 degree)
+        if (angleDifferenceDeg.abs() > 0.5) {
           Logger().d(
             'Rotating by ${angleDifferenceDeg.toStringAsFixed(2)}deg. TargetA: $targetPoseAngle, CurrentA: $currentPoseAngleDeg',
           );
@@ -266,8 +330,8 @@ class MLKitService {
         );
 
         // Use the stored reference image dimensions for the canvas
-        final int determinedCanvasWidth = referenceImageWidth!;
-        final int determinedCanvasHeight = referenceImageHeight!;
+        final int determinedCanvasWidth = referenceImageWidth;
+        final int determinedCanvasHeight = referenceImageHeight;
 
         // This part is for i > 0
         img.Image imageToSave;
@@ -282,11 +346,15 @@ class MLKitService {
 
           // For subsequent frames, create the final canvas and composite the
           // scaled/rotated 'transformedImage' onto it.
-          final finalImage = img.Image(
+          img.Image finalImage = img.Image(
             width: determinedCanvasWidth,
             height: determinedCanvasHeight,
           );
-          img.fill(finalImage, color: img.ColorRgb8(0, 0, 0)); // Fill with black
+
+          finalImage = img.fill(
+            finalImage,
+            color: img.ColorRgb8(0, 0, 0),
+          ); // Fill with black
 
           // The dx, dy calculation for translation
           final dx = targetCenter.x - currentCenterPt.x;
@@ -295,13 +363,12 @@ class MLKitService {
             'Final Translation dx=${dx.toStringAsFixed(2)}, dy=${dy.toStringAsFixed(2)} for frame $i',
           );
 
-          img.compositeImage(
+          imageToSave = img.compositeImage(
             finalImage,
             transformedImage, // This is the image already scaled and rotated
             dstX: dx.round(),
             dstY: dy.round(),
           );
-          imageToSave = finalImage;
         }
       }
 
@@ -324,5 +391,58 @@ class MLKitService {
     poseDetector.close();
     Logger().i('Pose detector closed.');
     Logger().i('Finished generating stabilized images list with R&S attempt.');
+  }
+
+  // Helper method to draw landmarks on the image
+  static img.Image _drawLandmarksOnImage(
+    img.Image image,
+    Map<PoseLandmarkType, PoseLandmark> landmarks,
+  ) {
+    final logger = Logger();
+    logger.d(
+      'Drawing landmarks on image. Image dimensions: ${image.width}x${image.height}',
+    );
+
+    final paint = img.ColorRgb8(255, 0, 0); // Red color for landmarks
+    const radius = 10; // Radius of the circle for each landmark
+
+    final typesToDraw = [
+      PoseLandmarkType.leftShoulder,
+      PoseLandmarkType.rightShoulder,
+      PoseLandmarkType.leftHip,
+      PoseLandmarkType.rightHip,
+      PoseLandmarkType.nose,
+    ];
+
+    for (var type in typesToDraw) {
+      final landmark = landmarks[type];
+      if (landmark != null) {
+        // Ensure landmarks are within image bounds before drawing
+        logger.d(
+          'Landmark ${type.toString()}: (${landmark.x.round()}, ${landmark.y.round()})',
+        );
+        if (landmark.x >= 0 &&
+            landmark.x < image.width &&
+            landmark.y >= 0 &&
+            landmark.y < image.height) {
+          image = img.fillCircle(
+            image,
+            x: landmark.x.round(),
+            y: landmark.y.round(),
+            radius: radius,
+            color: paint,
+          );
+          logger.d('Landmark ${type.toString()} drawn.');
+        } else {
+          logger.w(
+            'Landmark ${type.toString()} is out of bounds: (${landmark.x.round()}, ${landmark.y.round()})',
+          );
+        }
+      } else {
+        logger.w('Landmark ${type.toString()} not found.');
+      }
+    }
+    logger.d('Finished drawing landmarks.');
+    return image;
   }
 }
