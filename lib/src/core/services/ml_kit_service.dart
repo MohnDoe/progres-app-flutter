@@ -62,6 +62,18 @@ class MLKitService {
 
     _logger.i('Processing ${listPictures.length} pictures.');
     final overallStopwatch = Stopwatch()..start();
+    // --- Aggregate Stopwatches for final summary ---
+    int totalImagePreProcessingTime = 0;
+    int totalPoseDetectionTime = 0;
+    int totalMetricsCalculationTime = 0;
+    int totalDrawLandmarksTime = 0;
+    int totalSaveReferenceFrameTime = 0;
+    int totalTransformationTime = 0;
+    int totalCompositingTime = 0;
+    int totalSaveTransformedFrameTime = 0;
+    int processedImageCount = 0;
+    // --- End of Aggregate Stopwatches ---
+
     for (int i = 0; i < listPictures.length; i++) {
       final picture = listPictures[i];
       final imagePath = picture.file.path;
@@ -73,32 +85,44 @@ class MLKitService {
       );
       final frameStopwatch = Stopwatch()..start();
 
+      // --- Image Pre-processing (Scale down if too large) ---
+      final imagePreProcessingStopwatch = Stopwatch()..start();
+      String processedImagePath = imagePath;
+      img.Image? originalImageDecoded = img.decodeImage(
+        await File(imagePath).readAsBytes(),
+      );
+      if (originalImageDecoded == null) {
+        _logger.e('Could not decode image for pre-processing $imagePath. Skipping.');
+        // Handle this error similarly to other decode errors
+        frameStopwatch.stop();
+        continue;
+      }
+
+      const kWidthThreshold = 360;
+      const kUseScaledDownImage = true;
+
+      if (originalImageDecoded.width > kWidthThreshold && kUseScaledDownImage) {
+        final tempDir = await Directory.systemTemp.createTemp('progres_scaled_');
+        processedImagePath = p.join(tempDir.path, p.basename(imagePath));
+        final scaledImage = img.copyResize(originalImageDecoded, width: kWidthThreshold);
+        await File(processedImagePath).writeAsBytes(img.encodeJpg(scaledImage));
+        _logger.d(
+          'Scaled down ${p.basename(imagePath)} to ${scaledImage.width}x${scaledImage.height} at $processedImagePath for pose detection.',
+        );
+        originalImageDecoded = scaledImage;
+      }
+      imagePreProcessingStopwatch.stop();
+      totalImagePreProcessingTime += imagePreProcessingStopwatch.elapsedMilliseconds;
+
       final poseDetectionStopwatch = Stopwatch()..start();
-      final Pose? pose = await _detectPoseInImage(poseDetector, imagePath);
+      final Pose? pose = await _detectPoseInImage(poseDetector, processedImagePath);
       poseDetectionStopwatch.stop();
+      totalPoseDetectionTime += poseDetectionStopwatch.elapsedMilliseconds;
       _logger.d(
         'Pose detection for ${p.basename(imagePath)} took ${poseDetectionStopwatch.elapsedMilliseconds}ms.',
       );
 
-      final imageReadDecodeStopwatch = Stopwatch()..start();
-      final originalBytes = await File(imagePath).readAsBytes(); // Read once
-      img.Image? workingImage = img.decodeImage(originalBytes);
-      imageReadDecodeStopwatch.stop();
-      _logger.d(
-        'Image read & decode for ${p.basename(imagePath)} took ${imageReadDecodeStopwatch.elapsedMilliseconds}ms.',
-      );
-
-      if (workingImage == null) {
-        _logger.e('Could not decode image $imagePath. Skipping.');
-        yield VideoGenerationProgress(
-          // Assuming error state or just skip
-          VideoGenerationStep.aligningFrames, // Or a specific error step
-          (i + 1) / listPictures.length,
-          message: "Decode error for $imagePath",
-        );
-        frameStopwatch.stop();
-        continue;
-      }
+      img.Image? workingImage = originalImageDecoded;
 
       if (pose == null) {
         await _saveProblematicFrame(
@@ -120,9 +144,7 @@ class MLKitService {
       final metricsCalculationStopwatch = Stopwatch()..start();
       final _PoseMetrics? currentMetrics = _calculateCurrentPoseMetrics(pose);
       metricsCalculationStopwatch.stop();
-      _logger.d(
-        'Metrics calculation for ${p.basename(imagePath)} took ${metricsCalculationStopwatch.elapsedMilliseconds}ms.',
-      );
+      totalMetricsCalculationTime += metricsCalculationStopwatch.elapsedMilliseconds;
       if (currentMetrics == null) {
         _logger.w('Could not calculate metrics for $imagePath. Saving original.');
         await _saveProblematicFrame(
@@ -149,9 +171,7 @@ class MLKitService {
         crossCenter: currentMetrics.midShoulder,
       );
       drawLandmarksStopwatch.stop();
-      _logger.d(
-        'Drawing landmarks for ${p.basename(imagePath)} took ${drawLandmarksStopwatch.elapsedMilliseconds}ms.',
-      );
+      totalDrawLandmarksTime += drawLandmarksStopwatch.elapsedMilliseconds;
 
       img.Point trackedPointInWorkingImage = currentMetrics.midShoulder;
 
@@ -168,9 +188,7 @@ class MLKitService {
         final saveFrameStopwatch = Stopwatch()..start();
         await File(framePath).writeAsBytes(img.encodeJpg(workingImage));
         saveFrameStopwatch.stop();
-        _logger.d(
-          'Saving reference frame ${p.basename(framePath)} took ${saveFrameStopwatch.elapsedMilliseconds}ms.',
-        );
+        totalSaveReferenceFrameTime += saveFrameStopwatch.elapsedMilliseconds;
       } else {
         if (targetMetrics == null ||
             referenceImageWidth == null ||
@@ -202,9 +220,7 @@ class MLKitService {
           trackedPointInWorkingImage, // This is currentMetrics.midShoulder
         );
         transformationStopwatch.stop();
-        _logger.d(
-          'Image transformation for ${p.basename(imagePath)} took ${transformationStopwatch.elapsedMilliseconds}ms.',
-        );
+        totalTransformationTime += transformationStopwatch.elapsedMilliseconds;
 
         img.Image transformedImage = transformationResult.image;
         img.Point finalTrackedPoint = transformationResult.trackedPoint;
@@ -232,19 +248,16 @@ class MLKitService {
           dstY: dstY.round(),
         );
         compositingStopwatch.stop();
-        _logger.d(
-          'Compositing for ${p.basename(framePath)} took ${compositingStopwatch.elapsedMilliseconds}ms.',
-        );
+        totalCompositingTime += compositingStopwatch.elapsedMilliseconds;
 
         final saveFrameStopwatch = Stopwatch()..start();
         await File(framePath).writeAsBytes(img.encodeJpg(finalImage));
         saveFrameStopwatch.stop();
-        _logger.d(
-          'Saving transformed frame ${p.basename(framePath)} took ${saveFrameStopwatch.elapsedMilliseconds}ms.',
-        );
+        totalSaveTransformedFrameTime += saveFrameStopwatch.elapsedMilliseconds;
       }
       frameStopwatch.stop();
       _logger.i(
+        // Keep per-frame log with overall timing for that frame
         'Completed processing picture ${i + 1}/${listPictures.length} (${p.basename(imagePath)}) in ${frameStopwatch.elapsedMilliseconds}ms.',
       );
       yield VideoGenerationProgress(
@@ -252,10 +265,32 @@ class MLKitService {
         (i + 1) / listPictures.length,
         debugFilePath: framePath,
       );
+      processedImageCount++;
     }
     overallStopwatch.stop();
     await poseDetector.close(); // Close the detector when done
     _logger.i('Pose detector closed.');
+
+    String timingSummary =
+        'Finished generating $processedImageCount stabilized images in ${overallStopwatch.elapsedMilliseconds}ms.\n';
+    if (processedImageCount > 0) {
+      timingSummary +=
+          '  Avg total per image: ${(overallStopwatch.elapsedMilliseconds / processedImageCount).toStringAsFixed(2)}ms\n';
+      timingSummary +=
+          '  Avg Image Pre-processing: ${(totalImagePreProcessingTime / processedImageCount).toStringAsFixed(2)}ms\n';
+      timingSummary +=
+          '  Avg Pose Detection: ${(totalPoseDetectionTime / processedImageCount).toStringAsFixed(2)}ms\n';
+      timingSummary +=
+          '  Avg Metrics Calculation: ${(totalMetricsCalculationTime / processedImageCount).toStringAsFixed(2)}ms\n';
+      timingSummary +=
+          '  Avg Draw Landmarks: ${(totalDrawLandmarksTime / processedImageCount).toStringAsFixed(2)}ms\n';
+      timingSummary +=
+          '  Avg Transformation: ${(totalTransformationTime / processedImageCount).toStringAsFixed(2)}ms\n';
+      timingSummary +=
+          '  Avg Compositing: ${(totalCompositingTime / processedImageCount).toStringAsFixed(2)}ms\n';
+    }
+    _logger.i(timingSummary);
+
     _logger.i(
       'Finished generating ${listPictures.length} stabilized images in ${overallStopwatch.elapsedMilliseconds}ms (avg ${(overallStopwatch.elapsedMilliseconds / listPictures.length).toStringAsFixed(2)}ms/image).',
     );
