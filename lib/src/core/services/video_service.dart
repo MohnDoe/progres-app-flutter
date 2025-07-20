@@ -240,7 +240,7 @@ class VideoService {
     List<ProgressPicture> listPictures = await PicturesFileService()
         .listPicturesForEntryType(entryType);
 
-    listPictures = listPictures.take(20).toList();
+    // listPictures = listPictures.take(20).toList();
 
     // GENERATE SUBTITLES FILE
     // await _generateSubtitles(entries, fps);

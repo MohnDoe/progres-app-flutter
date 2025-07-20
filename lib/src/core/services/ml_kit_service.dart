@@ -33,6 +33,12 @@ class _TransformationResult {
   _TransformationResult(this.image, this.trackedPoint);
 }
 
+const kWidthThreshold = 480;
+const kUseScaledDownImage = true;
+const kSkipScaling = false;
+const kSkipRotation = true;
+const kDrawLandmarks = true;
+
 class MLKitService {
   // Assuming this is the class name you're using
   static final Logger _logger = Logger(); // Renamed to _logger for convention
@@ -98,9 +104,6 @@ class MLKitService {
         continue;
       }
 
-      const kWidthThreshold = 360;
-      const kUseScaledDownImage = false;
-
       if (originalImageDecoded.width > kWidthThreshold && kUseScaledDownImage) {
         final tempDir = await Directory.systemTemp.createTemp('progres_scaled_');
         processedImagePath = p.join(tempDir.path, p.basename(imagePath));
@@ -163,15 +166,17 @@ class MLKitService {
         continue;
       }
 
-      // Draw landmarks on the working image (as per original logic)
-      final drawLandmarksStopwatch = Stopwatch()..start();
-      workingImage = _drawLandmarksOnImage(
-        workingImage,
-        currentMetrics.allLandmarks, // Use allLandmarks from metrics
-        crossCenter: currentMetrics.midShoulder,
-      );
-      drawLandmarksStopwatch.stop();
-      totalDrawLandmarksTime += drawLandmarksStopwatch.elapsedMilliseconds;
+      if (kDrawLandmarks) {
+        // Draw landmarks on the working image (as per original logic)
+        final drawLandmarksStopwatch = Stopwatch()..start();
+        workingImage = _drawLandmarksOnImage(
+          workingImage,
+          currentMetrics.allLandmarks, // Use allLandmarks from metrics
+          crossCenter: currentMetrics.midShoulder,
+        );
+        drawLandmarksStopwatch.stop();
+        totalDrawLandmarksTime += drawLandmarksStopwatch.elapsedMilliseconds;
+      }
 
       img.Point trackedPointInWorkingImage = currentMetrics.midShoulder;
 
@@ -229,7 +234,11 @@ class MLKitService {
           width: referenceImageWidth,
           height: referenceImageHeight,
         );
-        finalImage = img.fill(finalImage, color: img.ColorRgb8(0, 0, 0));
+
+        finalImage = img.fill(
+          finalImage,
+          color: transformedImage.backgroundColor ?? img.ColorRgb8(0, 0, 0),
+        );
 
         final dstX = targetMetrics.midShoulder.x - finalTrackedPoint.x;
         final dstY = targetMetrics.midShoulder.y - finalTrackedPoint.y;
@@ -380,9 +389,6 @@ class MLKitService {
     _PoseMetrics currentMetrics,
     img.Point pointToTrack, // This is currentMetrics.midShoulder initially
   ) {
-    const kSkipScaling = false;
-    const kSkipRotation = false;
-
     img.Image workingImage = currentImage; // Operate on this
     double trackedX = pointToTrack.x.toDouble();
     double trackedY = pointToTrack.y.toDouble();
