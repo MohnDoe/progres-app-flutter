@@ -99,7 +99,7 @@ class MLKitService {
       }
 
       const kWidthThreshold = 360;
-      const kUseScaledDownImage = true;
+      const kUseScaledDownImage = false;
 
       if (originalImageDecoded.width > kWidthThreshold && kUseScaledDownImage) {
         final tempDir = await Directory.systemTemp.createTemp('progres_scaled_');
@@ -380,61 +380,123 @@ class MLKitService {
     _PoseMetrics currentMetrics,
     img.Point pointToTrack, // This is currentMetrics.midShoulder initially
   ) {
+    const kSkipScaling = false;
+    const kSkipRotation = false;
+
     img.Image workingImage = currentImage; // Operate on this
     double trackedX = pointToTrack.x.toDouble();
     double trackedY = pointToTrack.y.toDouble();
 
-    // --- 1. SCALING ---
-    double scaleFactorSpine = targetMetrics.spineLength / currentMetrics.spineLength;
-    double scaleFactorShoulder =
-        targetMetrics.shoulderWidth / currentMetrics.shoulderWidth;
-    double overallScaleFactor = scaleFactorShoulder; // As per original logic
+    _logger.d("APPLY_TRANSFORMATIONS - SCALING ONLY TEST");
+    _logger.d(
+      "  Incoming point: (${trackedX.toStringAsFixed(2)}, ${trackedY.toStringAsFixed(2)})",
+    );
 
-    if ((overallScaleFactor - 1.0).abs() > 0.01) {
-      _logger.d('Scaling by ${overallScaleFactor.toStringAsFixed(3)}');
-      int newWidth = (workingImage.width * overallScaleFactor).round();
-      int newHeight = (workingImage.height * overallScaleFactor).round();
+    if (!kSkipScaling) {
+      // --- 1. SCALING ---
+      double overallScaleFactor = 1.0;
+      if (currentMetrics.spineLength.abs() > 1e-6) {
+        // Avoid division by zero
+        overallScaleFactor = targetMetrics.spineLength / currentMetrics.spineLength;
+      }
+      if (overallScaleFactor.isNaN || overallScaleFactor.isInfinite) {
+        overallScaleFactor = 1.0;
+      }
 
-      if (newWidth > 0 && newHeight > 0) {
-        trackedX *= overallScaleFactor;
-        trackedY *= overallScaleFactor;
-        workingImage = img.copyResize(
-          workingImage,
-          width: newWidth,
-          height: newHeight,
-          interpolation: img.Interpolation.linear,
-        );
+      _logger.d(
+        "  OverallScaleFactor for spine: ${overallScaleFactor.toStringAsFixed(3)} (targetSW: ${targetMetrics.spineLength.toStringAsFixed(2)}, currentSW: ${currentMetrics.spineLength.toStringAsFixed(2)})",
+      );
+
+      if ((overallScaleFactor - 1.0).abs() > 0.01 && overallScaleFactor > 0.01) {
+        _logger.d('Scaling by ${overallScaleFactor.toStringAsFixed(3)}');
+        int newWidth = (workingImage.width * overallScaleFactor).round();
+        int newHeight = (workingImage.height * overallScaleFactor).round();
+
+        if (newWidth > 0 && newHeight > 0) {
+          trackedX *= overallScaleFactor;
+          trackedY *= overallScaleFactor;
+          _logger.d(
+            "  Point scaled to: (${trackedX.toStringAsFixed(2)}, ${trackedY.toStringAsFixed(2)})",
+          );
+          workingImage = img.copyResize(
+            workingImage,
+            width: newWidth,
+            height: newHeight,
+            interpolation: img.Interpolation.linear,
+          );
+        } else {
+          _logger.w("Invalid scale dimensions. Skipping scale.");
+        }
       } else {
-        _logger.w("Invalid scale dimensions. Skipping scale.");
+        _logger.d("  Skipping scaling (factor close to 1.0 or invalid).");
       }
     }
 
-    // --- 2. ROTATION ---
-    double angleDifferenceDeg =
-        targetMetrics.spineAngleDeg - currentMetrics.spineAngleDeg;
-    if (angleDifferenceDeg.abs() > 0.5) {
-      _logger.d('Rotating by ${angleDifferenceDeg.toStringAsFixed(2)} deg');
-      final imageCenterX = workingImage.width / 2.0;
-      final imageCenterY = workingImage.height / 2.0;
+    if (!kSkipRotation) {
+      // --- 2. ROTATION ---
+      double angleDifferenceDeg =
+          targetMetrics.spineAngleDeg - currentMetrics.spineAngleDeg;
+      if (angleDifferenceDeg.abs() > 0.5) {
+        _logger.d('Rotating by ${angleDifferenceDeg.toStringAsFixed(2)} deg');
 
-      double pX = trackedX - imageCenterX;
-      double pY = trackedY - imageCenterY;
+        final double w1 = workingImage.width.toDouble(); // Source width
+        final double h1 = workingImage.height.toDouble(); // Source height
+        final double w1Center = w1 / 2.0; // Source center X (like w2 in copyRotate)
+        final double h1Center = h1 / 2.0; // Source center Y (like h2 in copyRotate)
 
-      double angleRad = angleDifferenceDeg * (math.pi / 180.0);
-      double cosA = math.cos(angleRad);
-      double sinA = math.sin(angleRad);
-      double pRotX = pX * cosA - pY * sinA;
-      double pRotY = pX * sinA + pY * cosA;
+        double trackedRelativeToSrcCenterX = trackedX - w1Center;
+        double trackedRelativeToSrcCenterY = trackedY - h1Center;
 
-      trackedX = pRotX + imageCenterX;
-      trackedY = pRotY + imageCenterY;
+        double angleRad = angleDifferenceDeg * (math.pi / 180.0);
+        double cosA = math.cos(angleRad);
+        double sinA = math.sin(angleRad);
 
-      workingImage = img.copyRotate(
-        workingImage,
-        angle: angleDifferenceDeg,
-        interpolation: img.Interpolation.linear,
-      );
+        // COUNTER-CLOCKWISE point rotation (matches image content rotation)
+        double protxReltosrccenter =
+            trackedRelativeToSrcCenterX * cosA - trackedRelativeToSrcCenterY * sinA;
+        double protyReltosrccenter =
+            trackedRelativeToSrcCenterX * sinA + trackedRelativeToSrcCenterY * cosA;
+
+        // Calculate the new destination image dimensions and center (like in copyRotate)
+        final double ux = (w1 * cosA).abs();
+        final double uy = (w1 * sinA).abs();
+        final double vx = (h1 * sinA).abs();
+        final double vy = (h1 * cosA).abs();
+        final double w2New = ux + vx; // Destination width
+        final double h2New = uy + vy; // Destination height
+        final double w2NewCenter = w2New / 2.0; // Dest center X (like dw2 in copyRotate)
+        final double h2NewCenter = h2New / 2.0; // Dest center Y (like dh2 in copyRotate)
+
+        // The rotated point (pRotX_relToSrcCenter, pRotY_relToSrcCenter) is relative to the pivot.
+        // This pivot point (w1_center, h1_center) in the source image is now effectively
+        // at (w2_new_center, h2_new_center) in the destination image's coordinate system.
+        // So, the final absolute coordinates of the tracked point on the new canvas are:
+        trackedX = protxReltosrccenter + w2NewCenter;
+        trackedY = protyReltosrccenter + h2NewCenter;
+
+        _logger.d(
+          "  Point relative pre-rot (to src_center): (${trackedRelativeToSrcCenterX.toStringAsFixed(2)},${trackedRelativeToSrcCenterY.toStringAsFixed(2)})",
+        );
+        _logger.d(
+          "  Point relative post-rot (to pivot): (${protxReltosrccenter.toStringAsFixed(2)},${protyReltosrccenter.toStringAsFixed(2)})",
+        );
+        _logger.d(
+          "  Src Center: ($w1Center, $h1Center). New Dst Canvas Dims: (${w2New.toInt()}x${h2New.toInt()}). New Dst Center: ($w2NewCenter, $h2NewCenter)",
+        );
+        _logger.d(
+          "  Final point absolute on new canvas: (${trackedX.toStringAsFixed(2)}, ${trackedY.toStringAsFixed(2)})",
+        );
+
+        workingImage = img.copyRotate(
+          workingImage,
+          angle: angleDifferenceDeg,
+          interpolation: img.Interpolation.linear,
+        );
+      }
     }
+    _logger.d(
+      "  Returning point: (${trackedX.toStringAsFixed(2)}, ${trackedY.toStringAsFixed(2)})",
+    );
     return _TransformationResult(workingImage, img.Point(trackedX, trackedY));
   }
 
