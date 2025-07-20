@@ -101,6 +101,7 @@ class VideoService {
     final String compilingCommand =
         "-framerate $fps "
         "-i $framesInputPattern "
+        "-vf \"pad=ceil(iw/2)*2:ceil(ih/2)*2\" " // fix not divisible by 2
         "-r $fps "
         "-c:v libx264 -pix_fmt yuv420p "
         "$outputVideoPath";
