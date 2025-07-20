@@ -8,9 +8,18 @@ enum VideoGenerationStep {
 }
 
 class VideoGenerationProgress {
+  VideoGenerationProgress(
+    this.step,
+    this.progress, {
+    this.videoPath,
+    this.message,
+    this.debugFilePath,
+  });
+
   final VideoGenerationStep step;
   final double progress;
   final String? videoPath;
+  final String? message;
 
-  VideoGenerationProgress(this.step, this.progress, {this.videoPath});
+  final String? debugFilePath;
 }

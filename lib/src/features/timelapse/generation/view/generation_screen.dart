@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -35,6 +37,12 @@ class GenerationScreen extends ConsumerWidget {
                 LinearProgressIndicator(value: progress.progress),
                 const SizedBox(height: 16),
                 Text(_getStepText(progress.step)),
+                const SizedBox(height: 16),
+                if (progress.message != null) Text(progress.message!),
+                const SizedBox(height: 16),
+
+                if (progress.debugFilePath != null)
+                  Image.file(File(progress.debugFilePath!), width: 200),
               ],
             );
           },

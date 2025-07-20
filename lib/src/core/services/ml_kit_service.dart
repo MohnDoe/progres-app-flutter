@@ -1,21 +1,49 @@
 import 'dart:io';
 import 'dart:math' as math;
-
-import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
+import 'package:image/image.dart' as img;
 import 'package:logger/logger.dart';
+// Assuming path_provider is used by VideoService or directly for paths
+// import 'package:path_provider/path_provider.dart';
+import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
+import 'package:path/path.dart' as p;
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/core/services/video_service.dart';
-import 'package:image/image.dart' as img;
-import 'package:path/path.dart' as p;
-import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart';
+import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart'; // For p.join
+
+// --- End of Placeholders ---
+
+class _PoseMetrics {
+  final img.Point midShoulder;
+  final double spineLength;
+  final double shoulderWidth;
+  final double spineAngleDeg;
+  final Map<PoseLandmarkType, PoseLandmark> allLandmarks;
+
+  _PoseMetrics({
+    required this.midShoulder,
+    required this.spineLength,
+    required this.shoulderWidth,
+    required this.spineAngleDeg,
+    required this.allLandmarks,
+  });
+}
+
+class _TransformationResult {
+  final img.Image image;
+  final img.Point trackedPoint;
+
+  _TransformationResult(this.image, this.trackedPoint);
+}
 
 class MLKitService {
+  // Assuming this is the class name you're using
+  static final Logger _logger = Logger(); // Renamed to _logger for convention
   static Stream<VideoGenerationProgress> generateAlignedImages(
     List<ProgressPicture> listPictures,
   ) async* {
-    Logger().i('Preparing aligned frames with rotation and scale');
+    _logger.i('Preparing aligned frames with rotation and scale');
     final alignedFramesDir = await VideoService().alignedFramesDirectory;
-    Logger().i('Aligned frames directory: ${alignedFramesDir.path}');
+    _logger.i('Aligned frames directory: ${alignedFramesDir.path}');
 
     if (await alignedFramesDir.exists()) {
       await alignedFramesDir.delete(recursive: true);
@@ -24,354 +52,375 @@ class MLKitService {
 
     final poseDetector = PoseDetector(
       options: PoseDetectorOptions(
-        mode: PoseDetectionMode.single,
+        mode: PoseDetectionMode
+            .single, // singleImage is often preferred for single frame processing
         model: PoseDetectionModel.accurate,
       ),
     );
 
-    img.Point? targetCrossCenter; // Mid-shoulder of the reference pose
-    double? targetSpineLength; // Mid-hip to mid-shoulder
-    double? targetShoulderWidth;
-    double? targetSpineAngleDeg; // Angle of the spine (mid-hip to mid-shoulder)
-
+    _PoseMetrics? targetMetrics; // Using the helper class
     int? referenceImageWidth;
     int? referenceImageHeight;
 
-    Logger().i('Processing ${listPictures.length} pictures.');
+    _logger.i('Processing ${listPictures.length} pictures.');
     for (int i = 0; i < listPictures.length; i++) {
       final picture = listPictures[i];
       final imagePath = picture.file.path;
       final frameFileName = 'frame_${i.toString().padLeft(4, '0')}.jpg';
       final framePath = p.join(alignedFramesDir.path, frameFileName);
 
-      Logger().i(
+      _logger.i(
         'Processing picture ${i + 1}/${listPictures.length}: $imagePath to $frameFileName',
       );
 
-      final inputImageFile = InputImage.fromFile(picture.file);
-
-      List<Pose> poses = [];
-
-      try {
-        poses = await poseDetector.processImage(inputImageFile);
-      } on Exception catch (e) {
-        Logger().e('Error processing image $imagePath: $e');
-      }
-
-      if (poses.isEmpty || poses.first.landmarks.isEmpty) {
-        Logger().w('No pose detected in $imagePath. Skipping.');
-        // Optionally, save the original image or a blank frame
-        final originalBytes = await File(imagePath).readAsBytes();
-        img.Image? originalImage = img.decodeImage(originalBytes);
-        if (originalImage != null) {
-          if (referenceImageWidth != null &&
-              referenceImageHeight != null &&
-              (originalImage.width != referenceImageWidth ||
-                  originalImage.height != referenceImageHeight)) {
-            // If reference dimensions are set, create a canvas and center the image
-            final canvas = img.Image(
-              width: referenceImageWidth,
-              height: referenceImageHeight,
-            );
-            img.fill(canvas, color: img.ColorRgb8(0, 0, 0)); // Black background
-            img.compositeImage(
-              canvas,
-              originalImage,
-              dstX: (referenceImageWidth - originalImage.width) ~/ 2,
-              dstY: (referenceImageHeight - originalImage.height) ~/ 2,
-            );
-            await File(framePath).writeAsBytes(img.encodeJpg(canvas));
-          } else {
-            await File(framePath).writeAsBytes(img.encodeJpg(originalImage));
-          }
-        }
-        continue;
-      }
-
-      final pose = poses.first;
-
-      // Key landmarks for torso and head
-      final leftShoulder = pose.landmarks[PoseLandmarkType.leftShoulder];
-      final rightShoulder = pose.landmarks[PoseLandmarkType.rightShoulder];
-      final leftHip = pose.landmarks[PoseLandmarkType.leftHip];
-      final rightHip = pose.landmarks[PoseLandmarkType.rightHip];
-      // final leftEar = pose.landmarks[PoseLandmarkType.leftEar];
-      // final rightEar = pose.landmarks[PoseLandmarkType.rightEar];
-
-      if (leftShoulder == null ||
-          rightShoulder == null ||
-          leftHip == null ||
-          rightHip == null) {
-        Logger().w('Essential landmarks missing in $imagePath. Skipping.');
-        continue;
-      }
-      final currentMidShoulderX = (leftShoulder.x + rightShoulder.x) / 2;
-      final currentMidShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
-      final currentMidShoulderPt = img.Point(currentMidShoulderX, currentMidShoulderY);
-
-      final currentMidHipX = (leftHip.x + rightHip.x) / 2;
-      final currentMidHipY = (leftHip.y + rightHip.y) / 2;
-
-      final currentSpineLength = math.sqrt(
-        math.pow(currentMidShoulderX - currentMidHipX, 2) +
-            math.pow(currentMidShoulderY - currentMidHipY, 2),
-      );
-      if (currentSpineLength < 1.0) {
-        // Avoid division by zero or tiny values
-        Logger().w('Spine length too small in $imagePath. Skipping.');
-        continue;
-      }
-
-      final currentShoulderWidth = math.sqrt(
-        math.pow(leftShoulder.x - rightShoulder.x, 2) +
-            math.pow(leftShoulder.y - rightShoulder.y, 2),
-      );
-      if (currentShoulderWidth < 1.0) {
-        Logger().w('Shoulder width too small in $imagePath. Skipping.');
-        continue;
-      }
-
-      // Spine angle: from mid-hip (origin) to mid-shoulder (point)
-      final currentSpineAngleRad = math.atan2(
-        currentMidShoulderY - currentMidHipY,
-        currentMidShoulderX - currentMidHipX,
-      );
-      final currentSpineAngleDeg = currentSpineAngleRad * (180 / math.pi);
-
-      // --- Load original image using 'image' package ---
-      final originalBytes = await File(imagePath).readAsBytes();
+      final Pose? pose = await _detectPoseInImage(poseDetector, imagePath);
+      final originalBytes = await File(imagePath).readAsBytes(); // Read once
       img.Image? workingImage = img.decodeImage(originalBytes);
 
       if (workingImage == null) {
-        Logger().e('Could not decode image $imagePath. Skipping.');
+        _logger.e('Could not decode image $imagePath. Skipping.');
+        yield VideoGenerationProgress(
+          // Assuming error state or just skip
+          VideoGenerationStep.aligningFrames, // Or a specific error step
+          (i + 1) / listPictures.length,
+          message: "Decode error for $imagePath",
+        );
         continue;
       }
 
+      if (pose == null) {
+        await _saveProblematicFrame(
+          workingImage,
+          framePath,
+          referenceImageWidth,
+          referenceImageHeight,
+        );
+        yield VideoGenerationProgress(
+          VideoGenerationStep.aligningFrames,
+          (i + 1) / listPictures.length,
+          message: "No pose in $imagePath",
+          debugFilePath: framePath,
+        );
+        continue;
+      }
+
+      final _PoseMetrics? currentMetrics = _calculateCurrentPoseMetrics(pose);
+      if (currentMetrics == null) {
+        _logger.w('Could not calculate metrics for $imagePath. Saving original.');
+        await _saveProblematicFrame(
+          workingImage,
+          framePath,
+          referenceImageWidth,
+          referenceImageHeight,
+        );
+        yield VideoGenerationProgress(
+          VideoGenerationStep.aligningFrames,
+          (i + 1) / listPictures.length,
+          message: "Metrics error for $imagePath",
+          debugFilePath: framePath,
+        );
+        continue;
+      }
+
+      // Draw landmarks on the working image (as per original logic)
       workingImage = _drawLandmarksOnImage(
         workingImage,
-        pose.landmarks,
-        crossCenter: currentMidShoulderPt,
+        currentMetrics.allLandmarks, // Use allLandmarks from metrics
+        crossCenter: currentMetrics.midShoulder,
       );
 
-      // --- Point to track: currentMidShoulderPt (its coordinates are relative to original image) ---
-      // We need to find where this point ends up after transformations on `workingImage`.
-      double trackedMidShoulderX = currentMidShoulderPt.x.toDouble();
-      double trackedMidShoulderY = currentMidShoulderPt.y.toDouble();
-      // These are relative to the top-left of the CURRENT `workingImage`
-
-      // Store original dimensions for later use if needed for point transformation calculations
-      final originalImageWidthForCalc = workingImage.width;
-      final originalImageHeightForCalc = workingImage.height;
+      img.Point trackedPointInWorkingImage = currentMetrics.midShoulder;
 
       if (i == 0) {
-        // This is the reference image
-        targetCrossCenter = currentMidShoulderPt; // Store as img.Point for consistency
-        targetSpineLength = currentSpineLength;
-        targetShoulderWidth = currentShoulderWidth;
-        targetSpineAngleDeg = currentSpineAngleDeg;
+        targetMetrics = currentMetrics;
         referenceImageWidth = workingImage.width;
         referenceImageHeight = workingImage.height;
 
-        Logger().i(
-          'Reference SET: Center=(${targetCrossCenter.x.toStringAsFixed(2)}, ${targetCrossCenter.y.toStringAsFixed(2)}), '
-          'SpineLen=${targetSpineLength.toStringAsFixed(2)}, ShoulderWid=${targetShoulderWidth.toStringAsFixed(2)}, '
-          'SpineAngle=${targetSpineAngleDeg.toStringAsFixed(2)}deg',
+        _logger.i(
+          'Reference SET: Center=(${targetMetrics.midShoulder.x.toStringAsFixed(2)}, ${targetMetrics.midShoulder.y.toStringAsFixed(2)}), '
+          'SpineLen=${targetMetrics.spineLength.toStringAsFixed(2)}, ShoulderWid=${targetMetrics.shoulderWidth.toStringAsFixed(2)}, '
+          'SpineAngle=${targetMetrics.spineAngleDeg.toStringAsFixed(2)}deg',
         );
-        // Save the reference image as is (already on its own canvas implicitly)
         await File(framePath).writeAsBytes(img.encodeJpg(workingImage));
       } else {
-        // Subsequent images: Align to reference
-        if (targetCrossCenter == null ||
-            targetSpineLength == null ||
-            targetShoulderWidth == null ||
-            targetSpineAngleDeg == null ||
+        if (targetMetrics == null ||
             referenceImageWidth == null ||
             referenceImageHeight == null) {
-          Logger().e('Reference properties not set. Cannot align $imagePath. Skipping.');
-
+          _logger.e(
+            'Reference properties not set. Cannot align $imagePath. Saving original.',
+          );
+          await _saveProblematicFrame(
+            workingImage,
+            framePath,
+            referenceImageWidth,
+            referenceImageHeight,
+          );
+          yield VideoGenerationProgress(
+            VideoGenerationStep.aligningFrames,
+            (i + 1) / listPictures.length,
+            message: "Reference not set for $imagePath",
+            debugFilePath: framePath,
+          );
           continue;
         }
 
-        // --- 1. SCALING ---
-        // Uniform scaling based on spine length (primary) and shoulder width (secondary, if desired)
-        double scaleFactorSpine = targetSpineLength! / currentSpineLength;
-        double scaleFactorShoulder = targetShoulderWidth! / currentShoulderWidth;
+        final transformationResult = _applyTransformations(
+          workingImage,
+          targetMetrics,
+          currentMetrics,
+          trackedPointInWorkingImage, // This is currentMetrics.midShoulder
+        );
 
-        // Choose a single scale factor. Average can be a good compromise,
-        // or prioritize one (e.g., spine length).
-        // Using spine for now as it's often more stable for body size.
-        // double overallScaleFactor = scaleFactorSpine;
-        double overallScaleFactor = scaleFactorShoulder;
-        // double overallScaleFactor = (scaleFactorSpine + scaleFactorShoulder) / 2.0;
+        img.Image transformedImage = transformationResult.image;
+        img.Point finalTrackedPoint = transformationResult.trackedPoint;
 
-        if ((overallScaleFactor - 1.0).abs() > 0.01) {
-          // Apply if significant
-          Logger().d(
-            'Scaling image for $imagePath by ${overallScaleFactor.toStringAsFixed(3)}',
-          );
-          int newWidth = (workingImage.width * overallScaleFactor).round();
-          int newHeight = (workingImage.height * overallScaleFactor).round();
-
-          if (newWidth <= 0 || newHeight <= 0) {
-            Logger().w("Invalid scale dimensions for $imagePath. Skipping scale.");
-          } else {
-            // Update the tracked point's coordinates due to whole-image scaling
-            // The scaling is applied from (0,0) of the image.
-            trackedMidShoulderX *= overallScaleFactor;
-            trackedMidShoulderY *= overallScaleFactor;
-
-            workingImage = img.copyResize(
-              workingImage,
-              width: newWidth,
-              height: newHeight,
-              interpolation: img.Interpolation.linear,
-            );
-          }
-        }
-
-        // --- 2. ROTATION ---
-        double angleDifferenceDeg = targetSpineAngleDeg! - currentSpineAngleDeg;
-        // Normalize angle to be between -180 and 180 if needed, though atan2 usually handles it well.
-
-        if (angleDifferenceDeg.abs() > 0.5) {
-          // Apply if significant rotation
-          Logger().d(
-            'Rotating image for $imagePath by ${angleDifferenceDeg.toStringAsFixed(2)} deg',
-          );
-
-          // `copyRotate` rotates around the center of `workingImage`.
-          // We need to calculate how `trackedMidShoulder` moves due to this.
-          final imageCenterX = workingImage!.width / 2.0;
-          final imageCenterY = workingImage.height / 2.0;
-
-          // Translate tracked point to be relative to image center
-          double pX = trackedMidShoulderX - imageCenterX;
-          double pY = trackedMidShoulderY - imageCenterY;
-
-          // Rotate the point
-          double angleRad = angleDifferenceDeg * (math.pi / 180.0);
-          double cosA = math.cos(angleRad);
-          double sinA = math.sin(angleRad);
-          double pRotX = pX * cosA - pY * sinA;
-          double pRotY = pX * sinA + pY * cosA;
-
-          // Translate point back from image center
-          trackedMidShoulderX = pRotX + imageCenterX;
-          trackedMidShoulderY = pRotY + imageCenterY;
-
-          workingImage = img.copyRotate(
-            workingImage,
-            angle: angleDifferenceDeg,
-            interpolation: img.Interpolation.linear,
-          );
-        }
-        // --- 3. TRANSLATION (COMPOSITING) ---
-        // Create the final canvas with reference dimensions
         img.Image finalImage = img.Image(
           width: referenceImageWidth,
           height: referenceImageHeight,
         );
-        finalImage = img.fill(
-          finalImage,
-          color: img.ColorRgb8(0, 0, 0),
-        ); // Black background
+        finalImage = img.fill(finalImage, color: img.ColorRgb8(0, 0, 0));
 
-        // We want `trackedMidShoulder` (which is now in the coordinate system of the
-        // scaled and rotated `workingImage`) to land at `targetCrossCenter`
-        // (which is in the coordinate system of the reference/final image).
-        final dstX = targetCrossCenter.x - trackedMidShoulderX;
-        final dstY = targetCrossCenter.y - trackedMidShoulderY;
+        final dstX = targetMetrics.midShoulder.x - finalTrackedPoint.x;
+        final dstY = targetMetrics.midShoulder.y - finalTrackedPoint.y;
 
-        Logger().d(
-          'Compositing $imagePath: trackedMidShoulder=(${trackedMidShoulderX.toStringAsFixed(2)}, ${trackedMidShoulderY.toStringAsFixed(2)}), '
-          'targetCrossCenter=(${targetCrossCenter.x.toStringAsFixed(2)}, ${targetCrossCenter.y.toStringAsFixed(2)}), '
+        _logger.d(
+          'Compositing $imagePath: trackedMidShoulder=(${finalTrackedPoint.x.toStringAsFixed(2)}, ${finalTrackedPoint.y.toStringAsFixed(2)}), '
+          'targetCrossCenter=(${targetMetrics.midShoulder.x.toStringAsFixed(2)}, ${targetMetrics.midShoulder.y.toStringAsFixed(2)}), '
           'dst=(${dstX.toStringAsFixed(2)}, ${dstY.toStringAsFixed(2)})',
         );
 
         finalImage = img.compositeImage(
           finalImage,
-          workingImage,
+          transformedImage,
           dstX: dstX.round(),
           dstY: dstY.round(),
         );
-
         await File(framePath).writeAsBytes(img.encodeJpg(finalImage));
       }
       yield VideoGenerationProgress(
         VideoGenerationStep.aligningFrames,
         (i + 1) / listPictures.length,
+        debugFilePath: framePath,
       );
     }
 
-    poseDetector.close();
-    Logger().i('Pose detector closed.');
-    Logger().i('Finished generating stabilized images list with R&S attempt.');
+    await poseDetector.close(); // Close the detector when done
+    _logger.i('Pose detector closed.');
+    _logger.i('Finished generating stabilized images list with R&S attempt.');
+    // Optionally yield a final completion progress update
+    yield VideoGenerationProgress(
+      VideoGenerationStep.aligningFrames,
+      1.0,
+      message: "Alignment complete",
+    );
   }
 
-  // Helper method to draw landmarks on the image
+  // Helper: Detect Pose
+  static Future<Pose?> _detectPoseInImage(PoseDetector detector, String imagePath) async {
+    final inputImageFile = InputImage.fromFile(File(imagePath));
+    try {
+      final List<Pose> poses = await detector.processImage(inputImageFile);
+      if (poses.isNotEmpty && poses.first.landmarks.isNotEmpty) {
+        return poses.first;
+      }
+      _logger.w('No pose or landmarks detected in $imagePath.');
+    } on Exception catch (e) {
+      _logger.e('Error processing image $imagePath with ML Kit: $e');
+    }
+    return null;
+  }
+
+  // Helper: Calculate Pose Metrics
+  static _PoseMetrics? _calculateCurrentPoseMetrics(Pose pose) {
+    final landmarks = pose.landmarks;
+    final leftShoulder = landmarks[PoseLandmarkType.leftShoulder];
+    final rightShoulder = landmarks[PoseLandmarkType.rightShoulder];
+    final leftHip = landmarks[PoseLandmarkType.leftHip];
+    final rightHip = landmarks[PoseLandmarkType.rightHip];
+
+    if (leftShoulder == null ||
+        rightShoulder == null ||
+        leftHip == null ||
+        rightHip == null) {
+      _logger.w('Essential landmarks missing for metric calculation.');
+      return null;
+    }
+
+    final currentMidShoulderX = (leftShoulder.x + rightShoulder.x) / 2;
+    final currentMidShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+    final currentMidShoulderPt = img.Point(currentMidShoulderX, currentMidShoulderY);
+
+    final currentMidHipX = (leftHip.x + rightHip.x) / 2;
+    final currentMidHipY = (leftHip.y + rightHip.y) / 2;
+
+    final currentSpineLength = math.sqrt(
+      math.pow(currentMidShoulderX - currentMidHipX, 2) +
+          math.pow(currentMidShoulderY - currentMidHipY, 2),
+    );
+    if (currentSpineLength < 1.0) {
+      _logger.w('Calculated spine length is too small ($currentSpineLength).');
+      return null;
+    }
+
+    final currentShoulderWidth = math.sqrt(
+      math.pow(leftShoulder.x - rightShoulder.x, 2) +
+          math.pow(leftShoulder.y - rightShoulder.y, 2),
+    );
+    if (currentShoulderWidth < 1.0) {
+      _logger.w('Calculated shoulder width is too small ($currentShoulderWidth).');
+      return null;
+    }
+
+    final currentSpineAngleRad = math.atan2(
+      currentMidShoulderY - currentMidHipY,
+      currentMidShoulderX - currentMidHipX,
+    );
+    final currentSpineAngleDeg = currentSpineAngleRad * (180 / math.pi);
+
+    return _PoseMetrics(
+      midShoulder: currentMidShoulderPt,
+      spineLength: currentSpineLength,
+      shoulderWidth: currentShoulderWidth,
+      spineAngleDeg: currentSpineAngleDeg,
+      allLandmarks: landmarks,
+    );
+  }
+
+  // Helper: Image Transformation (Scale & Rotate)
+  static _TransformationResult _applyTransformations(
+    img.Image currentImage,
+    _PoseMetrics targetMetrics,
+    _PoseMetrics currentMetrics,
+    img.Point pointToTrack, // This is currentMetrics.midShoulder initially
+  ) {
+    img.Image workingImage = currentImage; // Operate on this
+    double trackedX = pointToTrack.x.toDouble();
+    double trackedY = pointToTrack.y.toDouble();
+
+    // --- 1. SCALING ---
+    double scaleFactorSpine = targetMetrics.spineLength / currentMetrics.spineLength;
+    double scaleFactorShoulder =
+        targetMetrics.shoulderWidth / currentMetrics.shoulderWidth;
+    double overallScaleFactor = scaleFactorShoulder; // As per original logic
+
+    if ((overallScaleFactor - 1.0).abs() > 0.01) {
+      _logger.d('Scaling by ${overallScaleFactor.toStringAsFixed(3)}');
+      int newWidth = (workingImage.width * overallScaleFactor).round();
+      int newHeight = (workingImage.height * overallScaleFactor).round();
+
+      if (newWidth > 0 && newHeight > 0) {
+        trackedX *= overallScaleFactor;
+        trackedY *= overallScaleFactor;
+        workingImage = img.copyResize(
+          workingImage,
+          width: newWidth,
+          height: newHeight,
+          interpolation: img.Interpolation.linear,
+        );
+      } else {
+        _logger.w("Invalid scale dimensions. Skipping scale.");
+      }
+    }
+
+    // --- 2. ROTATION ---
+    double angleDifferenceDeg =
+        targetMetrics.spineAngleDeg - currentMetrics.spineAngleDeg;
+    if (angleDifferenceDeg.abs() > 0.5) {
+      _logger.d('Rotating by ${angleDifferenceDeg.toStringAsFixed(2)} deg');
+      final imageCenterX = workingImage.width / 2.0;
+      final imageCenterY = workingImage.height / 2.0;
+
+      double pX = trackedX - imageCenterX;
+      double pY = trackedY - imageCenterY;
+
+      double angleRad = angleDifferenceDeg * (math.pi / 180.0);
+      double cosA = math.cos(angleRad);
+      double sinA = math.sin(angleRad);
+      double pRotX = pX * cosA - pY * sinA;
+      double pRotY = pX * sinA + pY * cosA;
+
+      trackedX = pRotX + imageCenterX;
+      trackedY = pRotY + imageCenterY;
+
+      workingImage = img.copyRotate(
+        workingImage,
+        angle: angleDifferenceDeg,
+        interpolation: img.Interpolation.linear,
+      );
+    }
+    return _TransformationResult(workingImage, img.Point(trackedX, trackedY));
+  }
+
+  // Helper: Save Problematic Frame (original or centered on canvas)
+  static Future<void> _saveProblematicFrame(
+    img.Image imageToSave,
+    String framePath,
+    int? referenceWidth,
+    int? referenceHeight,
+  ) async {
+    img.Image outputImage = imageToSave;
+    if (referenceWidth != null &&
+        referenceHeight != null &&
+        (imageToSave.width != referenceWidth || imageToSave.height != referenceHeight)) {
+      final canvas = img.Image(width: referenceWidth, height: referenceHeight);
+      img.fill(canvas, color: img.ColorRgb8(0, 0, 0)); // Black background
+      img.compositeImage(
+        canvas,
+        imageToSave,
+        dstX: (referenceWidth - imageToSave.width) ~/ 2,
+        dstY: (referenceHeight - imageToSave.height) ~/ 2,
+      );
+      outputImage = canvas;
+    }
+    await File(framePath).writeAsBytes(img.encodeJpg(outputImage));
+    _logger.i('Saved problematic/original frame to $framePath');
+  }
+
+  // --- Drawing Helper (Kept from original, avoiding drawStar) ---
   static img.Image _drawLandmarksOnImage(
     img.Image image,
     Map<PoseLandmarkType, PoseLandmark> landmarks, {
     img.Point? crossCenter,
   }) {
-    final logger = Logger();
-    img.Image newImage = img.Image.from(image);
-    logger.d(
-      'Drawing landmarks on image. Image dimensions: ${image.width}x${image.height}',
-    );
-    if (crossCenter != null) {
-      newImage = img.fillCircle(
-        newImage,
-        x: crossCenter.x.round(),
-        y: crossCenter.y.round(),
-        color: img.ColorRgb8(0, 0, 255),
-        radius: 10,
-      );
-    }
-    final paint = img.ColorRgb8(255, 0, 0); // Red color for landmarks
-    const radius = 10; // Radius of the circle for each landmark
+    img.Image newImage = img.Image.from(image); // Create a copy to draw on
 
-    final typesToDraw = [
-      PoseLandmarkType.leftShoulder,
-      PoseLandmarkType.rightShoulder,
-      PoseLandmarkType.leftHip,
-      PoseLandmarkType.rightHip,
-      PoseLandmarkType.nose,
-    ];
-
-    for (var type in typesToDraw) {
-      final landmark = landmarks[type];
-      if (landmark != null) {
-        // Ensure landmarks are within image bounds before drawing
-        logger.d(
-          'Landmark ${type.toString()}: (${landmark.x.round()}, ${landmark.y.round()})',
+    // Draw all landmarks as small circles/pixels
+    landmarks.forEach((type, landmark) {
+      if (landmark.x.round() >= 0 &&
+          landmark.x.round() < newImage.width &&
+          landmark.y.round() >= 0 &&
+          landmark.y.round() < newImage.height) {
+        img.fillCircle(
+          newImage,
+          x: landmark.x.round(),
+          y: landmark.y.round(),
+          radius: 3,
+          color: img.ColorRgb8(255, 0, 0),
         );
-        if (landmark.x >= 0 &&
-            landmark.x < image.width &&
-            landmark.y >= 0 &&
-            landmark.y < image.height) {
-          newImage = img.fillCircle(
-            newImage,
-            x: landmark.x.round(),
-            y: landmark.y.round(),
-            radius: radius,
-            color: paint,
-          );
-          logger.d('Landmark ${type.toString()} drawn.');
-        } else {
-          logger.w(
-            'Landmark ${type.toString()} is out of bounds: (${landmark.x.round()}, ${landmark.y.round()})',
-          );
-        }
-      } else {
-        logger.w('Landmark ${type.toString()} not found.');
+      }
+    });
+
+    // Draw the crossCenter if provided (e.g., a slightly larger circle)
+    if (crossCenter != null) {
+      if (crossCenter.x.round() >= 0 &&
+          crossCenter.x.round() < newImage.width &&
+          crossCenter.y.round() >= 0 &&
+          crossCenter.y.round() < newImage.height) {
+        img.fillCircle(
+          newImage,
+          x: crossCenter.x.round(),
+          y: crossCenter.y.round(),
+          radius: 6,
+          color: img.ColorRgb8(0, 0, 255),
+        );
       }
     }
-    // Draw spine and shoulder lines based on midpoints for clarity
+    // Draw spine and shoulder lines
     final leftShoulder = landmarks[PoseLandmarkType.leftShoulder];
     final rightShoulder = landmarks[PoseLandmarkType.rightShoulder];
     final leftHip = landmarks[PoseLandmarkType.leftHip];
     final rightHip = landmarks[PoseLandmarkType.rightHip];
+
     if (leftShoulder != null &&
         rightShoulder != null &&
         leftHip != null &&
@@ -381,28 +430,46 @@ class MLKitService {
       final midHipX = (leftHip.x + rightHip.x) / 2;
       final midHipY = (leftHip.y + rightHip.y) / 2;
 
-      // Shoulder line
-      newImage = img.drawLine(
-        newImage,
-        x1: leftShoulder.x.round(),
-        y1: leftShoulder.y.round(),
-        x2: rightShoulder.x.round(),
-        y2: rightShoulder.y.round(),
-        color: img.ColorRgb8(0, 255, 0),
-        thickness: 3,
-      );
-      // Spine line
-      newImage = img.drawLine(
-        newImage,
-        x1: midHipX.round(),
-        y1: midHipY.round(),
-        x2: midShoulderX.round(),
-        y2: midShoulderY.round(),
-        color: img.ColorRgb8(0, 255, 255),
-        thickness: 3,
-      );
+      // Simple bounds check before drawing lines
+      bool linePointsValid(num x1, num y1, num x2, num y2) {
+        return x1.round() >= 0 &&
+            x1.round() < newImage.width &&
+            y1.round() >= 0 &&
+            y1.round() < newImage.height &&
+            x2.round() >= 0 &&
+            x2.round() < newImage.width &&
+            y2.round() >= 0 &&
+            y2.round() < newImage.height;
+      }
+
+      if (linePointsValid(
+        leftShoulder.x,
+        leftShoulder.y,
+        rightShoulder.x,
+        rightShoulder.y,
+      )) {
+        img.drawLine(
+          newImage,
+          x1: leftShoulder.x.round(),
+          y1: leftShoulder.y.round(),
+          x2: rightShoulder.x.round(),
+          y2: rightShoulder.y.round(),
+          color: img.ColorRgb8(0, 255, 0),
+          thickness: 2,
+        );
+      }
+      if (linePointsValid(midHipX, midHipY, midShoulderX, midShoulderY)) {
+        img.drawLine(
+          newImage,
+          x1: midHipX.round(),
+          y1: midHipY.round(),
+          x2: midShoulderX.round(),
+          y2: midShoulderY.round(),
+          color: img.ColorRgb8(0, 255, 255),
+          thickness: 2,
+        );
+      }
     }
-    logger.d('Finished drawing landmarks.');
     return newImage;
   }
 }
