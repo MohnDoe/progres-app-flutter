@@ -2,13 +2,11 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'package:image/image.dart' as img;
 import 'package:logger/logger.dart';
-// Assuming path_provider is used by VideoService or directly for paths
-// import 'package:path_provider/path_provider.dart';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'package:path/path.dart' as p;
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/core/services/video_service.dart';
-import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart'; // For p.join
+import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart';
 
 // --- End of Placeholders ---
 
@@ -63,6 +61,7 @@ class MLKitService {
     int? referenceImageHeight;
 
     _logger.i('Processing ${listPictures.length} pictures.');
+    final overallStopwatch = Stopwatch()..start();
     for (int i = 0; i < listPictures.length; i++) {
       final picture = listPictures[i];
       final imagePath = picture.file.path;
@@ -70,12 +69,24 @@ class MLKitService {
       final framePath = p.join(alignedFramesDir.path, frameFileName);
 
       _logger.i(
-        'Processing picture ${i + 1}/${listPictures.length}: $imagePath to $frameFileName',
+        'Processing picture ${i + 1}/${listPictures.length}: ${p.basename(imagePath)} to $frameFileName',
+      );
+      final frameStopwatch = Stopwatch()..start();
+
+      final poseDetectionStopwatch = Stopwatch()..start();
+      final Pose? pose = await _detectPoseInImage(poseDetector, imagePath);
+      poseDetectionStopwatch.stop();
+      _logger.d(
+        'Pose detection for ${p.basename(imagePath)} took ${poseDetectionStopwatch.elapsedMilliseconds}ms.',
       );
 
-      final Pose? pose = await _detectPoseInImage(poseDetector, imagePath);
+      final imageReadDecodeStopwatch = Stopwatch()..start();
       final originalBytes = await File(imagePath).readAsBytes(); // Read once
       img.Image? workingImage = img.decodeImage(originalBytes);
+      imageReadDecodeStopwatch.stop();
+      _logger.d(
+        'Image read & decode for ${p.basename(imagePath)} took ${imageReadDecodeStopwatch.elapsedMilliseconds}ms.',
+      );
 
       if (workingImage == null) {
         _logger.e('Could not decode image $imagePath. Skipping.');
@@ -85,6 +96,7 @@ class MLKitService {
           (i + 1) / listPictures.length,
           message: "Decode error for $imagePath",
         );
+        frameStopwatch.stop();
         continue;
       }
 
@@ -101,10 +113,16 @@ class MLKitService {
           message: "No pose in $imagePath",
           debugFilePath: framePath,
         );
+        frameStopwatch.stop();
         continue;
       }
 
+      final metricsCalculationStopwatch = Stopwatch()..start();
       final _PoseMetrics? currentMetrics = _calculateCurrentPoseMetrics(pose);
+      metricsCalculationStopwatch.stop();
+      _logger.d(
+        'Metrics calculation for ${p.basename(imagePath)} took ${metricsCalculationStopwatch.elapsedMilliseconds}ms.',
+      );
       if (currentMetrics == null) {
         _logger.w('Could not calculate metrics for $imagePath. Saving original.');
         await _saveProblematicFrame(
@@ -119,14 +137,20 @@ class MLKitService {
           message: "Metrics error for $imagePath",
           debugFilePath: framePath,
         );
+        frameStopwatch.stop();
         continue;
       }
 
       // Draw landmarks on the working image (as per original logic)
+      final drawLandmarksStopwatch = Stopwatch()..start();
       workingImage = _drawLandmarksOnImage(
         workingImage,
         currentMetrics.allLandmarks, // Use allLandmarks from metrics
         crossCenter: currentMetrics.midShoulder,
+      );
+      drawLandmarksStopwatch.stop();
+      _logger.d(
+        'Drawing landmarks for ${p.basename(imagePath)} took ${drawLandmarksStopwatch.elapsedMilliseconds}ms.',
       );
 
       img.Point trackedPointInWorkingImage = currentMetrics.midShoulder;
@@ -141,7 +165,12 @@ class MLKitService {
           'SpineLen=${targetMetrics.spineLength.toStringAsFixed(2)}, ShoulderWid=${targetMetrics.shoulderWidth.toStringAsFixed(2)}, '
           'SpineAngle=${targetMetrics.spineAngleDeg.toStringAsFixed(2)}deg',
         );
+        final saveFrameStopwatch = Stopwatch()..start();
         await File(framePath).writeAsBytes(img.encodeJpg(workingImage));
+        saveFrameStopwatch.stop();
+        _logger.d(
+          'Saving reference frame ${p.basename(framePath)} took ${saveFrameStopwatch.elapsedMilliseconds}ms.',
+        );
       } else {
         if (targetMetrics == null ||
             referenceImageWidth == null ||
@@ -161,14 +190,20 @@ class MLKitService {
             message: "Reference not set for $imagePath",
             debugFilePath: framePath,
           );
+          frameStopwatch.stop();
           continue;
         }
 
+        final transformationStopwatch = Stopwatch()..start();
         final transformationResult = _applyTransformations(
           workingImage,
           targetMetrics,
           currentMetrics,
           trackedPointInWorkingImage, // This is currentMetrics.midShoulder
+        );
+        transformationStopwatch.stop();
+        _logger.d(
+          'Image transformation for ${p.basename(imagePath)} took ${transformationStopwatch.elapsedMilliseconds}ms.',
         );
 
         img.Image transformedImage = transformationResult.image;
@@ -186,27 +221,44 @@ class MLKitService {
         _logger.d(
           'Compositing $imagePath: trackedMidShoulder=(${finalTrackedPoint.x.toStringAsFixed(2)}, ${finalTrackedPoint.y.toStringAsFixed(2)}), '
           'targetCrossCenter=(${targetMetrics.midShoulder.x.toStringAsFixed(2)}, ${targetMetrics.midShoulder.y.toStringAsFixed(2)}), '
-          'dst=(${dstX.toStringAsFixed(2)}, ${dstY.toStringAsFixed(2)})',
+          'dst=(${dstX.toStringAsFixed(2)}, ${dstY.toStringAsFixed(2)}) for ${p.basename(framePath)}',
         );
 
+        final compositingStopwatch = Stopwatch()..start();
         finalImage = img.compositeImage(
           finalImage,
           transformedImage,
           dstX: dstX.round(),
           dstY: dstY.round(),
         );
+        compositingStopwatch.stop();
+        _logger.d(
+          'Compositing for ${p.basename(framePath)} took ${compositingStopwatch.elapsedMilliseconds}ms.',
+        );
+
+        final saveFrameStopwatch = Stopwatch()..start();
         await File(framePath).writeAsBytes(img.encodeJpg(finalImage));
+        saveFrameStopwatch.stop();
+        _logger.d(
+          'Saving transformed frame ${p.basename(framePath)} took ${saveFrameStopwatch.elapsedMilliseconds}ms.',
+        );
       }
+      frameStopwatch.stop();
+      _logger.i(
+        'Completed processing picture ${i + 1}/${listPictures.length} (${p.basename(imagePath)}) in ${frameStopwatch.elapsedMilliseconds}ms.',
+      );
       yield VideoGenerationProgress(
         VideoGenerationStep.aligningFrames,
         (i + 1) / listPictures.length,
         debugFilePath: framePath,
       );
     }
-
+    overallStopwatch.stop();
     await poseDetector.close(); // Close the detector when done
     _logger.i('Pose detector closed.');
-    _logger.i('Finished generating stabilized images list with R&S attempt.');
+    _logger.i(
+      'Finished generating ${listPictures.length} stabilized images in ${overallStopwatch.elapsedMilliseconds}ms (avg ${(overallStopwatch.elapsedMilliseconds / listPictures.length).toStringAsFixed(2)}ms/image).',
+    );
     // Optionally yield a final completion progress update
     yield VideoGenerationProgress(
       VideoGenerationStep.aligningFrames,
