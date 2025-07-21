@@ -122,6 +122,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // HEADER INFOS
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Row(
@@ -131,22 +132,27 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                 children: [
                   Text(
                     DateFormat.yMMMd().format(widget.from),
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: Theme.of(context).textTheme.labelLarge,
                   ),
-
                   const TimelineDaysDivider(),
-                  Text(
-                    "${NumberFormat.decimalPattern().format(totalDays)} days",
-                    style: Theme.of(context).textTheme.titleMedium,
+                  Column(
+                    children: [
+                      Text(
+                        "${NumberFormat.decimalPattern().format(totalDays)} days",
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      Text("132 photos!", style: Theme.of(context).textTheme.labelMedium),
+                    ],
                   ),
                   const TimelineDaysDivider(),
                   Text(
                     DateFormat.yMMMd().format(widget.to),
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: Theme.of(context).textTheme.labelLarge,
                   ),
                 ],
               ),
             ),
+            // VIDEO
             Expanded(
               child: PictureRectangle(
                 null,
@@ -161,6 +167,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                     : const Center(child: CircularProgressIndicator()),
               ),
             ),
+            // Progress
             if (_controller != null)
               VideoProgressIndicator(
                 _controller!,
@@ -171,6 +178,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   bufferedColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                 ),
               ),
+            // VIDEO CONTROLS
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
