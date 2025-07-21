@@ -4,6 +4,7 @@ import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/import/views/import_screen.dart';
 import 'package:progres/src/features/entries/list/views/list_entries_screen.dart';
 import 'package:progres/src/features/gallery/views/gallery_screen.dart';
+import 'package:progres/src/features/timelapse/configuration/views/timelapse_configuration_screen.dart';
 import 'package:progres/src/features/timelapse/generation/view/generation_screen.dart';
 import 'package:progres/src/features/timelapse/player/view/video_player_screen.dart';
 
@@ -56,6 +57,11 @@ final router = GoRouter(
           int.parse(state.pathParameters['to']!) * 1000,
         ),
       ),
+    ),
+    GoRoute(
+      path: TimelapseConfigurationScreen.path,
+      name: TimelapseConfigurationScreen.name,
+      builder: (context, state) => const TimelapseConfigurationScreen(),
     ),
     GoRoute(
       name: VideoPlayerScreen.name,
