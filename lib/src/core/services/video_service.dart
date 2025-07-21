@@ -13,17 +13,20 @@ import 'package:path/path.dart' as p;
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/core/services/file_service.dart';
+import 'package:progres/src/core/services/ml_kit_service.dart';
 import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart';
 import 'package:subtitle_toolkit/subtitle_toolkit.dart';
 
-const kOutputVideoPrefix = 'generated_timelapse';
-const kOutputVideoExt = 'mp4';
-
 class VideoService {
-  Future<Directory> get _temporaryDirectory async =>
-      await getTemporaryDirectory();
+  static final kOutputVideoPrefix = 'generated_timelapse';
+  static final kOutputVideoExt = 'mp4';
+
+  Future<Directory> get _temporaryDirectory async => await getTemporaryDirectory();
   Future<Directory> get _framesDirectory async =>
       Directory(p.join((await _temporaryDirectory).path, 'frames'));
+
+  Future<Directory> get alignedFramesDirectory async =>
+      Directory(p.join((await _temporaryDirectory).path, 'aligned_frames'));
 
   Future<String> get _transformsFilePath async =>
       p.join((await _temporaryDirectory).path, 'transforms.trf');
@@ -32,6 +35,9 @@ class VideoService {
 
   Future<String> get _framesInputPattern async =>
       p.join((await _framesDirectory).path, 'frame_%04d.jpg');
+
+  Future<String> get _alignedFramesInputPattern async =>
+      p.join((await alignedFramesDirectory).path, 'frame_%04d.jpg');
 
   Future<void> _initFramesDirectory() async {
     final framesDirectory = await _framesDirectory;
@@ -84,10 +90,29 @@ class VideoService {
     }
   }
 
-  Stream<VideoGenerationProgress> _analyseFrames(
+  Stream<VideoGenerationProgress> _generateVideoUsingAlignedFrames(
+    String outputVideoPath,
     int fps,
     int frameCount,
   ) async* {
+    Logger().i('Generating basic video.');
+    final framesInputPattern = await _alignedFramesInputPattern;
+
+    final String compilingCommand =
+        "-framerate $fps "
+        "-i $framesInputPattern "
+        "-vf \"pad=ceil(iw/2)*2:ceil(ih/2)*2\" " // fix not divisible by 2
+        "-r $fps "
+        "-c:v libx264 -pix_fmt yuv420p "
+        "$outputVideoPath";
+
+    await _deleteFile(outputVideoPath);
+    await for (final p in _executeCommand(compilingCommand, frameCount)) {
+      yield VideoGenerationProgress(VideoGenerationStep.generating, p);
+    }
+  }
+
+  Stream<VideoGenerationProgress> _analyseFrames(int fps, int frameCount) async* {
     Logger().i('Analysing video.');
     final framesInputPattern = await _framesInputPattern;
     final transformsFilePath = await _transformsFilePath;
@@ -106,10 +131,7 @@ class VideoService {
     }
   }
 
-  Future<void> _generateSubtitlesFile(
-    List<ProgressEntry> entries,
-    int fps,
-  ) async {
+  Future<void> _generateSubtitlesFile(List<ProgressEntry> entries, int fps) async {
     print('Generating subtitles');
     final subtitlesFilePath = await _subtitlesFilePath;
     await _deleteFile(subtitlesFilePath);
@@ -125,10 +147,7 @@ class VideoService {
     print('Subtitles generated');
   }
 
-  List<SubtitleEntry> _getSubtitleEntries(
-    List<ProgressEntry> entries,
-    int fps,
-  ) {
+  List<SubtitleEntry> _getSubtitleEntries(List<ProgressEntry> entries, int fps) {
     List<SubtitleEntry> subtitles = [];
     Duration frameDuration = Duration(milliseconds: (1000 / fps).toInt());
 
@@ -138,9 +157,7 @@ class VideoService {
           .format(entry.date)
           .replaceAll('\x00', ''); // Remove NULL characters
 
-      final startTime = Duration(
-        milliseconds: (frameDuration.inMilliseconds * index),
-      );
+      final startTime = Duration(milliseconds: (frameDuration.inMilliseconds * index));
       final endTime = startTime + frameDuration;
 
       final SubtitleEntry subtitleEntry = SubtitleEntry(
@@ -218,24 +235,27 @@ class VideoService {
     final kOutputVideoFilename =
         '${kOutputVideoPrefix}_${entryType.name}.$kOutputVideoExt';
 
-    final String outputVideoPath = p.join(
-      temporaryDirectory.path,
-      kOutputVideoFilename,
-    );
+    final String outputVideoPath = p.join(temporaryDirectory.path, kOutputVideoFilename);
 
     List<ProgressPicture> listPictures = await PicturesFileService()
         .listPicturesForEntryType(entryType);
+
+    // listPictures = listPictures.take(20).toList();
 
     // GENERATE SUBTITLES FILE
     // await _generateSubtitles(entries, fps);
 
     // PREPARING FRAMES : PUTTING THEM IN TEMP FOLDER IN ORDER
 
-    await for (final progress in _prepareFrames(listPictures)) {
-      yield VideoGenerationProgress(
-        progress.step,
-        progress.progress / totalStepCount,
-      );
+    // await for (final progress in _prepareFrames(listPictures)) {
+    //   yield VideoGenerationProgress(
+    //     progress.step,
+    //     progress.progress / totalStepCount,
+    //   );
+    // }
+
+    await for (final progress in MLKitService.generateAlignedImages(listPictures)) {
+      yield VideoGenerationProgress(progress.step, progress.progress / totalStepCount);
     }
 
     // PREPARING FRAMES DONE
@@ -243,15 +263,14 @@ class VideoService {
       VideoGenerationStep.generating,
       oneStepCompletedProgress,
     );
-    await for (final basicGenerationProgress in _generateBasicVideo(
+    await for (final basicGenerationProgress in _generateVideoUsingAlignedFrames(
       outputVideoPath,
       fps,
       listPictures.length,
     )) {
       yield VideoGenerationProgress(
         basicGenerationProgress.step,
-        oneStepCompletedProgress +
-            basicGenerationProgress.progress / totalStepCount,
+        oneStepCompletedProgress + basicGenerationProgress.progress / totalStepCount,
       );
     }
 

@@ -15,6 +15,7 @@ class PictureRectangle extends StatefulWidget {
     this.highlight = false,
     this.highlightWidth = 4,
     this.highlightColor = Colors.white,
+    this.aspectRatio = 1,
   });
 
   final ProgressPicture? picture;
@@ -22,6 +23,7 @@ class PictureRectangle extends StatefulWidget {
   final double width;
   final double height;
   final double borderRadius;
+  final double aspectRatio;
 
   final bool highlight;
   final double highlightWidth;
@@ -42,7 +44,7 @@ class _PictureRectangleState extends State<PictureRectangle> {
     return SizedBox(
       width: widget.width,
       child: AspectRatio(
-        aspectRatio: 1,
+        aspectRatio: widget.aspectRatio,
         child: Stack(
           children: [
             ClipPath(

@@ -9,6 +9,7 @@ import 'package:progres/src/features/timelapse/player/view/video_player_screen.d
 
 final router = GoRouter(
   initialLocation: ListEntriesScreen.path,
+  // initialLocation: '${VideoPlayerScreen.path}/front/1643807972/1753103972',
   routes: [
     GoRoute(
       name: GalleryScreen.name,
@@ -44,13 +45,32 @@ final router = GoRouter(
     GoRoute(
       name: GenerationScreen.name,
       path: GenerationScreen.path,
-      builder: (context, state) => const GenerationScreen(),
+      builder: (context, state) => GenerationScreen(
+        type: ProgressEntryType.values.firstWhere(
+          (element) => element.name == state.pathParameters['type'],
+        ),
+        from: DateTime.fromMillisecondsSinceEpoch(
+          int.parse(state.pathParameters['from']!) * 1000,
+        ),
+        to: DateTime.fromMillisecondsSinceEpoch(
+          int.parse(state.pathParameters['to']!) * 1000,
+        ),
+      ),
     ),
     GoRoute(
       name: VideoPlayerScreen.name,
-      path: VideoPlayerScreen.path,
-      builder: (context, state) =>
-          VideoPlayerScreen(videoPath: state.extra as String),
+      path: VideoPlayerScreen.path + VideoPlayerScreen.pathParams,
+      builder: (context, state) => VideoPlayerScreen(
+        type: ProgressEntryType.values.firstWhere(
+          (element) => element.name == state.pathParameters['type'],
+        ),
+        from: DateTime.fromMillisecondsSinceEpoch(
+          int.parse(state.pathParameters['from']!) * 1000,
+        ),
+        to: DateTime.fromMillisecondsSinceEpoch(
+          int.parse(state.pathParameters['to']!) * 1000,
+        ),
+      ),
     ),
   ],
 );
