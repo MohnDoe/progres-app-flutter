@@ -8,7 +8,8 @@ import 'package:progres/src/features/timelapse/generation/view/generation_screen
 import 'package:progres/src/features/timelapse/player/view/video_player_screen.dart';
 
 final router = GoRouter(
-  initialLocation: ListEntriesScreen.path,
+  // initialLocation: ListEntriesScreen.path,
+  initialLocation: '${VideoPlayerScreen.path}/side/1/1',
   routes: [
     GoRoute(
       name: GalleryScreen.name,
@@ -48,9 +49,16 @@ final router = GoRouter(
     ),
     GoRoute(
       name: VideoPlayerScreen.name,
-      path: VideoPlayerScreen.path,
-      builder: (context, state) =>
-          VideoPlayerScreen(videoPath: state.extra as String),
+      path: VideoPlayerScreen.path + VideoPlayerScreen.pathParams,
+      builder: (context, state) => VideoPlayerScreen(
+        type: ProgressEntryType.values.firstWhere(
+          (element) => element.name == state.pathParameters['type'],
+        ),
+        from: DateTime.fromMicrosecondsSinceEpoch(
+          int.parse(state.pathParameters['from']!),
+        ),
+        to: DateTime.fromMicrosecondsSinceEpoch(int.parse(state.pathParameters['to']!)),
+      ),
     ),
   ],
 );

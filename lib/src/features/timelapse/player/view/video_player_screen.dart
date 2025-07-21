@@ -4,6 +4,7 @@ import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/services/video_service.dart';
 import 'package:progres/src/core/ui/widgets/bottom_bar_button.dart';
 import 'package:progres/src/core/ui/widgets/picture_rectangle.dart';
@@ -16,12 +17,20 @@ import 'package:path/path.dart' as p;
 const kBottomBarSpacing = 4.0;
 
 class VideoPlayerScreen extends StatefulWidget {
-  const VideoPlayerScreen({super.key, required this.videoPath});
+  const VideoPlayerScreen({
+    super.key,
+    required this.from,
+    required this.to,
+    required this.type,
+  });
 
   static const String name = 'timelapse-player';
   static const String path = '/timelapse';
+  static const String pathParams = '/:type/:from/:to';
 
-  final String videoPath;
+  final DateTime from;
+  final DateTime to;
+  final ProgressEntryType type;
 
   @override
   State<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
@@ -60,7 +69,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       _isDownloading = true;
     });
     final filePath = await FileSaver.instance.saveFile(
-      name: "${VideoService.kOutputVideoPrefix}_front",
+      name: "${VideoService.kOutputVideoPrefix}_${widget.type.name}",
       file: File(videoPath),
       fileExtension: VideoService.kOutputVideoExt,
       mimeType: MimeType.mp4Video,
