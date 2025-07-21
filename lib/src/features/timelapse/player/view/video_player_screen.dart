@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/services/video_service.dart';
@@ -111,27 +112,55 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final int totalDays = widget.to.difference(widget.from).inDays;
     return Scaffold(
       appBar: AppBar(),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
         child: Column(
+          spacing: 32,
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            PictureRectangle(
-              null,
-              width: double.infinity,
-              height: double.infinity,
-              borderRadius: 64,
-              highlightColor: Theme.of(context).colorScheme.primary,
-              highlight: true,
-              aspectRatio: _controller?.value.aspectRatio ?? 1,
-              emptyWidget: _controller?.value.isInitialized ?? false
-                  ? VideoPlayer(_controller!)
-                  : const Center(child: CircularProgressIndicator()),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Row(
+                spacing: 8,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    DateFormat.yMMMd().format(widget.from),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+
+                  const TimelineDaysDivider(),
+                  Text(
+                    "${NumberFormat.decimalPattern().format(totalDays)} days",
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const TimelineDaysDivider(),
+                  Text(
+                    DateFormat.yMMMd().format(widget.to),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 32),
+            Expanded(
+              child: PictureRectangle(
+                null,
+                width: double.infinity,
+                height: double.infinity,
+                borderRadius: 64,
+                highlightColor: Theme.of(context).colorScheme.primary,
+                highlight: true,
+                aspectRatio: _controller?.value.aspectRatio ?? 1,
+                emptyWidget: _controller?.value.isInitialized ?? false
+                    ? VideoPlayer(_controller!)
+                    : const Center(child: CircularProgressIndicator()),
+              ),
+            ),
             if (_controller != null)
               VideoProgressIndicator(
                 _controller!,
@@ -142,7 +171,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   bufferedColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                 ),
               ),
-            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -234,6 +262,28 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class TimelineDaysDivider extends StatelessWidget {
+  const TimelineDaysDivider({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: List.generate(
+          7,
+          (_) => FaIcon(
+            FontAwesomeIcons.solidChevronRight,
+            size: 10,
+            color: Theme.of(context).dividerColor,
+          ),
+        ).toList(),
       ),
     );
   }
