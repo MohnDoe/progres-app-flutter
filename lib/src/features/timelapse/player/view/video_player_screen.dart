@@ -115,13 +115,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                 _controller!,
                 allowScrubbing: true,
                 colors: VideoProgressColors(
-                  backgroundColor: Theme.of(
-                    context,
-                  ).colorScheme.surfaceContainerLow,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
                   playedColor: Theme.of(context).colorScheme.primary,
-                  bufferedColor: Theme.of(
-                    context,
-                  ).colorScheme.surfaceContainerHighest,
+                  bufferedColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                 ),
               ),
             const SizedBox(height: 16),
@@ -131,22 +127,15 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               spacing: 16,
               children: [
                 IconButton.filledTonal(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   onPressed: () {
                     _controller?.seekTo(Duration.zero);
                   },
                   icon: const FaIcon(FontAwesomeIcons.backwardFast),
                 ),
                 IconButton.filled(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 16,
-                  ),
-                  onPressed:
-                      _controller != null && _controller!.value.isInitialized
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  onPressed: _controller != null && _controller!.value.isInitialized
                       ? () {
                           setState(() {
                             if (_controller?.value.isPlaying ?? false) {
@@ -164,15 +153,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   ),
                 ),
                 IconButton.filledTonal(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   style: _controller?.value.isLooping ?? false
                       ? IconButton.styleFrom(
-                          backgroundColor: Theme.of(
-                            context,
-                          ).colorScheme.primary,
+                          backgroundColor: Theme.of(context).colorScheme.primary,
                         )
                       : null,
                   onPressed: () {
@@ -199,26 +183,27 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.max,
           crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            TextButton.icon(
+            IconButton(
+              iconSize: 16,
+              icon: const FaIcon(FontAwesomeIcons.shareNodes),
+              onPressed: _shareVideo,
+            ),
+            IconButton(
+              iconSize: 16,
               icon: _isDownloading
-                  ? SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
+                  ? CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Theme.of(context).colorScheme.primary,
                     )
-                  : null,
-              label: Text(!_isDownloading ? "Save to gallery" : "Saving..."),
+                  : const FaIcon(FontAwesomeIcons.download),
               onPressed: !_isDownloading ? _downloadVideo : null,
             ),
             IconButton(
               iconSize: 16,
-              icon: const FaIcon(FontAwesomeIcons.arrowUpFromBracket),
-              onPressed: _shareVideo,
+              icon: const FaIcon(FontAwesomeIcons.sliders),
+              onPressed: () => {},
             ),
           ],
         ),
