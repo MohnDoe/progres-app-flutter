@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:progres/src/core/services/video_service.dart';
 import 'package:progres/src/core/ui/widgets/picture_rectangle.dart';
 import 'package:video_player/video_player.dart';
+import 'package:open_file/open_file.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'package:path/path.dart' as p;
@@ -55,16 +56,25 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     setState(() {
       _isDownloading = true;
     });
-    await FileSaver.instance.saveFile(
+    final filePath = await FileSaver.instance.saveFile(
       name: "${VideoService.kOutputVideoPrefix}_front",
       file: File(videoPath),
       fileExtension: VideoService.kOutputVideoExt,
       mimeType: MimeType.mp4Video,
     );
     if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Video saved to gallery")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: Duration(seconds: 5),
+          content: const Text("Timelapse saved to gallery!"),
+          action: SnackBarAction(
+            label: "Open",
+            onPressed: () {
+              OpenFile.open(filePath);
+            },
+          ),
+        ),
+      );
     }
     setState(() {
       _isDownloading = false;
