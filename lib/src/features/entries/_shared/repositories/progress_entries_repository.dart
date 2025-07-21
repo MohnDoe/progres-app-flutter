@@ -6,8 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
-import 'package:progres/src/core/services/file_service.dart'
-    show PicturesFileService;
+import 'package:progres/src/core/services/file_service.dart' show PicturesFileService;
 import 'package:progres/src/core/services/image_cache_service.dart';
 
 class ProgressEntriesRepository {
@@ -21,11 +20,40 @@ class ProgressEntriesRepository {
       entries,
     ); // Create a new list to avoid modifying the original
 
-    sortedList.sort(
-      (ProgressEntry a, ProgressEntry b) => b.date.compareTo(a.date),
-    );
+    sortedList.sort((ProgressEntry a, ProgressEntry b) => b.date.compareTo(a.date));
 
     return sortedList;
+  }
+
+  List<ProgressEntry> getEntriesBetweenDates(
+    DateTime from,
+    DateTime to,
+    ProgressEntryType? type,
+  ) {
+    print('Getting entries between dates');
+    print('From: $from, To: $to, Type: $type');
+    return entries.where((entry) {
+      final entryDate = entry.date;
+      print('Entry date: $entryDate');
+      // Check if the entry date is within the specified range (inclusive)
+      final bool isWithinDateRange =
+          (entryDate.isAtSameMomentAs(from) || entryDate.isAfter(from)) &&
+          (entryDate.isAtSameMomentAs(to) || entryDate.isBefore(to));
+
+      // If a type is specified, check if the entry has a picture for that type
+      final bool hasPictureForType = type == null || (entry.pictures[type] != null);
+
+      print(
+        'isWithinDateRange: $isWithinDateRange, hasPictureForType: $hasPictureForType',
+      );
+
+      return isWithinDateRange && hasPictureForType;
+    }).toList();
+  }
+
+  int getEntriesCount(DateTime from, DateTime to, ProgressEntryType? type) {
+    print('Getting entries count');
+    return getEntriesBetweenDates(from, to, type).length;
   }
 
   Future<void> addEntry(ProgressEntry entry) async {
@@ -57,10 +85,7 @@ class ProgressEntriesRepository {
 
   Future<void> editEntry(ProgressEntry oldEntry, ProgressEntry newEntry) async {
     // Ensure date is not changing, as this logic assumes it.
-    assert(
-      oldEntry.date.isAtSameMomentAs(newEntry.date),
-      "Date mismatch in editEntry",
-    );
+    assert(oldEntry.date.isAtSameMomentAs(newEntry.date), "Date mismatch in editEntry");
     print('Editing entry for date: ${oldEntry.date}');
 
     final pictureService = PicturesFileService();
@@ -73,9 +98,7 @@ class ProgressEntriesRepository {
       // For each type in newEntry, what is its intended source file?
       final Map<ProgressEntryType, File> intendedSourceFilesForNewEntry = {};
       // Pictures from oldEntry that might be deleted if not reused or moved.
-      final Set<ProgressEntryType> typesWithPicturesInOldEntry = oldEntry
-          .pictures
-          .keys
+      final Set<ProgressEntryType> typesWithPicturesInOldEntry = oldEntry.pictures.keys
           .toSet();
 
       for (ProgressEntryType currentType in ProgressEntryType.values) {
@@ -84,8 +107,7 @@ class ProgressEntriesRepository {
 
         if (newPicData != null) {
           // There's a picture for this type in newEntry.
-          if (oldPicData != null &&
-              newPicData.file.path == oldPicData.file.path) {
+          if (oldPicData != null && newPicData.file.path == oldPicData.file.path) {
             // Case 1: Picture is unchanged. Mark for direct reuse.
             print("Reusing picture for $currentType: ${newPicData.file.path}");
             finalPicturesInEntry[currentType] = newPicData;
@@ -116,8 +138,7 @@ class ProgressEntriesRepository {
           // or deleted when its original type is processed.
           bool needsTempCopy = false;
           for (ProgressEntryType oldType in oldEntry.pictures.keys) {
-            if (oldEntry.pictures[oldType]?.file.path ==
-                sourceForThisType.path) {
+            if (oldEntry.pictures[oldType]?.file.path == sourceForThisType.path) {
               // `sourceForThisType` (e.g., new 'front' wants old 'side's file) IS an existing canonical file.
               // Will this `oldType`'s canonical file be overwritten or deleted?
               // It will be overwritten if `newEntry.pictures[oldType]` is different or null.
@@ -164,8 +185,7 @@ class ProgressEntriesRepository {
       }
 
       // --- Pass 2: Save to Canonical Locations ---
-      for (ProgressEntryType typeToSave
-          in intendedSourceFilesForNewEntry.keys) {
+      for (ProgressEntryType typeToSave in intendedSourceFilesForNewEntry.keys) {
         final File sourceFile = intendedSourceFilesForNewEntry[typeToSave]!;
         print("Saving picture for $typeToSave from source: ${sourceFile.path}");
         try {
@@ -174,9 +194,7 @@ class ProgressEntriesRepository {
             typeToSave,
             ProgressPicture(file: sourceFile),
           );
-          finalPicturesInEntry[typeToSave] = ProgressPicture(
-            file: savedCanonicalFile,
-          );
+          finalPicturesInEntry[typeToSave] = ProgressPicture(file: savedCanonicalFile);
         } catch (e) {
           print("ERROR saving $typeToSave from ${sourceFile.path}: $e");
           // Decide: attempt to reuse old picture if one existed?
@@ -190,22 +208,18 @@ class ProgressEntriesRepository {
       }
 
       // TODO: don't do this
-      await ImageCacheService.evictPictures(
-        finalPicturesInEntry.values.toList(),
-      );
+      await ImageCacheService.evictPictures(finalPicturesInEntry.values.toList());
 
       // --- Pass 3: Cleanup ---
       // Delete old pictures that are no longer used AT ALL by the new entry.
       // typesWithPicturesInOldEntry now contains types that had pictures in oldEntry
       // but are NOT represented in finalPicturesInEntry (either by reuse or by saving a new one).
-      for (ProgressEntryType typeToDeleteFromOld
-          in typesWithPicturesInOldEntry) {
+      for (ProgressEntryType typeToDeleteFromOld in typesWithPicturesInOldEntry) {
         // Double check it wasn't actually moved (i.e., its file isn't now used by another type in finalPicturesInEntry)
         // This check is a bit redundant due to the temp copy logic but is a safeguard.
         bool fileWasMoved = false;
         if (oldEntry.pictures[typeToDeleteFromOld] != null) {
-          String oldFilePath =
-              oldEntry.pictures[typeToDeleteFromOld]!.file.path;
+          String oldFilePath = oldEntry.pictures[typeToDeleteFromOld]!.file.path;
           for (var finalPic in finalPicturesInEntry.values) {
             if (finalPic.file.path == oldFilePath) {
               fileWasMoved = true;
@@ -279,9 +293,7 @@ class ProgressEntriesRepository {
       );
 
       final newEntry = ProgressEntry(
-        pictures: await PicturesFileService().getAllEntryTypesFromDate(
-          entryDate,
-        ),
+        pictures: await PicturesFileService().getAllEntryTypesFromDate(entryDate),
         date: entryDate,
         lastModifiedTimestamp: DateTime.now().microsecondsSinceEpoch,
       );

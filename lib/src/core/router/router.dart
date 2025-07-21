@@ -9,7 +9,7 @@ import 'package:progres/src/features/timelapse/player/view/video_player_screen.d
 
 final router = GoRouter(
   // initialLocation: ListEntriesScreen.path,
-  initialLocation: '${VideoPlayerScreen.path}/side/1/1',
+  initialLocation: '${VideoPlayerScreen.path}/front/1643807972/1753103972',
   routes: [
     GoRoute(
       name: GalleryScreen.name,
@@ -54,10 +54,12 @@ final router = GoRouter(
         type: ProgressEntryType.values.firstWhere(
           (element) => element.name == state.pathParameters['type'],
         ),
-        from: DateTime.fromMicrosecondsSinceEpoch(
-          int.parse(state.pathParameters['from']!),
+        from: DateTime.fromMillisecondsSinceEpoch(
+          int.parse(state.pathParameters['from']!) * 1000,
         ),
-        to: DateTime.fromMicrosecondsSinceEpoch(int.parse(state.pathParameters['to']!)),
+        to: DateTime.fromMillisecondsSinceEpoch(
+          int.parse(state.pathParameters['to']!) * 1000,
+        ),
       ),
     ),
   ],

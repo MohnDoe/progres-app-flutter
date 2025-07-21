@@ -9,6 +9,7 @@ import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/services/video_service.dart';
 import 'package:progres/src/core/ui/widgets/bottom_bar_button.dart';
 import 'package:progres/src/core/ui/widgets/picture_rectangle.dart';
+import 'package:progres/src/features/timelapse/player/widgets/header_infos.dart';
 import 'package:video_player/video_player.dart';
 import 'package:open_file/open_file.dart';
 import 'package:share_plus/share_plus.dart';
@@ -112,46 +113,16 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final int totalDays = widget.to.difference(widget.from).inDays;
     return Scaffold(
       appBar: AppBar(),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
         child: Column(
-          spacing: 32,
+          spacing: 16,
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // HEADER INFOS
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Row(
-                spacing: 8,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    DateFormat.yMMMd().format(widget.from),
-                    style: Theme.of(context).textTheme.labelLarge,
-                  ),
-                  const TimelineDaysDivider(),
-                  Column(
-                    children: [
-                      Text(
-                        "${NumberFormat.decimalPattern().format(totalDays)} days",
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      Text("132 photos!", style: Theme.of(context).textTheme.labelMedium),
-                    ],
-                  ),
-                  const TimelineDaysDivider(),
-                  Text(
-                    DateFormat.yMMMd().format(widget.to),
-                    style: Theme.of(context).textTheme.labelLarge,
-                  ),
-                ],
-              ),
-            ),
+            HeaderInfos(from: widget.from, to: widget.to, type: widget.type),
             // VIDEO
             Expanded(
               child: PictureRectangle(
@@ -270,28 +241,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class TimelineDaysDivider extends StatelessWidget {
-  const TimelineDaysDivider({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: List.generate(
-          7,
-          (_) => FaIcon(
-            FontAwesomeIcons.solidChevronRight,
-            size: 10,
-            color: Theme.of(context).dividerColor,
-          ),
-        ).toList(),
       ),
     );
   }
