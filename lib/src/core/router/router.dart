@@ -45,7 +45,17 @@ final router = GoRouter(
     GoRoute(
       name: GenerationScreen.name,
       path: GenerationScreen.path,
-      builder: (context, state) => const GenerationScreen(),
+      builder: (context, state) => GenerationScreen(
+        type: ProgressEntryType.values.firstWhere(
+          (element) => element.name == state.pathParameters['type'],
+        ),
+        from: DateTime.fromMillisecondsSinceEpoch(
+          int.parse(state.pathParameters['from']!) * 1000,
+        ),
+        to: DateTime.fromMillisecondsSinceEpoch(
+          int.parse(state.pathParameters['to']!) * 1000,
+        ),
+      ),
     ),
     GoRoute(
       name: VideoPlayerScreen.name,

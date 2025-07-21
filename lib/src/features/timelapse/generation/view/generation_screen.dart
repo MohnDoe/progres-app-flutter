@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart';
 import 'package:progres/src/features/timelapse/generation/viewmodels/video_generation_view_model.dart';
 import 'package:progres/src/features/timelapse/player/view/video_player_screen.dart';
@@ -10,8 +11,18 @@ import 'package:progres/src/features/timelapse/player/view/video_player_screen.d
 class GenerationScreen extends ConsumerWidget {
   static const String name = 'generation';
   static const String path = '/generation';
+  static const String pathParams = '/:type/:from/:to';
 
-  const GenerationScreen({super.key});
+  final ProgressEntryType type;
+  final DateTime from;
+  final DateTime to;
+
+  const GenerationScreen({
+    super.key,
+    required this.from,
+    required this.to,
+    required this.type,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -26,7 +37,11 @@ class GenerationScreen extends ConsumerWidget {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 context.pushReplacementNamed(
                   VideoPlayerScreen.name,
-                  extra: progress.videoPath,
+                  pathParameters: {
+                    'from': from.millisecondsSinceEpoch.toString(),
+                    'to': to.millisecondsSinceEpoch.toString(),
+                    'type': type.name,
+                  },
                 );
               });
               return const CircularProgressIndicator();
