@@ -5,12 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:progres/src/core/services/video_service.dart';
+import 'package:progres/src/core/ui/widgets/bottom_bar_button.dart';
 import 'package:progres/src/core/ui/widgets/picture_rectangle.dart';
 import 'package:video_player/video_player.dart';
 import 'package:open_file/open_file.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'package:path/path.dart' as p;
+
+const kBottomBarSpacing = 4.0;
 
 class VideoPlayerScreen extends StatefulWidget {
   const VideoPlayerScreen({super.key, required this.videoPath});
@@ -190,30 +193,35 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         ),
       ),
       bottomNavigationBar: BottomAppBar(
+        padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
         child: Row(
           mainAxisSize: MainAxisSize.max,
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            IconButton(
-              iconSize: 16,
-              icon: const FaIcon(FontAwesomeIcons.shareNodes),
-              onPressed: _shareVideo,
+            BottomBarButton(
+              onTap: _shareVideo,
+              icon: const FaIcon(FontAwesomeIcons.shareNodes, size: 16),
+              label: 'Share',
             ),
-            IconButton(
-              iconSize: 16,
+            BottomBarButton(
+              onTap: !_isDownloading ? _downloadVideo : null,
               icon: _isDownloading
-                  ? CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Theme.of(context).colorScheme.primary,
+                  ? SizedBox(
+                      height: 16,
+                      width: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                     )
-                  : const FaIcon(FontAwesomeIcons.download),
-              onPressed: !_isDownloading ? _downloadVideo : null,
+                  : const FaIcon(FontAwesomeIcons.download, size: 16),
+              label: 'Save',
             ),
-            IconButton(
-              iconSize: 16,
-              icon: const FaIcon(FontAwesomeIcons.sliders),
-              onPressed: () => {},
+            BottomBarButton(
+              onTap: () => {},
+              icon: const FaIcon(FontAwesomeIcons.sliders, size: 16),
+              label: 'Edit',
             ),
           ],
         ),
