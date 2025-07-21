@@ -8,8 +8,8 @@ import 'package:progres/src/features/timelapse/generation/view/generation_screen
 import 'package:progres/src/features/timelapse/player/view/video_player_screen.dart';
 
 final router = GoRouter(
-  // initialLocation: ListEntriesScreen.path,
-  initialLocation: '${VideoPlayerScreen.path}/front/1643807972/1753103972',
+  initialLocation: ListEntriesScreen.path,
+  // initialLocation: '${VideoPlayerScreen.path}/front/1643807972/1753103972',
   routes: [
     GoRoute(
       name: GalleryScreen.name,
