@@ -95,6 +95,12 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     });
   }
 
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
   Future<void> _shareVideo() async {
     await SharePlus.instance.share(
       ShareParams(
@@ -140,14 +146,39 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             ),
             // Progress
             if (_controller != null)
-              VideoProgressIndicator(
-                _controller!,
-                allowScrubbing: true,
-                colors: VideoProgressColors(
-                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
-                  playedColor: Theme.of(context).colorScheme.primary,
-                  bufferedColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                ),
+              Column(
+                spacing: 4,
+                children: [
+                  VideoProgressIndicator(
+                    _controller!,
+                    allowScrubbing: true,
+                    colors: VideoProgressColors(
+                      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
+                      playedColor: Theme.of(context).colorScheme.primary,
+                      bufferedColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      ValueListenableBuilder(
+                        valueListenable: _controller!,
+                        builder: (context, VideoPlayerValue value, child) {
+                          return Text(
+                            _formatDuration(value.position),
+                            style: Theme.of(context).textTheme.bodySmall,
+                          );
+                        },
+                      ),
+                      Text(
+                        _formatDuration(_controller!.value.duration),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ],
               ),
             // VIDEO CONTROLS
             Row(
