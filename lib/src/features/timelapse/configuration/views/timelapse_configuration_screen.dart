@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:progres/font_awesome_flutter/lib/font_awesome_flutter.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 
 class TimelapseConfigurationScreen extends ConsumerStatefulWidget {
@@ -17,13 +18,13 @@ enum Quality { sd, fhd, uhd }
 
 class _TimelapseConfigurationScreenState
     extends ConsumerState<TimelapseConfigurationScreen> {
-  double _fps = 15;
+  double _fps = 10;
   Quality _quality = Quality.fhd;
   bool _showDateOnTimelapse = true;
   DateTime _startDate = DateTime.now().subtract(const Duration(days: 30));
   DateTime _endDate = DateTime.now();
   ProgressEntryType _progressEntryType = ProgressEntryType.front;
-  bool _stabilization = true;
+  bool _stabilization = false;
   bool _watermark = true;
 
   // Dummy data for available pictures, replace with actual logic
@@ -36,29 +37,39 @@ class _TimelapseConfigurationScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Configuration')),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: <Widget>[
-          _buildProgressEntryTypeSelector(),
-          _buildFpsSlider(),
-          _buildQualitySelector(),
-          _buildBooleanSwitch(
-            title: 'Show Date on Timelapse',
-            value: _showDateOnTimelapse,
-            onChanged: (value) => setState(() => _showDateOnTimelapse = value),
+      body: SingleChildScrollView(
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            spacing: 16,
+            children: <Widget>[
+              _buildProgressEntryTypeSelector(),
+              _buildFpsSlider(),
+              _buildQualitySelector(),
+              _buildBooleanSwitch(
+                title: 'Show Date on Timelapse',
+                value: _showDateOnTimelapse,
+                onChanged: (value) => setState(() => _showDateOnTimelapse = value),
+              ),
+              // _buildDateRangePicker(),
+              _buildBooleanSwitch(
+                title: 'Enable Stabilization',
+                value: _stabilization,
+                onChanged: (value) => setState(() => _stabilization = value),
+              ),
+              _buildBooleanSwitch(
+                title: 'Add Watermark',
+                value: _watermark,
+                onChanged: (value) => setState(() => _watermark = value),
+              ),
+            ],
           ),
-          // _buildDateRangePicker(),
-          _buildBooleanSwitch(
-            title: 'Enable Stabilization',
-            value: _stabilization,
-            onChanged: (value) => setState(() => _stabilization = value),
-          ),
-          _buildBooleanSwitch(
-            title: 'Add Watermark',
-            value: _watermark,
-            onChanged: (value) => setState(() => _watermark = value),
-          ),
-        ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {},
+        icon: FaIcon(FontAwesomeIcons.solidPlay, size: 16),
+        label: Text("Generate now"),
       ),
     );
   }
@@ -113,30 +124,6 @@ class _TimelapseConfigurationScreenState
   }) {
     return SwitchListTile(title: Text(title), value: value, onChanged: onChanged);
   }
-
-  // Widget _buildDateRangePicker() {
-  // final dateFormat = DateFormat.yMMMd();
-  // return null;
-  //   return Row(
-  //     children: [
-  //       Expanded(
-  //         child: DateTimePicker(
-  //           labelText: 'Start Date',
-  //           selectedDate: _startDate,
-  //           onSelectedDate: (date) => setState(() => _startDate = date),
-  //         ),
-  //       ),
-  //       const SizedBox(width: 16),
-  //       Expanded(
-  //         child: DateTimePicker(
-  //           labelText: 'End Date',
-  //           selectedDate: _endDate,
-  //           onSelectedDate: (date) => setState(() => _endDate = date),
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
 
   Widget _buildProgressEntryTypeSelector() {
     return Row(
