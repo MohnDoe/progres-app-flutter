@@ -82,7 +82,7 @@ class _TimelapseConfigurationScreenState
                     .watch(listEntriesControllerProvider.notifier)
                     .getEntriesBetweenDates(conf.from, conf.to, conf.type),
               );
-          context.pushReplacementNamed(GenerationScreen.name);
+          context.goNamed(GenerationScreen.name);
         },
         icon: FaIcon(FontAwesomeIcons.solidPlay, size: 16),
         label: Text("Generate now"),

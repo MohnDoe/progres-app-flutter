@@ -4,10 +4,12 @@ import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
 import 'package:progres/src/core/services/video_service.dart';
 import 'package:progres/src/core/ui/widgets/bottom_bar_button.dart';
 import 'package:progres/src/core/ui/widgets/picture_rectangle.dart';
 import 'package:progres/src/features/timelapse/_shared/repositories/timelapse_notifier.dart';
+import 'package:progres/src/features/timelapse/configuration/views/timelapse_configuration_screen.dart';
 import 'package:progres/src/features/timelapse/player/widgets/header_infos.dart';
 import 'package:video_player/video_player.dart';
 import 'package:open_file/open_file.dart';
@@ -45,7 +47,6 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
     setState(() {
       videoPath = path;
     });
-    print('Video path: $path');
     _controller = VideoPlayerController.file(File(path))
       ..initialize().then((_) {
         _controller?.play();
@@ -111,7 +112,17 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
     Timelapse timelapse = ref.read(timelapseProvider);
 
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        title: const Text('Timelapse'),
+        actions: [
+          IconButton(
+            onPressed: () {
+              context.goNamed(TimelapseConfigurationScreen.name);
+            },
+            icon: const FaIcon(FontAwesomeIcons.arrowRotateLeft),
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
         child: Column(
@@ -119,7 +130,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            HeaderInfos(from: timelapse.from, to: timelapse.to, type: timelapse.type),
+            HeaderInfos(timelapse: timelapse),
             // VIDEO
             Expanded(
               child: PictureRectangle(

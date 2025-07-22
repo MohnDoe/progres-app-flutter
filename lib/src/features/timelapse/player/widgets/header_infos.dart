@@ -4,19 +4,13 @@ import 'package:intl/intl.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/_shared/repositories/progress_entries_repository.dart';
 import 'package:progres/src/features/entries/list/controllers/list_entries_controller.dart';
+import 'package:progres/src/features/timelapse/_shared/repositories/timelapse_notifier.dart';
 import 'package:progres/src/features/timelapse/player/widgets/header_infos_divider.dart';
 
 class HeaderInfos extends ConsumerStatefulWidget {
-  const HeaderInfos({
-    super.key,
-    required this.from,
-    required this.to,
-    required this.type,
-  });
+  const HeaderInfos({super.key, required this.timelapse});
 
-  final DateTime from;
-  final DateTime to;
-  final ProgressEntryType type;
+  final Timelapse timelapse;
 
   @override
   ConsumerState<HeaderInfos> createState() => _HeaderInfosState();
@@ -26,17 +20,13 @@ class _HeaderInfosState extends ConsumerState<HeaderInfos> {
   @override
   void initState() {
     super.initState();
-    ref.read(listEntriesControllerProvider.notifier).loadEntries();
   }
 
   @override
   Widget build(BuildContext context) {
     // Watch the listEntriesControllerProvider to get the current state.
-    final int totalDays = widget.to.difference(widget.from).inDays;
-
-    int totalPhotos = ref
-        .watch(progressEntriesRepositoryProvider)
-        .getEntriesCount(widget.from, widget.to, widget.type);
+    final int totalDays = widget.timelapse.to.difference(widget.timelapse.from).inDays;
+    int totalPhotos = widget.timelapse.entries.length;
 
     return Container(
       decoration: BoxDecoration(
@@ -50,7 +40,7 @@ class _HeaderInfosState extends ConsumerState<HeaderInfos> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
-            DateFormat.yMMMd().format(widget.from),
+            DateFormat.yMMMd().format(widget.timelapse.from),
             style: Theme.of(context).textTheme.labelLarge,
           ),
           const HeaderInfosDivider(),
@@ -68,7 +58,7 @@ class _HeaderInfosState extends ConsumerState<HeaderInfos> {
           ),
           const HeaderInfosDivider(),
           Text(
-            DateFormat.yMMMd().format(widget.to),
+            DateFormat.yMMMd().format(widget.timelapse.to),
             style: Theme.of(context).textTheme.labelLarge,
           ),
         ],
