@@ -49,6 +49,7 @@ class _TimelapseConfigurationScreenState
           child: Column(
             spacing: 16,
             children: <Widget>[
+              _buildDateRangePicker(conf, entries.last.date, entries.first.date),
               _buildProgressEntryTypeSelector(conf, entriesCountByEntryType),
               _buildFpsSlider(conf, minFps: minFps, maxFps: maxFps),
               _buildQualitySelector(conf),
@@ -58,7 +59,6 @@ class _TimelapseConfigurationScreenState
                 onChanged: (value) =>
                     ref.read(timelapseProvider.notifier).setShowDateOnTimelapse(value),
               ),
-              _buildDateRangePicker(conf, entries.last.date, entries.first.date),
               _buildBooleanSwitch(
                 title: 'Enable Stabilization',
                 value: conf.stabilization,
