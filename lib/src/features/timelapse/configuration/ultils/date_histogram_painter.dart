@@ -23,10 +23,10 @@ class DateHistogramPainter extends CustomPainter {
       ..color = color
       ..style = PaintingStyle.fill;
 
-    final paintBorder = Paint()
-      ..color = borderColor
-      ..strokeWidth = 1
-      ..style = PaintingStyle.stroke;
+    // final paintBorder = Paint()
+    //   ..color = borderColor
+    //   ..strokeWidth = 1
+    //   ..style = PaintingStyle.stroke;
 
     final double dotSpacing = size.width / totalDays;
 

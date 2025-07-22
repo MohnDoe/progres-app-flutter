@@ -6,7 +6,6 @@ import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/_shared/repositories/progress_entries_repository.dart';
 import 'package:progres/src/features/entries/list/controllers/list_entries_controller.dart';
 import 'package:progres/src/features/timelapse/_shared/repositories/timelapse_notifier.dart';
-import 'package:progres/src/features/timelapse/configuration/ultils/date_histogram_painter.dart';
 import 'package:progres/src/features/timelapse/configuration/widgets/date_histogram.dart';
 import 'package:progres/src/features/timelapse/generation/view/generation_screen.dart';
 

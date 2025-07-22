@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:progres/src/core/domain/models/progress_entry.dart';
-import 'package:progres/src/features/entries/_shared/repositories/progress_entries_repository.dart';
-import 'package:progres/src/features/entries/list/controllers/list_entries_controller.dart';
 import 'package:progres/src/features/timelapse/_shared/repositories/timelapse_notifier.dart';
 import 'package:progres/src/features/timelapse/player/widgets/header_infos_divider.dart';
 
