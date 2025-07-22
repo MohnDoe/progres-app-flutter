@@ -53,6 +53,11 @@ class Timelapse {
       generationProgress: generationProgress ?? this.generationProgress,
     );
   }
+
+  @override
+  String toString() {
+    return 'Timelapse(type: $type, from: $from, to: $to, quality: $quality, fps: $fps, stabilization: $stabilization, watermark: $watermark, showDateOnTimelapse: $showDateOnTimelapse, generationProgress: $generationProgress)';
+  }
 }
 
 class TimelapseNotifier extends Notifier<Timelapse> {

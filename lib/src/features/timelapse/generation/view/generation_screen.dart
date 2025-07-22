@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
+import 'package:progres/src/features/timelapse/_shared/repositories/timelapse_notifier.dart';
 import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart';
 import 'package:progres/src/features/timelapse/generation/viewmodels/video_generation_view_model.dart';
 import 'package:progres/src/features/timelapse/player/view/video_player_screen.dart';
@@ -11,22 +12,13 @@ import 'package:progres/src/features/timelapse/player/view/video_player_screen.d
 class GenerationScreen extends ConsumerWidget {
   static const String name = 'generation';
   static const String path = '/generation';
-  static const String pathParams = '/:type/:from/:to';
 
-  final ProgressEntryType type;
-  final DateTime from;
-  final DateTime to;
-
-  const GenerationScreen({
-    super.key,
-    required this.from,
-    required this.to,
-    required this.type,
-  });
+  const GenerationScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final generationState = ref.watch(videoGenerationViewModelProvider);
+    final Timelapse conf = ref.read(timelapseProvider);
+    final generationState = ref.watch(videoGenerationViewModelProvider(conf));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Generating Video')),
@@ -38,9 +30,9 @@ class GenerationScreen extends ConsumerWidget {
                 context.pushReplacementNamed(
                   VideoPlayerScreen.name,
                   pathParameters: {
-                    'from': from.millisecondsSinceEpoch.toString(),
-                    'to': to.millisecondsSinceEpoch.toString(),
-                    'type': type.name,
+                    'from': conf.from.millisecondsSinceEpoch.toString(),
+                    'to': conf.to.millisecondsSinceEpoch.toString(),
+                    'type': conf.type.name,
                   },
                 );
               });

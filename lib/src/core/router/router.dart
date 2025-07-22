@@ -46,17 +46,7 @@ final router = GoRouter(
     GoRoute(
       name: GenerationScreen.name,
       path: GenerationScreen.path,
-      builder: (context, state) => GenerationScreen(
-        type: ProgressEntryType.values.firstWhere(
-          (element) => element.name == state.pathParameters['type'],
-        ),
-        from: DateTime.fromMillisecondsSinceEpoch(
-          int.parse(state.pathParameters['from']!) * 1000,
-        ),
-        to: DateTime.fromMillisecondsSinceEpoch(
-          int.parse(state.pathParameters['to']!) * 1000,
-        ),
-      ),
+      builder: (context, state) => const GenerationScreen(),
     ),
     GoRoute(
       path: TimelapseConfigurationScreen.path,

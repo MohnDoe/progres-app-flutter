@@ -65,7 +65,7 @@ class ListEntriesScreen extends ConsumerWidget {
               ),
               PopupMenuItem(
                 child: TextButton.icon(
-                  onPressed: () => context.goNamed(TimelapseConfigurationScreen.name),
+                  onPressed: () => context.pushNamed(TimelapseConfigurationScreen.name),
                   label: Text("Generate timelapse"),
                 ),
               ),
