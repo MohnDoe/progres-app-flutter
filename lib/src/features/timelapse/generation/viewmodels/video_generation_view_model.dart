@@ -11,5 +11,8 @@ import 'package:progres/src/features/timelapse/generation/models/video_generatio
 final videoGenerationViewModelProvider = StreamProvider.autoDispose
     .family<VideoGenerationProgress, Timelapse>((ref, configuration) {
       final videoService = VideoService();
-      return videoService.createVideo(configuration);
+      return videoService.createVideo(
+        configuration,
+        ref.read(timelapseProvider.notifier).videoFilename,
+      );
     });

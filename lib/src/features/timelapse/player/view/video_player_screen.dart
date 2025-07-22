@@ -2,45 +2,33 @@ import 'dart:io';
 
 import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/services/video_service.dart';
 import 'package:progres/src/core/ui/widgets/bottom_bar_button.dart';
 import 'package:progres/src/core/ui/widgets/picture_rectangle.dart';
+import 'package:progres/src/features/timelapse/_shared/repositories/timelapse_notifier.dart';
 import 'package:progres/src/features/timelapse/player/widgets/header_infos.dart';
 import 'package:video_player/video_player.dart';
 import 'package:open_file/open_file.dart';
 import 'package:share_plus/share_plus.dart';
 
-import 'package:path/path.dart' as p;
-
 const kBottomBarSpacing = 4.0;
 
-class VideoPlayerScreen extends StatefulWidget {
-  const VideoPlayerScreen({
-    super.key,
-    required this.from,
-    required this.to,
-    required this.type,
-  });
+class VideoPlayerScreen extends ConsumerStatefulWidget {
+  const VideoPlayerScreen({super.key});
 
   static const String name = 'timelapse-player';
   static const String path = '/timelapse';
-  static const String pathParams = '/:type/:from/:to';
-
-  final DateTime from;
-  final DateTime to;
-  final ProgressEntryType type;
 
   @override
-  State<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
+  ConsumerState<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
 }
 
-class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
-  late String videoPath;
-
+class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
   bool _isDownloading = false;
+
+  late String videoPath;
 
   VideoPlayerController? _controller;
 
@@ -51,12 +39,14 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   }
 
   Future<void> _initVideoPlayer() async {
-    videoPath = p.join(
-      (await getTemporaryDirectory()).path,
-      "${VideoService.kOutputVideoPrefix}_front.${VideoService.kOutputVideoExt}",
+    final path = await VideoService().getVideoPath(
+      ref.read(timelapseProvider.notifier).videoFilename,
     );
-
-    _controller = VideoPlayerController.file(File(videoPath))
+    setState(() {
+      videoPath = path;
+    });
+    print('Video path: $path');
+    _controller = VideoPlayerController.file(File(path))
       ..initialize().then((_) {
         _controller?.play();
         _controller?.setLooping(true);
@@ -65,12 +55,12 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       });
   }
 
-  Future<void> _downloadVideo() async {
+  Future<void> _downloadVideo(String videoPath) async {
     setState(() {
       _isDownloading = true;
     });
     final filePath = await FileSaver.instance.saveFile(
-      name: "${VideoService.kOutputVideoPrefix}_${widget.type.name}",
+      name: VideoService.kOutputVideoPrefix,
       file: File(videoPath),
       fileExtension: VideoService.kOutputVideoExt,
       mimeType: MimeType.mp4Video,
@@ -100,7 +90,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     return '$minutes:$seconds';
   }
 
-  Future<void> _shareVideo() async {
+  Future<void> _shareVideo(String videoPath) async {
     await SharePlus.instance.share(
       ShareParams(
         title: 'Body timelapse video',
@@ -118,6 +108,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    Timelapse timelapse = ref.read(timelapseProvider);
+
     return Scaffold(
       appBar: AppBar(),
       body: Padding(
@@ -127,7 +119,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            HeaderInfos(from: widget.from, to: widget.to, type: widget.type),
+            HeaderInfos(from: timelapse.from, to: timelapse.to, type: timelapse.type),
             // VIDEO
             Expanded(
               child: PictureRectangle(
@@ -246,12 +238,12 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             BottomBarButton(
-              onTap: _shareVideo,
+              onTap: () => _shareVideo(videoPath),
               icon: const FaIcon(FontAwesomeIcons.shareNodes, size: 16),
               label: 'Share',
             ),
             BottomBarButton(
-              onTap: !_isDownloading ? _downloadVideo : null,
+              onTap: !_isDownloading ? () => _downloadVideo(videoPath) : null,
               icon: _isDownloading
                   ? SizedBox(
                       height: 16,

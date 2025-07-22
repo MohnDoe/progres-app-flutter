@@ -96,7 +96,7 @@ class VideoService {
     int fps,
     int frameCount,
   ) async* {
-    Logger().i('Generating basic video.');
+    Logger().i('Generating aligned video.');
     final framesInputPattern = await _alignedFramesInputPattern;
 
     final String compilingCommand =
@@ -222,24 +222,30 @@ class VideoService {
     }
   }
 
-  Stream<VideoGenerationProgress> createVideo(Timelapse configuration) async* {
-    Logger().i('Creating video.');
+  Future<String> getVideoPath(String videoFilename) async {
+    final temporaryDirectory = await _temporaryDirectory;
+
+    return p.join(temporaryDirectory.path, videoFilename);
+  }
+
+  Stream<VideoGenerationProgress> createVideo(
+    Timelapse configuration,
+    String outputFilename,
+  ) async* {
+    Logger().i('Creating video. ');
     Logger().i(configuration);
     final totalStepCount = [
       VideoGenerationStep.preparingFrames,
       VideoGenerationStep.generating,
     ].length;
     final oneStepCompletedProgress = 1 / totalStepCount;
-    final temporaryDirectory = await _temporaryDirectory;
-    final kOutputVideoFilename =
-        '${kOutputVideoPrefix}_${configuration.type.name}.$kOutputVideoExt';
 
-    final String outputVideoPath = p.join(temporaryDirectory.path, kOutputVideoFilename);
+    final String outputVideoPath = await getVideoPath(outputFilename);
 
     List<ProgressPicture> listPictures = await PicturesFileService()
         .listPicturesForEntryType(configuration.type);
 
-    // listPictures = listPictures.take(20).toList();
+    listPictures = listPictures.take(10).toList();
 
     // GENERATE SUBTITLES FILE
     // await _generateSubtitles(entries, fps);

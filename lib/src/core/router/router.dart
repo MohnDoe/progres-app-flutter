@@ -55,18 +55,8 @@ final router = GoRouter(
     ),
     GoRoute(
       name: VideoPlayerScreen.name,
-      path: VideoPlayerScreen.path + VideoPlayerScreen.pathParams,
-      builder: (context, state) => VideoPlayerScreen(
-        type: ProgressEntryType.values.firstWhere(
-          (element) => element.name == state.pathParameters['type'],
-        ),
-        from: DateTime.fromMillisecondsSinceEpoch(
-          int.parse(state.pathParameters['from']!) * 1000,
-        ),
-        to: DateTime.fromMillisecondsSinceEpoch(
-          int.parse(state.pathParameters['to']!) * 1000,
-        ),
-      ),
+      path: VideoPlayerScreen.path,
+      builder: (context, state) => const VideoPlayerScreen(),
     ),
   ],
 );

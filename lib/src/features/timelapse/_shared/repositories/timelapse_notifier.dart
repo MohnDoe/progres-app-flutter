@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
+import 'package:progres/src/core/services/video_service.dart';
 import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart';
 
 enum Quality { sd, fhd, uhd }
@@ -40,6 +41,7 @@ class Timelapse {
     bool? watermark,
     bool? showDateOnTimelapse,
     VideoGenerationProgress? generationProgress,
+    String? filePath,
   }) {
     return Timelapse(
       type: type ?? this.type,
@@ -56,7 +58,17 @@ class Timelapse {
 
   @override
   String toString() {
-    return 'Timelapse(type: $type, from: $from, to: $to, quality: $quality, fps: $fps, stabilization: $stabilization, watermark: $watermark, showDateOnTimelapse: $showDateOnTimelapse, generationProgress: $generationProgress)';
+    return 'Timelapse('
+        'type: $type, '
+        'from: $from, '
+        'to: $to, '
+        'quality: $quality, '
+        'fps: $fps, '
+        'stabilization: $stabilization, '
+        'watermark: $watermark, '
+        'showDateOnTimelapse: $showDateOnTimelapse, '
+        'generationProgress: $generationProgress'
+        ')';
   }
 }
 
@@ -70,6 +82,14 @@ class TimelapseNotifier extends Notifier<Timelapse> {
       from: DateTime.now().subtract(const Duration(days: 30)),
       to: DateTime.now(),
     );
+  }
+
+  String get videoFilename {
+    return "timelapse_${state.type.name}_${state.from.millisecondsSinceEpoch}_${state.to.millisecondsSinceEpoch}_${state.quality.name}_${state.fps}fps.mp4";
+  }
+
+  Future<String> get videoPath async {
+    return VideoService().getVideoPath(videoFilename);
   }
 
   void setFps(int fps) {
@@ -102,6 +122,10 @@ class TimelapseNotifier extends Notifier<Timelapse> {
 
   void setTo(DateTime to) {
     state = state.copyWith(to: to);
+  }
+
+  void setFilePath(String filePath) {
+    state = state.copyWith(filePath: filePath);
   }
 }
 

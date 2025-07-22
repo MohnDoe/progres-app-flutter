@@ -34,7 +34,6 @@ class ProgressEntriesRepository {
     print('From: $from, To: $to, Type: $type');
     return entries.where((entry) {
       final entryDate = entry.date;
-      print('Entry date: $entryDate');
       // Check if the entry date is within the specified range (inclusive)
       final bool isWithinDateRange =
           (entryDate.isAtSameMomentAs(from) || entryDate.isAfter(from)) &&
@@ -42,10 +41,6 @@ class ProgressEntriesRepository {
 
       // If a type is specified, check if the entry has a picture for that type
       final bool hasPictureForType = type == null || (entry.pictures[type] != null);
-
-      print(
-        'isWithinDateRange: $isWithinDateRange, hasPictureForType: $hasPictureForType',
-      );
 
       return isWithinDateRange && hasPictureForType;
     }).toList();

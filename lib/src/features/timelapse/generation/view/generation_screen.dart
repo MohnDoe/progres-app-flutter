@@ -27,14 +27,7 @@ class GenerationScreen extends ConsumerWidget {
           data: (progress) {
             if (progress.step == VideoGenerationStep.done) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                context.pushReplacementNamed(
-                  VideoPlayerScreen.name,
-                  pathParameters: {
-                    'from': conf.from.millisecondsSinceEpoch.toString(),
-                    'to': conf.to.millisecondsSinceEpoch.toString(),
-                    'type': conf.type.name,
-                  },
-                );
+                context.pushReplacementNamed(VideoPlayerScreen.name);
               });
               return const CircularProgressIndicator();
             }
