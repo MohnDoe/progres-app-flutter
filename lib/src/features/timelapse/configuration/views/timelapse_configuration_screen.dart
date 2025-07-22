@@ -6,6 +6,8 @@ import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/_shared/repositories/progress_entries_repository.dart';
 import 'package:progres/src/features/entries/list/controllers/list_entries_controller.dart';
 import 'package:progres/src/features/timelapse/_shared/repositories/timelapse_notifier.dart';
+import 'package:progres/src/features/timelapse/configuration/ultils/date_histogram_painter.dart';
+import 'package:progres/src/features/timelapse/configuration/widgets/date_histogram.dart';
 import 'package:progres/src/features/timelapse/generation/view/generation_screen.dart';
 
 const idealDurationRange = [Duration(seconds: 1), Duration(seconds: 5)];
@@ -43,36 +45,40 @@ class _TimelapseConfigurationScreenState
       appBar: AppBar(title: const Text('Configuration')),
       body: SingleChildScrollView(
         child: entriesState.when(
-          data: (_) => Container(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              spacing: 16,
-              children: <Widget>[
-                _buildProgressEntryTypeSelector(conf, entriesCountByEntryType),
-                _buildFpsSlider(conf, minFps: minFps, maxFps: maxFps),
-                _buildQualitySelector(conf),
-                _buildBooleanSwitch(
-                  title: 'Show Date on Timelapse',
-                  value: conf.showDateOnTimelapse,
-                  onChanged: (value) =>
-                      ref.read(timelapseProvider.notifier).setShowDateOnTimelapse(value),
-                ),
-                _buildDateRangePicker(conf),
-                _buildBooleanSwitch(
-                  title: 'Enable Stabilization',
-                  value: conf.stabilization,
-                  onChanged: (value) =>
-                      ref.read(timelapseProvider.notifier).setStabilization(value),
-                ),
-                _buildBooleanSwitch(
-                  title: 'Add Watermark',
-                  value: conf.watermark,
-                  onChanged: (value) =>
-                      ref.read(timelapseProvider.notifier).setWatermark(value),
-                ),
-              ],
-            ),
-          ),
+          data: (_) {
+            final entries = ref.watch(progressEntriesRepositoryProvider).orderedEntries;
+            return Container(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                spacing: 16,
+                children: <Widget>[
+                  _buildProgressEntryTypeSelector(conf, entriesCountByEntryType),
+                  _buildFpsSlider(conf, minFps: minFps, maxFps: maxFps),
+                  _buildQualitySelector(conf),
+                  _buildBooleanSwitch(
+                    title: 'Show Date on Timelapse',
+                    value: conf.showDateOnTimelapse,
+                    onChanged: (value) => ref
+                        .read(timelapseProvider.notifier)
+                        .setShowDateOnTimelapse(value),
+                  ),
+                  _buildDateRangePicker(conf, entries.last.date, entries.first.date),
+                  _buildBooleanSwitch(
+                    title: 'Enable Stabilization',
+                    value: conf.stabilization,
+                    onChanged: (value) =>
+                        ref.read(timelapseProvider.notifier).setStabilization(value),
+                  ),
+                  _buildBooleanSwitch(
+                    title: 'Add Watermark',
+                    value: conf.watermark,
+                    onChanged: (value) =>
+                        ref.read(timelapseProvider.notifier).setWatermark(value),
+                  ),
+                ],
+              ),
+            );
+          },
           error: (error, stackTrace) => Column(
             children: [
               Center(child: Text(error.toString())),
@@ -186,17 +192,16 @@ class _TimelapseConfigurationScreenState
     );
   }
 
-  Widget _buildDateRangePicker(Timelapse conf) {
-    final entries = ref
-        .watch(listEntriesControllerProvider.notifier)
-        .getEntriesBetweenDates(
-          DateTime.now().subtract(const Duration(days: 30000)),
-          DateTime.now(),
-          null,
-        );
-    final firstEntryDate = entries.isNotEmpty ? entries.last.date : DateTime.now();
-    final lastEntryDate = entries.isNotEmpty ? entries.first.date : DateTime.now();
+  Widget _buildDateRangePicker(
+    Timelapse conf,
+    DateTime firstEntryDate,
+    DateTime lastEntryDate,
+  ) {
+    print('First entry date: $firstEntryDate');
+    print('Last entry date: $lastEntryDate');
 
+    print('[Before binding] Conf from: ${conf.from}');
+    print('[Before binding] Conf to: ${conf.to}');
     if (conf.from.isBefore(firstEntryDate)) {
       WidgetsBinding.instance.addPostFrameCallback(
         (_) => ref.read(timelapseProvider.notifier).setFrom(firstEntryDate),
@@ -208,9 +213,6 @@ class _TimelapseConfigurationScreenState
       );
     }
 
-    print('First entry date: $firstEntryDate');
-    print('Last entry date: $lastEntryDate');
-
     print('Conf from: ${conf.from}');
     print('Conf to: ${conf.to}');
 
@@ -219,9 +221,7 @@ class _TimelapseConfigurationScreenState
         : Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Date Range: ${conf.from.toLocal().toString().split(' ')[0]} - ${conf.to.toLocal().toString().split(' ')[0]}',
-              ),
+              const DateHistogram(),
               RangeSlider(
                 values: RangeValues(
                   conf.from.millisecondsSinceEpoch.toDouble(),
@@ -253,24 +253,24 @@ class _TimelapseConfigurationScreenState
             ],
           );
   }
-}
 
-Future<void> _selectDateRange(
-  BuildContext context,
-  WidgetRef ref,
-  Timelapse conf,
-  DateTime firstDate,
-  DateTime lastDate,
-) async {
-  final DateTimeRange? picked = await showDateRangePicker(
-    context: context,
-    initialDateRange: DateTimeRange(start: conf.from, end: conf.to),
-    firstDate: firstDate,
-    lastDate: lastDate,
-  );
-  if (picked != null) {
-    final timelapseNotifier = ref.read(timelapseProvider.notifier);
-    timelapseNotifier.setFrom(picked.start);
-    timelapseNotifier.setTo(picked.end);
+  Future<void> _selectDateRange(
+    BuildContext context,
+    WidgetRef ref,
+    Timelapse conf,
+    DateTime firstDate,
+    DateTime lastDate,
+  ) async {
+    final DateTimeRange? picked = await showDateRangePicker(
+      context: context,
+      initialDateRange: DateTimeRange(start: conf.from, end: conf.to),
+      firstDate: firstDate,
+      lastDate: lastDate,
+    );
+    if (picked != null) {
+      final timelapseNotifier = ref.read(timelapseProvider.notifier);
+      timelapseNotifier.setFrom(picked.start);
+      timelapseNotifier.setTo(picked.end);
+    }
   }
 }
