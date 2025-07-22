@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:progres/font_awesome_flutter/lib/font_awesome_flutter.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
+import 'package:progres/src/features/timelapse/_shared/repositories/timelapse_notifier.dart';
 
 class TimelapseConfigurationScreen extends ConsumerStatefulWidget {
   const TimelapseConfigurationScreen({super.key});
@@ -14,19 +15,8 @@ class TimelapseConfigurationScreen extends ConsumerStatefulWidget {
   ConsumerState createState() => _TimelapseConfigurationScreenState();
 }
 
-enum Quality { sd, fhd, uhd }
-
 class _TimelapseConfigurationScreenState
     extends ConsumerState<TimelapseConfigurationScreen> {
-  double _fps = 10;
-  Quality _quality = Quality.fhd;
-  bool _showDateOnTimelapse = true;
-  DateTime _startDate = DateTime.now().subtract(const Duration(days: 30));
-  DateTime _endDate = DateTime.now();
-  ProgressEntryType _progressEntryType = ProgressEntryType.front;
-  bool _stabilization = false;
-  bool _watermark = true;
-
   // Dummy data for available pictures, replace with actual logic
   final int _availablePictures = 100;
 
@@ -35,6 +25,8 @@ class _TimelapseConfigurationScreenState
 
   @override
   Widget build(BuildContext context) {
+    Timelapse conf = ref.watch(timelapseProvider);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Configuration')),
       body: SingleChildScrollView(
@@ -43,24 +35,27 @@ class _TimelapseConfigurationScreenState
           child: Column(
             spacing: 16,
             children: <Widget>[
-              _buildProgressEntryTypeSelector(),
-              _buildFpsSlider(),
-              _buildQualitySelector(),
+              _buildProgressEntryTypeSelector(conf),
+              _buildFpsSlider(conf),
+              _buildQualitySelector(conf),
               _buildBooleanSwitch(
                 title: 'Show Date on Timelapse',
-                value: _showDateOnTimelapse,
-                onChanged: (value) => setState(() => _showDateOnTimelapse = value),
+                value: conf.showDateOnTimelapse,
+                onChanged: (value) =>
+                    ref.read(timelapseProvider.notifier).setShowDateOnTimelapse(value),
               ),
               // _buildDateRangePicker(),
               _buildBooleanSwitch(
                 title: 'Enable Stabilization',
-                value: _stabilization,
-                onChanged: (value) => setState(() => _stabilization = value),
+                value: conf.stabilization,
+                onChanged: (value) =>
+                    ref.read(timelapseProvider.notifier).setStabilization(value),
               ),
               _buildBooleanSwitch(
                 title: 'Add Watermark',
-                value: _watermark,
-                onChanged: (value) => setState(() => _watermark = value),
+                value: conf.watermark,
+                onChanged: (value) =>
+                    ref.read(timelapseProvider.notifier).setWatermark(value),
               ),
             ],
           ),
@@ -74,33 +69,28 @@ class _TimelapseConfigurationScreenState
     );
   }
 
-  Widget _buildFpsSlider() {
+  Widget _buildFpsSlider(Timelapse conf) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('FPS: ${_fps.round()}'),
+        Text('FPS: ${conf.fps.round()}'),
         Slider(
-          value: _fps,
+          value: conf.fps.toDouble(),
           min: _minFps,
           max: _maxFps,
           divisions: (_maxFps - _minFps).round(),
-          label: _fps.round().toString(),
-          onChanged: _availablePictures > 0
-              ? (double value) {
-                  setState(() {
-                    _fps = value;
-                  });
-                }
-              : null,
+          label: conf.fps.toString(),
+          onChanged: (value) =>
+              ref.read(timelapseProvider.notifier).setFps(value.round()),
         ),
       ],
     );
   }
 
-  Widget _buildQualitySelector() {
+  Widget _buildQualitySelector(Timelapse conf) {
     return DropdownButtonFormField<Quality>(
       decoration: const InputDecoration(labelText: 'Quality'),
-      value: _quality,
+      value: conf.quality,
       items: Quality.values.map((Quality quality) {
         return DropdownMenuItem<Quality>(
           value: quality,
@@ -109,9 +99,7 @@ class _TimelapseConfigurationScreenState
       }).toList(),
       onChanged: (Quality? newValue) {
         if (newValue != null) {
-          setState(() {
-            _quality = newValue;
-          });
+          ref.read(timelapseProvider.notifier).setQuality(newValue);
         }
       },
     );
@@ -125,7 +113,7 @@ class _TimelapseConfigurationScreenState
     return SwitchListTile(title: Text(title), value: value, onChanged: onChanged);
   }
 
-  Widget _buildProgressEntryTypeSelector() {
+  Widget _buildProgressEntryTypeSelector(Timelapse conf) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       mainAxisSize: MainAxisSize.min,
@@ -152,11 +140,9 @@ class _TimelapseConfigurationScreenState
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.all(Radius.circular(8)),
                     ),
-                    selected: _progressEntryType == entryType,
+                    selected: conf.type == entryType,
                     onSelected: (bool _) {
-                      setState(() {
-                        _progressEntryType = entryType;
-                      });
+                      ref.read(timelapseProvider.notifier).setType(entryType);
                     },
                   ),
                 )
@@ -165,22 +151,22 @@ class _TimelapseConfigurationScreenState
         ),
       ],
     );
-    return DropdownButtonFormField<ProgressEntryType>(
-      decoration: const InputDecoration(labelText: 'Progress Entry Type'),
-      value: _progressEntryType,
-      items: ProgressEntryType.values.map((ProgressEntryType type) {
-        return DropdownMenuItem<ProgressEntryType>(
-          value: type,
-          child: Text(type.name[0].toUpperCase() + type.name.substring(1)),
-        );
-      }).toList(),
-      onChanged: (ProgressEntryType? newValue) {
-        if (newValue != null) {
-          setState(() {
-            _progressEntryType = newValue;
-          });
-        }
-      },
-    );
+    // return DropdownButtonFormField<ProgressEntryType>(
+    //   decoration: const InputDecoration(labelText: 'Progress Entry Type'),
+    //   value: _progressEntryType,
+    //   items: ProgressEntryType.values.map((ProgressEntryType type) {
+    //     return DropdownMenuItem<ProgressEntryType>(
+    //       value: type,
+    //       child: Text(type.name[0].toUpperCase() + type.name.substring(1)),
+    //     );
+    //   }).toList(),
+    //   onChanged: (ProgressEntryType? newValue) {
+    //     if (newValue != null) {
+    //       setState(() {
+    //         _progressEntryType = newValue;
+    //       });
+    //     }
+    //   },
+    // );
   }
 }
