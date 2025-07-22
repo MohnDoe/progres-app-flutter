@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/timelapse/_shared/repositories/timelapse_notifier.dart';
 import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart';
 import 'package:progres/src/features/timelapse/generation/viewmodels/video_generation_view_model.dart';

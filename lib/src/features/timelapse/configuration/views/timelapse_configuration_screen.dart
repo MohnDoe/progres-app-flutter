@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:progres/font_awesome_flutter/lib/font_awesome_flutter.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/timelapse/_shared/repositories/timelapse_notifier.dart';
