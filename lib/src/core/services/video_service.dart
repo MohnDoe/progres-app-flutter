@@ -72,6 +72,7 @@ class VideoService {
   Stream<VideoGenerationProgress> _generateBasicVideo(
     String outputVideoPath,
     int fps,
+    bool useSubtitles,
     int frameCount,
   ) async* {
     Logger().i('Generating basic video.');
@@ -80,6 +81,7 @@ class VideoService {
     final String compilingCommand =
         "-framerate $fps "
         "-i $framesInputPattern "
+        "${useSubtitles ? "-vf \"${(await getSubtitleCommand())}\"" : ''} "
         "-r $fps "
         "-c:v libx264 -pix_fmt yuv420p "
         "$outputVideoPath";
@@ -93,6 +95,7 @@ class VideoService {
   Stream<VideoGenerationProgress> _generateVideoUsingAlignedFrames(
     String outputVideoPath,
     int fps,
+    bool useSubtitles,
     int frameCount,
   ) async* {
     Logger().i('Generating aligned video.');
@@ -101,7 +104,8 @@ class VideoService {
     final String compilingCommand =
         "-framerate $fps "
         "-i $framesInputPattern "
-        "-vf \"pad=ceil(iw/2)*2:ceil(ih/2)*2\" " // fix not divisible by 2
+        "-vf \"pad=ceil(iw/2)*2:ceil(ih/2)*2" // fix not divisible by 2
+        "${useSubtitles ? ",${(await getSubtitleCommand())}\"" : "\""} "
         "-r $fps "
         "-c:v libx264 -pix_fmt yuv420p "
         "$outputVideoPath";
@@ -247,19 +251,20 @@ class VideoService {
         .toList();
 
     // GENERATE SUBTITLES FILE
-    // await _generateSubtitles(entries, fps);
+    if (configuration.showDateOnTimelapse) {
+      await _generateSubtitlesFile(configuration.entries, configuration.fps);
+    }
 
     // PREPARING FRAMES : PUTTING THEM IN TEMP FOLDER IN ORDER
 
-    // await for (final progress in _prepareFrames(listPictures)) {
-    //   yield VideoGenerationProgress(
-    //     progress.step,
-    //     progress.progress / totalStepCount,
-    //   );
-    // }
-
-    await for (final progress in MLKitService.generateAlignedImages(listPictures)) {
-      yield VideoGenerationProgress(progress.step, progress.progress / totalStepCount);
+    if (configuration.stabilization) {
+      await for (final progress in MLKitService.generateAlignedImages(listPictures)) {
+        yield VideoGenerationProgress(progress.step, progress.progress / totalStepCount);
+      }
+    } else {
+      await for (final progress in _prepareFrames(listPictures)) {
+        yield VideoGenerationProgress(progress.step, progress.progress / totalStepCount);
+      }
     }
 
     // PREPARING FRAMES DONE
@@ -267,15 +272,31 @@ class VideoService {
       VideoGenerationStep.generating,
       oneStepCompletedProgress,
     );
-    await for (final basicGenerationProgress in _generateVideoUsingAlignedFrames(
-      outputVideoPath,
-      configuration.fps,
-      listPictures.length,
-    )) {
-      yield VideoGenerationProgress(
-        basicGenerationProgress.step,
-        oneStepCompletedProgress + basicGenerationProgress.progress / totalStepCount,
-      );
+
+    if (configuration.stabilization) {
+      await for (final basicGenerationProgress in _generateVideoUsingAlignedFrames(
+        outputVideoPath,
+        configuration.fps,
+        configuration.showDateOnTimelapse,
+        listPictures.length,
+      )) {
+        yield VideoGenerationProgress(
+          basicGenerationProgress.step,
+          oneStepCompletedProgress + basicGenerationProgress.progress / totalStepCount,
+        );
+      }
+    } else {
+      await for (final basicGenerationProgress in _generateBasicVideo(
+        outputVideoPath,
+        configuration.fps,
+        configuration.showDateOnTimelapse,
+        listPictures.length,
+      )) {
+        yield VideoGenerationProgress(
+          basicGenerationProgress.step,
+          oneStepCompletedProgress + basicGenerationProgress.progress / totalStepCount,
+        );
+      }
     }
 
     print('Video generation complete. : $outputVideoPath');
