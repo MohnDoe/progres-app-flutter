@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:progres/font_awesome_flutter/lib/font_awesome_flutter.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
+import 'package:progres/src/features/entries/list/controllers/list_entries_controller.dart';
 import 'package:progres/src/features/timelapse/_shared/repositories/timelapse_notifier.dart';
 import 'package:progres/src/features/timelapse/generation/view/generation_screen.dart';
+
+const idealDurationRange = [Duration(seconds: 1), Duration(seconds: 5)];
 
 class TimelapseConfigurationScreen extends ConsumerStatefulWidget {
   const TimelapseConfigurationScreen({super.key});
@@ -19,47 +22,69 @@ class TimelapseConfigurationScreen extends ConsumerStatefulWidget {
 class _TimelapseConfigurationScreenState
     extends ConsumerState<TimelapseConfigurationScreen> {
   // Dummy data for available pictures, replace with actual logic
-  final int _availablePictures = 100;
-
-  double get _minFps => _availablePictures > 0 ? 5 : 0;
-  double get _maxFps => _availablePictures > 0 ? 30 : 0;
 
   @override
   Widget build(BuildContext context) {
     Timelapse conf = ref.watch(timelapseProvider);
 
+    final entriesState = ref.watch(listEntriesControllerProvider);
+
+    final Map<ProgressEntryType, int> entriesCountByEntryType = ref
+        .watch(listEntriesControllerProvider.notifier)
+        .getEntriesCountByEntryType(conf.from, conf.to);
+
+    int availablePictures = entriesCountByEntryType[conf.type]!;
+
+    double minFps = 1;
+
+    double maxFps = 30;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Configuration')),
       body: SingleChildScrollView(
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            spacing: 16,
-            children: <Widget>[
-              _buildProgressEntryTypeSelector(conf),
-              _buildFpsSlider(conf),
-              _buildQualitySelector(conf),
-              _buildBooleanSwitch(
-                title: 'Show Date on Timelapse',
-                value: conf.showDateOnTimelapse,
-                onChanged: (value) =>
-                    ref.read(timelapseProvider.notifier).setShowDateOnTimelapse(value),
-              ),
-              // _buildDateRangePicker(),
-              _buildBooleanSwitch(
-                title: 'Enable Stabilization',
-                value: conf.stabilization,
-                onChanged: (value) =>
-                    ref.read(timelapseProvider.notifier).setStabilization(value),
-              ),
-              _buildBooleanSwitch(
-                title: 'Add Watermark',
-                value: conf.watermark,
-                onChanged: (value) =>
-                    ref.read(timelapseProvider.notifier).setWatermark(value),
+        child: entriesState.when(
+          data: (_) => Container(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              spacing: 16,
+              children: <Widget>[
+                _buildProgressEntryTypeSelector(conf, entriesCountByEntryType),
+                _buildFpsSlider(conf, minFps: minFps, maxFps: maxFps),
+                _buildQualitySelector(conf),
+                _buildBooleanSwitch(
+                  title: 'Show Date on Timelapse',
+                  value: conf.showDateOnTimelapse,
+                  onChanged: (value) =>
+                      ref.read(timelapseProvider.notifier).setShowDateOnTimelapse(value),
+                ),
+                // _buildDateRangePicker(),
+                _buildBooleanSwitch(
+                  title: 'Enable Stabilization',
+                  value: conf.stabilization,
+                  onChanged: (value) =>
+                      ref.read(timelapseProvider.notifier).setStabilization(value),
+                ),
+                _buildBooleanSwitch(
+                  title: 'Add Watermark',
+                  value: conf.watermark,
+                  onChanged: (value) =>
+                      ref.read(timelapseProvider.notifier).setWatermark(value),
+                ),
+              ],
+            ),
+          ),
+          error: (error, stackTrace) => Column(
+            children: [
+              Center(child: Text(error.toString())),
+              TextButton(
+                onPressed: () {
+                  ref.read(listEntriesControllerProvider.notifier).loadEntries();
+                },
+                child: const Text("Retry"),
               ),
             ],
           ),
+          loading: () => const Center(child: CircularProgressIndicator()),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -70,16 +95,16 @@ class _TimelapseConfigurationScreenState
     );
   }
 
-  Widget _buildFpsSlider(Timelapse conf) {
+  Widget _buildFpsSlider(Timelapse conf, {double minFps = 5, double maxFps = 30}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('FPS: ${conf.fps.round()}'),
         Slider(
           value: conf.fps.toDouble(),
-          min: _minFps,
-          max: _maxFps,
-          divisions: (_maxFps - _minFps).round(),
+          min: minFps,
+          max: maxFps,
+          divisions: (maxFps - minFps).round(),
           label: conf.fps.toString(),
           onChanged: (value) =>
               ref.read(timelapseProvider.notifier).setFps(value.round()),
@@ -114,7 +139,10 @@ class _TimelapseConfigurationScreenState
     return SwitchListTile(title: Text(title), value: value, onChanged: onChanged);
   }
 
-  Widget _buildProgressEntryTypeSelector(Timelapse conf) {
+  Widget _buildProgressEntryTypeSelector(
+    Timelapse conf,
+    Map<ProgressEntryType, int> entriesCountByEntryType,
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       mainAxisSize: MainAxisSize.min,
@@ -133,7 +161,9 @@ class _TimelapseConfigurationScreenState
                 .map(
                   (entryType) => ChoiceChip(
                     visualDensity: VisualDensity.comfortable,
-                    label: Text(entryType.label),
+                    label: Text(
+                      "${entryType.label} - ${entriesCountByEntryType[entryType]}",
+                    ),
                     showCheckmark: false,
                     side: BorderSide.none,
                     avatar: ProgressEntry.getIconFromType(entryType),
@@ -142,9 +172,11 @@ class _TimelapseConfigurationScreenState
                       borderRadius: BorderRadius.all(Radius.circular(8)),
                     ),
                     selected: conf.type == entryType,
-                    onSelected: (bool _) {
-                      ref.read(timelapseProvider.notifier).setType(entryType);
-                    },
+                    onSelected: entriesCountByEntryType[entryType]! > 0
+                        ? (bool _) {
+                            ref.read(timelapseProvider.notifier).setType(entryType);
+                          }
+                        : null,
                   ),
                 )
                 .toList(),

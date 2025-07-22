@@ -16,6 +16,7 @@ class Timelapse {
     this.watermark = true,
     this.showDateOnTimelapse = true,
     this.generationProgress = const VideoGenerationProgress(VideoGenerationStep.none, 0),
+    this.entries = const [],
   });
 
   final ProgressEntryType type;
@@ -28,6 +29,7 @@ class Timelapse {
   final bool stabilization;
   final bool watermark;
   final bool showDateOnTimelapse;
+  final List<ProgressEntry> entries;
 
   VideoGenerationProgress generationProgress;
 
@@ -42,6 +44,7 @@ class Timelapse {
     bool? showDateOnTimelapse,
     VideoGenerationProgress? generationProgress,
     String? filePath,
+    List<ProgressEntry>? entries,
   }) {
     return Timelapse(
       type: type ?? this.type,
@@ -53,6 +56,7 @@ class Timelapse {
       watermark: watermark ?? this.watermark,
       showDateOnTimelapse: showDateOnTimelapse ?? this.showDateOnTimelapse,
       generationProgress: generationProgress ?? this.generationProgress,
+      entries: entries ?? this.entries,
     );
   }
 
@@ -72,16 +76,20 @@ class Timelapse {
   }
 }
 
+Timelapse defaultTimelapse() {
+  return Timelapse(
+    type: ProgressEntryType.front,
+    from: DateTime.now().subtract(const Duration(days: 526)),
+    to: DateTime.now(),
+  );
+}
+
 class TimelapseNotifier extends Notifier<Timelapse> {
   TimelapseNotifier() : super();
 
   @override
   Timelapse build() {
-    return Timelapse(
-      type: ProgressEntryType.front,
-      from: DateTime.now().subtract(const Duration(days: 30)),
-      to: DateTime.now(),
-    );
+    return defaultTimelapse();
   }
 
   String get videoFilename {
@@ -126,6 +134,10 @@ class TimelapseNotifier extends Notifier<Timelapse> {
 
   void setFilePath(String filePath) {
     state = state.copyWith(filePath: filePath);
+  }
+
+  void setEntries(List<ProgressEntry> entries) {
+    state = state.copyWith(entries: entries);
   }
 }
 
