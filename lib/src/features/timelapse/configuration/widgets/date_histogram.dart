@@ -28,6 +28,9 @@ class DateHistogram extends ConsumerWidget {
 
     datesWithEntry.sort();
 
+    // TODO : change color when type is selector
+    // only available are primary for selected type
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: RepaintBoundary(

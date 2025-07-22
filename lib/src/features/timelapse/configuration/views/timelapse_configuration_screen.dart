@@ -32,7 +32,7 @@ class _TimelapseConfigurationScreenState
 
     print(conf);
 
-    final entriesState = ref.watch(listEntriesControllerProvider);
+    final entries = ref.watch(progressEntriesRepositoryProvider).orderedEntries;
 
     final Map<ProgressEntryType, int> entriesCountByEntryType = ref
         .watch(listEntriesControllerProvider.notifier)
@@ -44,53 +44,35 @@ class _TimelapseConfigurationScreenState
     return Scaffold(
       appBar: AppBar(title: const Text('Configuration')),
       body: SingleChildScrollView(
-        child: entriesState.when(
-          data: (_) {
-            final entries = ref.watch(progressEntriesRepositoryProvider).orderedEntries;
-            return Container(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                spacing: 16,
-                children: <Widget>[
-                  _buildProgressEntryTypeSelector(conf, entriesCountByEntryType),
-                  _buildFpsSlider(conf, minFps: minFps, maxFps: maxFps),
-                  _buildQualitySelector(conf),
-                  _buildBooleanSwitch(
-                    title: 'Show Date on Timelapse',
-                    value: conf.showDateOnTimelapse,
-                    onChanged: (value) => ref
-                        .read(timelapseProvider.notifier)
-                        .setShowDateOnTimelapse(value),
-                  ),
-                  _buildDateRangePicker(conf, entries.last.date, entries.first.date),
-                  _buildBooleanSwitch(
-                    title: 'Enable Stabilization',
-                    value: conf.stabilization,
-                    onChanged: (value) =>
-                        ref.read(timelapseProvider.notifier).setStabilization(value),
-                  ),
-                  _buildBooleanSwitch(
-                    title: 'Add Watermark',
-                    value: conf.watermark,
-                    onChanged: (value) =>
-                        ref.read(timelapseProvider.notifier).setWatermark(value),
-                  ),
-                ],
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            spacing: 16,
+            children: <Widget>[
+              _buildProgressEntryTypeSelector(conf, entriesCountByEntryType),
+              _buildFpsSlider(conf, minFps: minFps, maxFps: maxFps),
+              _buildQualitySelector(conf),
+              _buildBooleanSwitch(
+                title: 'Show Date on Timelapse',
+                value: conf.showDateOnTimelapse,
+                onChanged: (value) =>
+                    ref.read(timelapseProvider.notifier).setShowDateOnTimelapse(value),
               ),
-            );
-          },
-          error: (error, stackTrace) => Column(
-            children: [
-              Center(child: Text(error.toString())),
-              TextButton(
-                onPressed: () {
-                  ref.read(listEntriesControllerProvider.notifier).loadEntries();
-                },
-                child: const Text("Retry"),
+              _buildDateRangePicker(conf, entries.last.date, entries.first.date),
+              _buildBooleanSwitch(
+                title: 'Enable Stabilization',
+                value: conf.stabilization,
+                onChanged: (value) =>
+                    ref.read(timelapseProvider.notifier).setStabilization(value),
+              ),
+              _buildBooleanSwitch(
+                title: 'Add Watermark',
+                value: conf.watermark,
+                onChanged: (value) =>
+                    ref.read(timelapseProvider.notifier).setWatermark(value),
               ),
             ],
           ),
-          loading: () => const Center(child: CircularProgressIndicator()),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
