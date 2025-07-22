@@ -30,8 +30,6 @@ class _TimelapseConfigurationScreenState
   Widget build(BuildContext context) {
     Timelapse conf = ref.watch(timelapseProvider);
 
-    print(conf);
-
     final entries = ref.watch(progressEntriesRepositoryProvider).orderedEntries;
 
     final Map<ProgressEntryType, int> entriesCountByEntryType = ref
@@ -76,7 +74,16 @@ class _TimelapseConfigurationScreenState
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.pushReplacementNamed(GenerationScreen.name),
+        onPressed: () {
+          ref
+              .read(timelapseProvider.notifier)
+              .setEntries(
+                ref
+                    .watch(listEntriesControllerProvider.notifier)
+                    .getEntriesBetweenDates(conf.from, conf.to, conf.type),
+              );
+          context.pushReplacementNamed(GenerationScreen.name);
+        },
         icon: FaIcon(FontAwesomeIcons.solidPlay, size: 16),
         label: Text("Generate now"),
       ),

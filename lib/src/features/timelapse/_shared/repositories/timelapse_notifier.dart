@@ -62,7 +62,7 @@ class Timelapse {
 
   @override
   String toString() {
-    return 'Timelapse('
+    return 'TimelapseConfiguration('
         'type: $type, '
         'from: $from, '
         'to: $to, '
@@ -71,7 +71,8 @@ class Timelapse {
         'stabilization: $stabilization, '
         'watermark: $watermark, '
         'showDateOnTimelapse: $showDateOnTimelapse, '
-        'generationProgress: $generationProgress'
+        'generationProgress: $generationProgress, '
+        'pictures: ${entries.length}, '
         ')';
   }
 }

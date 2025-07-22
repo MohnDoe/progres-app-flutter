@@ -242,10 +242,10 @@ class VideoService {
 
     final String outputVideoPath = await getVideoPath(outputFilename);
 
-    List<ProgressPicture> listPictures = await PicturesFileService()
-        .listPicturesForEntryType(configuration.type);
-
-    listPictures = listPictures.take(10).toList();
+    List<ProgressPicture> listPictures = configuration.entries
+        .where((entry) => entry.pictures[configuration.type] != null)
+        .map((entry) => entry.pictures[configuration.type]!)
+        .toList();
 
     // GENERATE SUBTITLES FILE
     // await _generateSubtitles(entries, fps);
