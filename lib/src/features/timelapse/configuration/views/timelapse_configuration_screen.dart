@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:progres/font_awesome_flutter/lib/font_awesome_flutter.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
+import 'package:progres/src/features/entries/_shared/repositories/progress_entries_repository.dart';
 import 'package:progres/src/features/entries/list/controllers/list_entries_controller.dart';
 import 'package:progres/src/features/timelapse/_shared/repositories/timelapse_notifier.dart';
 import 'package:progres/src/features/timelapse/generation/view/generation_screen.dart';
@@ -27,16 +28,15 @@ class _TimelapseConfigurationScreenState
   Widget build(BuildContext context) {
     Timelapse conf = ref.watch(timelapseProvider);
 
+    print(conf);
+
     final entriesState = ref.watch(listEntriesControllerProvider);
 
     final Map<ProgressEntryType, int> entriesCountByEntryType = ref
         .watch(listEntriesControllerProvider.notifier)
         .getEntriesCountByEntryType(conf.from, conf.to);
 
-    int availablePictures = entriesCountByEntryType[conf.type]!;
-
     double minFps = 1;
-
     double maxFps = 30;
 
     return Scaffold(
@@ -57,7 +57,7 @@ class _TimelapseConfigurationScreenState
                   onChanged: (value) =>
                       ref.read(timelapseProvider.notifier).setShowDateOnTimelapse(value),
                 ),
-                // _buildDateRangePicker(),
+                _buildDateRangePicker(conf),
                 _buildBooleanSwitch(
                   title: 'Enable Stabilization',
                   value: conf.stabilization,
@@ -184,22 +184,93 @@ class _TimelapseConfigurationScreenState
         ),
       ],
     );
-    // return DropdownButtonFormField<ProgressEntryType>(
-    //   decoration: const InputDecoration(labelText: 'Progress Entry Type'),
-    //   value: _progressEntryType,
-    //   items: ProgressEntryType.values.map((ProgressEntryType type) {
-    //     return DropdownMenuItem<ProgressEntryType>(
-    //       value: type,
-    //       child: Text(type.name[0].toUpperCase() + type.name.substring(1)),
-    //     );
-    //   }).toList(),
-    //   onChanged: (ProgressEntryType? newValue) {
-    //     if (newValue != null) {
-    //       setState(() {
-    //         _progressEntryType = newValue;
-    //       });
-    //     }
-    //   },
-    // );
+  }
+
+  Widget _buildDateRangePicker(Timelapse conf) {
+    final entries = ref
+        .watch(listEntriesControllerProvider.notifier)
+        .getEntriesBetweenDates(
+          DateTime.now().subtract(const Duration(days: 30000)),
+          DateTime.now(),
+          null,
+        );
+    final firstEntryDate = entries.isNotEmpty ? entries.last.date : DateTime.now();
+    final lastEntryDate = entries.isNotEmpty ? entries.first.date : DateTime.now();
+
+    if (conf.from.isBefore(firstEntryDate)) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => ref.read(timelapseProvider.notifier).setFrom(firstEntryDate),
+      );
+    }
+    if (conf.to.isAfter(lastEntryDate)) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => ref.read(timelapseProvider.notifier).setTo(lastEntryDate),
+      );
+    }
+
+    print('First entry date: $firstEntryDate');
+    print('Last entry date: $lastEntryDate');
+
+    print('Conf from: ${conf.from}');
+    print('Conf to: ${conf.to}');
+
+    return firstEntryDate.isAtSameMomentAs(DateTime.now())
+        ? const SizedBox.shrink()
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Date Range: ${conf.from.toLocal().toString().split(' ')[0]} - ${conf.to.toLocal().toString().split(' ')[0]}',
+              ),
+              RangeSlider(
+                values: RangeValues(
+                  conf.from.millisecondsSinceEpoch.toDouble(),
+                  conf.to.millisecondsSinceEpoch.toDouble(),
+                ),
+                min: firstEntryDate.millisecondsSinceEpoch.toDouble(),
+                max: lastEntryDate.millisecondsSinceEpoch.toDouble(),
+                divisions: lastEntryDate.difference(firstEntryDate).inDays > 0
+                    ? lastEntryDate.difference(firstEntryDate).inDays
+                    : 1,
+                labels: RangeLabels(
+                  conf.from.toLocal().toString().split(' ')[0],
+                  conf.to.toLocal().toString().split(' ')[0],
+                ),
+                onChanged: (RangeValues values) {
+                  ref
+                      .read(timelapseProvider.notifier)
+                      .setFrom(DateTime.fromMillisecondsSinceEpoch(values.start.round()));
+                  ref
+                      .read(timelapseProvider.notifier)
+                      .setTo(DateTime.fromMillisecondsSinceEpoch(values.end.round()));
+                },
+              ),
+              TextButton(
+                onPressed: () =>
+                    _selectDateRange(context, ref, conf, firstEntryDate, lastEntryDate),
+                child: const Text("Select Date Range with Picker"),
+              ),
+            ],
+          );
+  }
+}
+
+Future<void> _selectDateRange(
+  BuildContext context,
+  WidgetRef ref,
+  Timelapse conf,
+  DateTime firstDate,
+  DateTime lastDate,
+) async {
+  final DateTimeRange? picked = await showDateRangePicker(
+    context: context,
+    initialDateRange: DateTimeRange(start: conf.from, end: conf.to),
+    firstDate: firstDate,
+    lastDate: lastDate,
+  );
+  if (picked != null) {
+    final timelapseNotifier = ref.read(timelapseProvider.notifier);
+    timelapseNotifier.setFrom(picked.start);
+    timelapseNotifier.setTo(picked.end);
   }
 }

@@ -79,7 +79,7 @@ class Timelapse {
 Timelapse defaultTimelapse() {
   return Timelapse(
     type: ProgressEntryType.front,
-    from: DateTime.now().subtract(const Duration(days: 526)),
+    from: DateTime.now().subtract(const Duration(days: 30)),
     to: DateTime.now(),
   );
 }

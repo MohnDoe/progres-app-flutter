@@ -39,7 +39,7 @@ class ListEntriesController extends StateNotifier<AsyncValue<List<ProgressEntry>
   List<ProgressEntry> getEntriesBetweenDates(
     DateTime from,
     DateTime to,
-    ProgressEntryType type,
+    ProgressEntryType? type,
   ) {
     return _repository.getEntriesBetweenDates(from, to, type);
   }

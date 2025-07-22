@@ -32,7 +32,7 @@ class ProgressEntriesRepository {
   ) {
     print('Getting entries between dates');
     print('From: $from, To: $to, Type: $type');
-    return entries.where((entry) {
+    return orderedEntries.where((entry) {
       final entryDate = entry.date;
       // Check if the entry date is within the specified range (inclusive)
       final bool isWithinDateRange =
