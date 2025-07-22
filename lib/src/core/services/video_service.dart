@@ -237,10 +237,16 @@ class VideoService {
   ) async* {
     Logger().i('Creating video. ');
     Logger().i(configuration);
-    final totalStepCount = [
-      VideoGenerationStep.preparingFrames,
-      VideoGenerationStep.generating,
-    ].length;
+
+    List<VideoGenerationStep> steps = [VideoGenerationStep.generating];
+
+    if (configuration.stabilization) {
+      steps = [...steps, VideoGenerationStep.aligningFrames];
+    } else {
+      steps = [...steps, VideoGenerationStep.preparingFrames];
+    }
+
+    final totalStepCount = steps.length;
     final oneStepCompletedProgress = 1 / totalStepCount;
 
     final String outputVideoPath = await getVideoPath(outputFilename);
