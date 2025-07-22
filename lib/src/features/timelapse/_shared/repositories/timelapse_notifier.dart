@@ -14,7 +14,7 @@ class Timelapse {
     this.stabilization = false,
     this.watermark = true,
     this.showDateOnTimelapse = true,
-    this.generationProgress,
+    this.generationProgress = const VideoGenerationProgress(VideoGenerationStep.none, 0),
   });
 
   final ProgressEntryType type;
@@ -28,7 +28,7 @@ class Timelapse {
   final bool watermark;
   final bool showDateOnTimelapse;
 
-  VideoGenerationProgress? generationProgress;
+  VideoGenerationProgress generationProgress;
 
   Timelapse copyWith({
     ProgressEntryType? type,

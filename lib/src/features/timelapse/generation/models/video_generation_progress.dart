@@ -1,4 +1,5 @@
 enum VideoGenerationStep {
+  none,
   preparingFrames,
   aligningFrames,
   generating,
@@ -8,7 +9,7 @@ enum VideoGenerationStep {
 }
 
 class VideoGenerationProgress {
-  VideoGenerationProgress(
+  const VideoGenerationProgress(
     this.step,
     this.progress, {
     this.videoPath,
