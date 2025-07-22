@@ -138,7 +138,7 @@ class TimelapseNotifier extends Notifier<Timelapse> {
   }
 
   void setEntries(List<ProgressEntry> entries) {
-    state = state.copyWith(entries: entries);
+    state = state.copyWith(entries: entries.reversed.toList());
   }
 }
 
