@@ -30,16 +30,18 @@ class DateHistogram extends ConsumerWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: CustomPaint(
-        willChange: false,
-        isComplex: true,
-        size: Size(double.infinity, 8),
-        painter: DateHistogramPainter(
-          datesWithEntry: datesWithEntry,
-          firstDate: firstDate,
-          lastDate: lastDate,
-          totalDays: totalDays,
-          color: Theme.of(context).colorScheme.primary,
+      child: RepaintBoundary(
+        child: CustomPaint(
+          willChange: false,
+          isComplex: true,
+          size: Size(double.infinity, 8),
+          painter: DateHistogramPainter(
+            datesWithEntry: datesWithEntry,
+            firstDate: firstDate,
+            lastDate: lastDate,
+            totalDays: totalDays,
+            color: Theme.of(context).colorScheme.primary,
+          ),
         ),
       ),
     );
