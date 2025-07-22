@@ -6,6 +6,7 @@ class DateHistogramPainter extends CustomPainter {
   final DateTime lastDate;
   final int totalDays;
   final Color color;
+  final Color borderColor;
 
   DateHistogramPainter({
     required this.datesWithEntry,
@@ -13,6 +14,7 @@ class DateHistogramPainter extends CustomPainter {
     required this.lastDate,
     required this.totalDays,
     required this.color,
+    required this.borderColor,
   });
 
   @override
@@ -21,7 +23,14 @@ class DateHistogramPainter extends CustomPainter {
       ..color = color
       ..style = PaintingStyle.fill;
 
+    final paintBorder = Paint()
+      ..color = borderColor
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+
     final double dotSpacing = size.width / totalDays;
+
+    final double radius = 4;
 
     for (int i = 0; i < totalDays; i++) {
       final currentDate = firstDate.add(Duration(days: i));
@@ -31,11 +40,10 @@ class DateHistogramPainter extends CustomPainter {
         ),
       );
       if (hasEntry) {
-        canvas.drawCircle(
-          Offset((i * dotSpacing) + (dotSpacing / 2), size.height / 2),
-          4,
-          paint,
-        );
+        final center = Offset((i * dotSpacing) + (dotSpacing / 2), size.height / 2);
+
+        canvas.drawCircle(center, radius, paint);
+        // canvas.drawCircle(center, radius, paintBorder);
       }
     }
   }

@@ -41,6 +41,7 @@ class DateHistogram extends ConsumerWidget {
             lastDate: lastDate,
             totalDays: totalDays,
             color: Theme.of(context).colorScheme.primary,
+            borderColor: Theme.of(context).colorScheme.surfaceContainerHighest,
           ),
         ),
       ),

@@ -221,7 +221,6 @@ class _TimelapseConfigurationScreenState
         : Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const DateHistogram(),
               RangeSlider(
                 values: RangeValues(
                   conf.from.millisecondsSinceEpoch.toDouble(),
@@ -245,11 +244,13 @@ class _TimelapseConfigurationScreenState
                       .setTo(DateTime.fromMillisecondsSinceEpoch(values.end.round()));
                 },
               ),
-              TextButton(
-                onPressed: () =>
-                    _selectDateRange(context, ref, conf, firstEntryDate, lastEntryDate),
-                child: const Text("Select Date Range with Picker"),
-              ),
+              const DateHistogram(),
+              // TODO: create input for each date
+              // TextButton(
+              //   onPressed: () =>
+              //       _selectDateRange(context, ref, conf, firstEntryDate, lastEntryDate),
+              //   child: const Text("Select Date Range with Picker"),
+              // ),
             ],
           );
   }
