@@ -10,12 +10,15 @@ import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:image/image.dart' as img;
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
 import 'package:progres/src/core/services/ml_kit_service.dart';
 import 'package:progres/src/features/timelapse/_shared/repositories/timelapse_notifier.dart';
 import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart';
 import 'package:subtitle_toolkit/subtitle_toolkit.dart';
+
+import 'file_service.dart';
 
 class VideoService {
   static final kOutputVideoPrefix = 'generated_timelapse';
@@ -48,20 +51,31 @@ class VideoService {
 
   Stream<VideoGenerationProgress> _prepareFrames(
     List<ProgressPicture> listPictures,
+    Timelapse timelapseConfiguration,
   ) async* {
     Logger().i('Preparing frames');
     final framesDirectory = await _framesDirectory;
-
     await _initFramesDirectory();
 
     Logger().i('Using ${listPictures.length} entries.');
 
     for (int i = 0; i < listPictures.length; i++) {
-      final framePath = p.join(
+      String framePath = p.join(
         framesDirectory.path,
         'frame_${i.toString().padLeft(4, '0')}.jpg',
       );
-      await listPictures[i].file.copy(framePath);
+
+      final int? resolutionThreshold = timelapseConfiguration.quality.resolution;
+      if (resolutionThreshold != null) {
+        await PicturesFileService.scaleDownImageIfNecessary(
+          listPictures[i].file,
+          framesDirectory,
+          resolutionThreshold,
+        );
+      } else {
+        await listPictures[i].file.copy(framePath);
+      }
+
       yield VideoGenerationProgress(
         VideoGenerationStep.preparingFrames,
         (i + 1) / listPictures.length,
@@ -264,11 +278,14 @@ class VideoService {
     // PREPARING FRAMES : PUTTING THEM IN TEMP FOLDER IN ORDER
 
     if (configuration.stabilization) {
-      await for (final progress in MLKitService.generateAlignedImages(listPictures)) {
+      await for (final progress in MLKitService.generateAlignedImages(
+        listPictures,
+        configuration,
+      )) {
         yield VideoGenerationProgress(progress.step, progress.progress / totalStepCount);
       }
     } else {
-      await for (final progress in _prepareFrames(listPictures)) {
+      await for (final progress in _prepareFrames(listPictures, configuration)) {
         yield VideoGenerationProgress(progress.step, progress.progress / totalStepCount);
       }
     }

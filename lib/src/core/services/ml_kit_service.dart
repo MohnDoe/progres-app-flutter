@@ -5,7 +5,9 @@ import 'package:logger/logger.dart';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'package:path/path.dart' as p;
 import 'package:progres/src/core/domain/models/progress_picture.dart';
+import 'package:progres/src/core/services/file_service.dart';
 import 'package:progres/src/core/services/video_service.dart';
+import 'package:progres/src/features/timelapse/_shared/repositories/timelapse_notifier.dart';
 import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart';
 
 // --- End of Placeholders ---
@@ -44,6 +46,7 @@ class MLKitService {
   static final Logger _logger = Logger(); // Renamed to _logger for convention
   static Stream<VideoGenerationProgress> generateAlignedImages(
     List<ProgressPicture> listPictures,
+    Timelapse timelapseConfiguration,
   ) async* {
     _logger.i('Preparing aligned frames with rotation and scale');
     final alignedFramesDir = await VideoService().alignedFramesDirectory;
@@ -94,28 +97,25 @@ class MLKitService {
       // --- Image Pre-processing (Scale down if too large) ---
       final imagePreProcessingStopwatch = Stopwatch()..start();
       String processedImagePath = imagePath;
-      img.Image? originalImageDecoded = img.decodeImage(
-        await File(imagePath).readAsBytes(),
-      );
-      if (originalImageDecoded == null) {
-        _logger.e('Could not decode image for pre-processing $imagePath. Skipping.');
-        // Handle this error similarly to other decode errors
-        frameStopwatch.stop();
-        continue;
-      }
 
-      if (originalImageDecoded.width > kWidthThreshold && kUseScaledDownImage) {
-        final tempDir = await Directory.systemTemp.createTemp('progres_scaled_');
-        processedImagePath = p.join(tempDir.path, p.basename(imagePath));
-        final scaledImage = img.copyResize(originalImageDecoded, width: kWidthThreshold);
-        await File(processedImagePath).writeAsBytes(img.encodeJpg(scaledImage));
-        _logger.d(
-          'Scaled down ${p.basename(imagePath)} to ${scaledImage.width}x${scaledImage.height} at $processedImagePath for pose detection.',
-        );
-        originalImageDecoded = scaledImage;
-      }
+      final int? resolutionThreshold = timelapseConfiguration.quality.resolution;
+
+      img.Image? scaledImage;
+
+      (
+        scaledImage,
+        processedImagePath,
+      ) = await PicturesFileService.scaleDownImageIfNecessary(
+        File(imagePath),
+        alignedFramesDir,
+        resolutionThreshold,
+      );
       imagePreProcessingStopwatch.stop();
       totalImagePreProcessingTime += imagePreProcessingStopwatch.elapsedMilliseconds;
+
+      if (scaledImage == null) {
+        continue;
+      }
 
       final poseDetectionStopwatch = Stopwatch()..start();
       final Pose? pose = await _detectPoseInImage(poseDetector, processedImagePath);
@@ -125,7 +125,7 @@ class MLKitService {
         'Pose detection for ${p.basename(imagePath)} took ${poseDetectionStopwatch.elapsedMilliseconds}ms.',
       );
 
-      img.Image? workingImage = originalImageDecoded;
+      img.Image? workingImage = scaledImage;
 
       if (pose == null) {
         await _saveProblematicFrame(
@@ -393,7 +393,6 @@ class MLKitService {
     double trackedX = pointToTrack.x.toDouble();
     double trackedY = pointToTrack.y.toDouble();
 
-    _logger.d("APPLY_TRANSFORMATIONS - SCALING ONLY TEST");
     _logger.d(
       "  Incoming point: (${trackedX.toStringAsFixed(2)}, ${trackedY.toStringAsFixed(2)})",
     );
