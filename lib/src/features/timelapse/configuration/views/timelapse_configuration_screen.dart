@@ -413,22 +413,22 @@ class ConfigurationContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Widget labelWidget = label != null
+        ? Text(label!, style: Theme.of(context).textTheme.titleMedium)
+        : const SizedBox.shrink();
     return Container(
       padding: padding,
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 8,
-        children: [
-          label == null
-              ? const SizedBox.shrink()
-              : Text(label!, style: Theme.of(context).textTheme.titleMedium),
-          child,
-        ],
-      ),
+      child: label != null
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 8,
+              children: [labelWidget, child],
+            )
+          : child,
     );
   }
 }
