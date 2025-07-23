@@ -1,6 +1,9 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:progres/font_awesome_flutter/lib/font_awesome_flutter.dart';
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/_shared/repositories/progress_entries_repository.dart';
@@ -8,6 +11,7 @@ import 'package:progres/src/features/entries/list/controllers/list_entries_contr
 import 'package:progres/src/features/timelapse/_shared/repositories/timelapse_notifier.dart';
 import 'package:progres/src/features/timelapse/configuration/widgets/date_histogram.dart';
 import 'package:progres/src/features/timelapse/generation/view/generation_screen.dart';
+import 'package:progres/src/features/timelapse/player/widgets/header_infos_divider.dart';
 
 const idealDurationRange = [Duration(seconds: 1), Duration(seconds: 5)];
 
@@ -185,6 +189,8 @@ class _TimelapseConfigurationScreenState
     DateTime firstEntryDate,
     DateTime lastEntryDate,
   ) {
+    final dateFormatter = DateFormat.yMMMd();
+
     print('First entry date: $firstEntryDate');
     print('Last entry date: $lastEntryDate');
 
@@ -201,46 +207,112 @@ class _TimelapseConfigurationScreenState
       );
     }
 
+    final int totalDays = conf.to.difference(conf.from).inDays;
+
     print('Conf from: ${conf.from}');
     print('Conf to: ${conf.to}');
 
     return firstEntryDate.isAtSameMomentAs(DateTime.now())
         ? const SizedBox.shrink()
-        : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              RangeSlider(
-                values: RangeValues(
-                  conf.from.millisecondsSinceEpoch.toDouble(),
-                  conf.to.millisecondsSinceEpoch.toDouble(),
+        : Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  spacing: 8,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    Text(dateFormatter.format(conf.from)),
+                    const HeaderInfosDivider(count: 4, size: 8),
+                    FilledButton.tonal(
+                      style: FilledButton.styleFrom(
+                        visualDensity: VisualDensity(
+                          horizontal: VisualDensity.minimumDensity,
+                          vertical: VisualDensity.comfortable.vertical,
+                        ),
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLowest,
+                      ),
+                      onPressed: () => _selectDateRange(
+                        context,
+                        ref,
+                        conf,
+                        firstEntryDate,
+                        lastEntryDate,
+                      ),
+                      child: Text(
+                        "${NumberFormat.decimalPattern().format(totalDays)} days",
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
+                    const HeaderInfosDivider(count: 4, size: 8),
+                    Text(dateFormatter.format(conf.to)),
+                  ],
                 ),
-                min: firstEntryDate.millisecondsSinceEpoch.toDouble(),
-                max: lastEntryDate.millisecondsSinceEpoch.toDouble(),
-                divisions: lastEntryDate.difference(firstEntryDate).inDays > 0
-                    ? lastEntryDate.difference(firstEntryDate).inDays
-                    : 1,
-                labels: RangeLabels(
-                  conf.from.toLocal().toString().split(' ')[0],
-                  conf.to.toLocal().toString().split(' ')[0],
+                RangeSlider(
+                  values: RangeValues(
+                    conf.from.millisecondsSinceEpoch.toDouble(),
+                    conf.to.millisecondsSinceEpoch.toDouble(),
+                  ),
+                  min: firstEntryDate.millisecondsSinceEpoch.toDouble(),
+                  max: lastEntryDate.millisecondsSinceEpoch.toDouble(),
+                  labels: null,
+                  onChanged: (RangeValues values) {
+                    ref
+                        .read(timelapseProvider.notifier)
+                        .setFrom(
+                          DateTime.fromMillisecondsSinceEpoch(values.start.round()),
+                        );
+                    ref
+                        .read(timelapseProvider.notifier)
+                        .setTo(DateTime.fromMillisecondsSinceEpoch(values.end.round()));
+                  },
                 ),
-                onChanged: (RangeValues values) {
-                  ref
-                      .read(timelapseProvider.notifier)
-                      .setFrom(DateTime.fromMillisecondsSinceEpoch(values.start.round()));
-                  ref
-                      .read(timelapseProvider.notifier)
-                      .setTo(DateTime.fromMillisecondsSinceEpoch(values.end.round()));
-                },
-              ),
-              const DateHistogram(),
-              // TODO: create input for each date
-              // TextButton(
-              //   onPressed: () =>
-              //       _selectDateRange(context, ref, conf, firstEntryDate, lastEntryDate),
-              //   child: const Text("Select Date Range with Picker"),
-              // ),
-            ],
+                const DateHistogram(),
+                // TODO: create input for each date
+                // TextButton(
+                //   onPressed: () =>
+                //       _selectDateRange(context, ref, conf, firstEntryDate, lastEntryDate),
+                //   child: const Text("Select Date Range with Picker"),
+                // ),
+              ],
+            ),
           );
+  }
+
+  Future<void> _selectDate(
+    BuildContext context,
+    WidgetRef ref,
+    DateTime firstDate,
+    DateTime lastDate,
+    Timelapse conf, {
+    bool isFrom = true,
+  }) async {
+    final DateTime lastPossibleDate = isFrom ? conf.to : lastDate;
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: isFrom ? conf.from : conf.to,
+      firstDate: firstDate,
+      lastDate: lastPossibleDate,
+    );
+
+    if (picked != null) {
+      final timelapseNotifier = ref.read(timelapseProvider.notifier);
+      if (isFrom) {
+        timelapseNotifier.setFrom(picked);
+      } else {
+        timelapseNotifier.setTo(picked);
+      }
+    }
   }
 
   Future<void> _selectDateRange(
@@ -255,6 +327,8 @@ class _TimelapseConfigurationScreenState
       initialDateRange: DateTimeRange(start: conf.from, end: conf.to),
       firstDate: firstDate,
       lastDate: lastDate,
+      currentDate: DateTime.now(),
+      saveText: "Set range",
     );
     if (picked != null) {
       final timelapseNotifier = ref.read(timelapseProvider.notifier);
