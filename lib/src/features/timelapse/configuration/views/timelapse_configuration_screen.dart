@@ -50,27 +50,45 @@ class _TimelapseConfigurationScreenState
           child: Column(
             spacing: 16,
             children: <Widget>[
-              _buildDateRangePicker(conf, entries.last.date, entries.first.date),
-              _buildProgressEntryTypeSelector(conf, entriesCountByEntryType),
-              _buildFpsSlider(conf, minFps: minFps, maxFps: maxFps),
-              _buildQualitySelector(conf),
-              _buildBooleanSwitch(
-                title: 'Show Date on Timelapse',
-                value: conf.showDateOnTimelapse,
-                onChanged: (value) =>
-                    ref.read(timelapseProvider.notifier).setShowDateOnTimelapse(value),
+              ConfigurationContainer(
+                label: 'Select a range',
+                child: _buildDateRangePicker(conf, entries.last.date, entries.first.date),
               ),
-              _buildBooleanSwitch(
-                title: 'Enable Stabilization',
-                value: conf.stabilization,
-                onChanged: (value) =>
-                    ref.read(timelapseProvider.notifier).setStabilization(value),
+              ConfigurationContainer(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: _buildProgressEntryTypeSelector(conf, entriesCountByEntryType),
               ),
-              _buildBooleanSwitch(
-                title: 'Add Watermark',
-                value: conf.watermark,
-                onChanged: (value) =>
-                    ref.read(timelapseProvider.notifier).setWatermark(value),
+              ConfigurationContainer(
+                label: 'Framerate',
+                child: _buildFpsSlider(conf, minFps: minFps, maxFps: maxFps),
+              ),
+              ConfigurationContainer(child: _buildQualitySelector(conf)),
+              ConfigurationContainer(
+                padding: const EdgeInsets.all(4),
+                child: _buildBooleanSwitch(
+                  title: 'Show Date on Timelapse',
+                  value: conf.showDateOnTimelapse,
+                  onChanged: (value) =>
+                      ref.read(timelapseProvider.notifier).setShowDateOnTimelapse(value),
+                ),
+              ),
+              ConfigurationContainer(
+                padding: const EdgeInsets.all(4),
+                child: _buildBooleanSwitch(
+                  title: 'Enable Stabilization',
+                  value: conf.stabilization,
+                  onChanged: (value) =>
+                      ref.read(timelapseProvider.notifier).setStabilization(value),
+                ),
+              ),
+              ConfigurationContainer(
+                padding: const EdgeInsets.all(4),
+                child: _buildBooleanSwitch(
+                  title: 'Add Watermark',
+                  value: conf.watermark,
+                  onChanged: (value) =>
+                      ref.read(timelapseProvider.notifier).setWatermark(value),
+                ),
               ),
             ],
           ),
@@ -94,19 +112,21 @@ class _TimelapseConfigurationScreenState
   }
 
   Widget _buildFpsSlider(Timelapse conf, {double minFps = 5, double maxFps = 30}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text('FPS: ${conf.fps.round()}'),
-        Slider(
-          value: conf.fps.toDouble(),
-          min: minFps,
-          max: maxFps,
-          divisions: (maxFps - minFps).round(),
-          label: conf.fps.toString(),
-          onChanged: (value) =>
-              ref.read(timelapseProvider.notifier).setFps(value.round()),
+        Expanded(
+          child: Slider(
+            value: conf.fps.toDouble(),
+            min: minFps,
+            max: maxFps,
+            divisions: (maxFps - minFps).round(),
+            label: conf.fps.toString(),
+            onChanged: (value) =>
+                ref.read(timelapseProvider.notifier).setFps(value.round()),
+          ),
         ),
+        Text('${conf.fps.round()}'),
       ],
     );
   }
@@ -134,45 +154,43 @@ class _TimelapseConfigurationScreenState
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
-    return SwitchListTile(title: Text(title), value: value, onChanged: onChanged);
+    return SwitchListTile(
+      title: Text(title),
+      visualDensity: VisualDensity.compact,
+      value: value,
+      onChanged: onChanged,
+    );
   }
 
   Widget _buildProgressEntryTypeSelector(
     Timelapse conf,
     Map<ProgressEntryType, int> entriesCountByEntryType,
   ) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        spacing: 16,
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        mainAxisSize: MainAxisSize.max,
-        children: ProgressEntryType.values
-            .map(
-              (entryType) => ChoiceChip(
-                visualDensity: VisualDensity.comfortable,
-                label: Text("${entryType.label} - ${entriesCountByEntryType[entryType]}"),
-                showCheckmark: false,
-                side: BorderSide.none,
-                avatar: ProgressEntry.getIconFromType(entryType),
-                iconTheme: IconThemeData(size: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(8)),
-                ),
-                selected: conf.type == entryType,
-                onSelected: entriesCountByEntryType[entryType]! > 0
-                    ? (bool _) {
-                        ref.read(timelapseProvider.notifier).setType(entryType);
-                      }
-                    : null,
+    return Row(
+      spacing: 16,
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      mainAxisSize: MainAxisSize.max,
+      children: ProgressEntryType.values
+          .map(
+            (entryType) => ChoiceChip(
+              visualDensity: VisualDensity.comfortable,
+              label: Text("${entryType.label} - ${entriesCountByEntryType[entryType]}"),
+              showCheckmark: false,
+              side: BorderSide.none,
+              avatar: ProgressEntry.getIconFromType(entryType),
+              iconTheme: IconThemeData(size: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(8)),
               ),
-            )
-            .toList(),
-      ),
+              selected: conf.type == entryType,
+              onSelected: entriesCountByEntryType[entryType]! > 0
+                  ? (bool _) {
+                      ref.read(timelapseProvider.notifier).setType(entryType);
+                    }
+                  : null,
+            ),
+          )
+          .toList(),
     );
   }
 
@@ -206,77 +224,68 @@ class _TimelapseConfigurationScreenState
 
     return firstEntryDate.isAtSameMomentAs(DateTime.now())
         ? const SizedBox.shrink()
-        : Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  spacing: 8,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Text(dateFormatter.format(conf.from)),
-                    const HeaderInfosDivider(count: 4, size: 8),
-                    FilledButton.tonal(
-                      style: FilledButton.styleFrom(
-                        visualDensity: VisualDensity(
-                          horizontal: VisualDensity.minimumDensity,
-                          vertical: VisualDensity.comfortable.vertical,
-                        ),
-                        backgroundColor: Theme.of(
-                          context,
-                        ).colorScheme.surfaceContainerLowest,
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                spacing: 8,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  Text(dateFormatter.format(conf.from)),
+                  const HeaderInfosDivider(count: 4, size: 8),
+                  FilledButton.tonal(
+                    style: FilledButton.styleFrom(
+                      visualDensity: VisualDensity(
+                        horizontal: VisualDensity.minimumDensity,
+                        vertical: VisualDensity.comfortable.vertical,
                       ),
-                      onPressed: () => _selectDateRange(
+                      backgroundColor: Theme.of(
                         context,
-                        ref,
-                        conf,
-                        firstEntryDate,
-                        lastEntryDate,
-                      ),
-                      child: Text(
-                        "${NumberFormat.decimalPattern().format(totalDays)} days",
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
+                      ).colorScheme.surfaceContainerLowest,
                     ),
-                    const HeaderInfosDivider(count: 4, size: 8),
-                    Text(dateFormatter.format(conf.to)),
-                  ],
-                ),
-                RangeSlider(
-                  values: RangeValues(
-                    conf.from.millisecondsSinceEpoch.toDouble(),
-                    conf.to.millisecondsSinceEpoch.toDouble(),
+                    onPressed: () => _selectDateRange(
+                      context,
+                      ref,
+                      conf,
+                      firstEntryDate,
+                      lastEntryDate,
+                    ),
+                    child: Text(
+                      "${NumberFormat.decimalPattern().format(totalDays)} days",
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
                   ),
-                  min: firstEntryDate.millisecondsSinceEpoch.toDouble(),
-                  max: lastEntryDate.millisecondsSinceEpoch.toDouble(),
-                  labels: null,
-                  onChanged: (RangeValues values) {
-                    ref
-                        .read(timelapseProvider.notifier)
-                        .setFrom(
-                          DateTime.fromMillisecondsSinceEpoch(values.start.round()),
-                        );
-                    ref
-                        .read(timelapseProvider.notifier)
-                        .setTo(DateTime.fromMillisecondsSinceEpoch(values.end.round()));
-                  },
+                  const HeaderInfosDivider(count: 4, size: 8),
+                  Text(dateFormatter.format(conf.to)),
+                ],
+              ),
+              RangeSlider(
+                values: RangeValues(
+                  conf.from.millisecondsSinceEpoch.toDouble(),
+                  conf.to.millisecondsSinceEpoch.toDouble(),
                 ),
-                const DateHistogram(),
-                // TODO: create input for each date
-                // TextButton(
-                //   onPressed: () =>
-                //       _selectDateRange(context, ref, conf, firstEntryDate, lastEntryDate),
-                //   child: const Text("Select Date Range with Picker"),
-                // ),
-              ],
-            ),
+                min: firstEntryDate.millisecondsSinceEpoch.toDouble(),
+                max: lastEntryDate.millisecondsSinceEpoch.toDouble(),
+                labels: null,
+                onChanged: (RangeValues values) {
+                  ref
+                      .read(timelapseProvider.notifier)
+                      .setFrom(DateTime.fromMillisecondsSinceEpoch(values.start.round()));
+                  ref
+                      .read(timelapseProvider.notifier)
+                      .setTo(DateTime.fromMillisecondsSinceEpoch(values.end.round()));
+                },
+              ),
+              const DateHistogram(),
+              // TODO: create input for each date
+              // TextButton(
+              //   onPressed: () =>
+              //       _selectDateRange(context, ref, conf, firstEntryDate, lastEntryDate),
+              //   child: const Text("Select Date Range with Picker"),
+              // ),
+            ],
           );
   }
 
@@ -327,5 +336,40 @@ class _TimelapseConfigurationScreenState
       timelapseNotifier.setFrom(picked.start);
       timelapseNotifier.setTo(picked.end);
     }
+  }
+}
+
+class ConfigurationContainer extends StatelessWidget {
+  const ConfigurationContainer({
+    super.key,
+    required this.child,
+    this.label,
+    this.padding = const EdgeInsets.all(16),
+  });
+
+  final Widget child;
+  final String? label;
+
+  final EdgeInsets padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 8,
+        children: [
+          label == null
+              ? const SizedBox.shrink()
+              : Text(label!, style: Theme.of(context).textTheme.titleMedium),
+          child,
+        ],
+      ),
+    );
   }
 }
