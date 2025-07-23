@@ -4,11 +4,22 @@ import 'package:progres/src/features/entries/_shared/repositories/progress_entri
 import 'package:progres/src/features/timelapse/configuration/ultils/date_histogram_painter.dart';
 
 class DateHistogram extends ConsumerWidget {
-  const DateHistogram({super.key});
+  const DateHistogram({
+    super.key,
+    required this.selectedFirstDate,
+    required this.selectedLastDate,
+    required this.dotColor,
+    required this.highlightedDotColor,
+  });
+
+  final DateTime selectedFirstDate;
+  final DateTime selectedLastDate;
+
+  final Color dotColor;
+  final Color highlightedDotColor;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    print('DateHistogram build');
     final entries = ref.read(progressEntriesRepositoryProvider).orderedEntries;
 
     final firstDate = entries.last.date;
@@ -16,10 +27,17 @@ class DateHistogram extends ConsumerWidget {
     final totalDays = lastDate.difference(firstDate).inDays + 1;
 
     final List<DateTime> datesWithEntry = [];
+    final List<DateTime> highlightedDates = [];
     for (final entry in entries) {
       final date = DateTime(entry.date.year, entry.date.month, entry.date.day);
       if (!datesWithEntry.contains(date)) {
         datesWithEntry.add(date);
+
+        if (date.isBefore(selectedLastDate) && date.isAfter(selectedFirstDate) ||
+            date.isAtSameMomentAs(selectedFirstDate) ||
+            date.isAtSameMomentAs(selectedLastDate)) {
+          highlightedDates.add(date);
+        }
       }
     }
     if (datesWithEntry.isEmpty) {
@@ -38,11 +56,12 @@ class DateHistogram extends ConsumerWidget {
         size: Size(double.infinity, 8),
         painter: DateHistogramPainter(
           datesWithEntry: datesWithEntry,
+          highlightedDates: highlightedDates,
           firstDate: firstDate,
           lastDate: lastDate,
           totalDays: totalDays,
-          color: Theme.of(context).colorScheme.primary,
-          borderColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+          highlightColor: highlightedDotColor,
+          color: dotColor,
         ),
       ),
     );

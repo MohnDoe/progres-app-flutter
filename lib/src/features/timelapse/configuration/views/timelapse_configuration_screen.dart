@@ -319,7 +319,7 @@ class _TimelapseConfigurationScreenState
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: Theme.of(context).colorScheme.surfaceContainerLowest,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Stack(
@@ -332,7 +332,21 @@ class _TimelapseConfigurationScreenState
                           child: Container(
                             width: selectionWidth,
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Theme.of(
+                                    context,
+                                  ).colorScheme.secondary.withOpacity(0.4),
+                                  Theme.of(
+                                    context,
+                                  ).colorScheme.secondary.withOpacity(0.75),
+                                  Theme.of(
+                                    context,
+                                  ).colorScheme.secondary.withOpacity(0.4),
+                                ],
+                              ),
                               border: BoxBorder.symmetric(
                                 vertical: BorderSide(
                                   color: Theme.of(context).colorScheme.primary,
@@ -344,19 +358,20 @@ class _TimelapseConfigurationScreenState
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          child: const DateHistogram(),
+                          child: DateHistogram(
+                            selectedFirstDate: conf.from,
+                            selectedLastDate: conf.to,
+                            dotColor: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
+                            highlightedDotColor: Theme.of(context).colorScheme.primary,
+                          ),
                         ),
                       ],
                     ),
                   );
                 },
               ),
-              // TODO: create input for each date
-              // TextButton(
-              //   onPressed: () =>
-              //       _selectDateRange(context, ref, conf, firstEntryDate, lastEntryDate),
-              //   child: const Text("Select Date Range with Picker"),
-              // ),
             ],
           );
   }
