@@ -31,21 +31,18 @@ class DateHistogram extends ConsumerWidget {
     // TODO : change color when type is selector
     // only available are primary for selected type
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: RepaintBoundary(
-        child: CustomPaint(
-          willChange: false,
-          isComplex: true,
-          size: Size(double.infinity, 8),
-          painter: DateHistogramPainter(
-            datesWithEntry: datesWithEntry,
-            firstDate: firstDate,
-            lastDate: lastDate,
-            totalDays: totalDays,
-            color: Theme.of(context).colorScheme.primary,
-            borderColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-          ),
+    return RepaintBoundary(
+      child: CustomPaint(
+        willChange: false,
+        isComplex: true,
+        size: Size(double.infinity, 8),
+        painter: DateHistogramPainter(
+          datesWithEntry: datesWithEntry,
+          firstDate: firstDate,
+          lastDate: lastDate,
+          totalDays: totalDays,
+          color: Theme.of(context).colorScheme.primary,
+          borderColor: Theme.of(context).colorScheme.surfaceContainerHighest,
         ),
       ),
     );

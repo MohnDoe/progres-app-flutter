@@ -278,7 +278,66 @@ class _TimelapseConfigurationScreenState
                       .setTo(DateTime.fromMillisecondsSinceEpoch(values.end.round()));
                 },
               ),
-              const DateHistogram(),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final availableWidth = constraints.maxWidth - 32;
+
+                  final selectedStartDate = conf.from;
+                  final selectedEndDate = conf.to;
+
+                  // Ensure totalDays is not zero to avoid division by zero.
+                  final double overallDateRangeInDays = max(
+                    1,
+                    lastEntryDate.difference(firstEntryDate).inDays.toDouble(),
+                  );
+
+                  final selectionStartOffset =
+                      (selectedStartDate.difference(firstEntryDate).inDays /
+                          overallDateRangeInDays) *
+                      availableWidth;
+
+                  final selectionEndOffset =
+                      (selectedEndDate.difference(firstEntryDate).inDays /
+                          overallDateRangeInDays) *
+                      availableWidth;
+
+                  final selectionWidth = selectionEndOffset - selectionStartOffset;
+
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Stack(
+                      alignment: Alignment.centerLeft,
+                      children: [
+                        Positioned(
+                          top: 8,
+                          bottom: 8,
+                          left: selectionStartOffset,
+                          child: Container(
+                            width: selectionWidth,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                              border: BoxBorder.symmetric(
+                                vertical: BorderSide(
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                horizontal: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: const DateHistogram(),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
               // TODO: create input for each date
               // TextButton(
               //   onPressed: () =>
