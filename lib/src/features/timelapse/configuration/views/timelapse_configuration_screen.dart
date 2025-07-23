@@ -25,7 +25,23 @@ class TimelapseConfigurationScreen extends ConsumerStatefulWidget {
 
 class _TimelapseConfigurationScreenState
     extends ConsumerState<TimelapseConfigurationScreen> {
-  // Dummy data for available pictures, replace with actual logic
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final entries = ref.read(progressEntriesRepositoryProvider).orderedEntries;
+      if (entries.isNotEmpty) {
+        ref.read(timelapseProvider.notifier).setFrom(entries.last.date);
+        ref.read(timelapseProvider.notifier).setTo(entries.first.date);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    ref.read(timelapseProvider.notifier).reset();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
