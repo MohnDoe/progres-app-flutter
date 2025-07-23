@@ -350,15 +350,15 @@ class _TimelapseConfigurationScreenState
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
                                 colors: [
-                                  Theme.of(
-                                    context,
-                                  ).colorScheme.secondary.withOpacity(0.2),
-                                  Theme.of(
-                                    context,
-                                  ).colorScheme.secondary.withOpacity(0.5),
-                                  Theme.of(
-                                    context,
-                                  ).colorScheme.secondary.withOpacity(0.2),
+                                  Theme.of(context).colorScheme.secondary.withAlpha(
+                                    (255.0 * 0.2).round(),
+                                  ),
+                                  Theme.of(context).colorScheme.secondary.withAlpha(
+                                    (255.0 * 0.5).round(),
+                                  ),
+                                  Theme.of(context).colorScheme.secondary.withAlpha(
+                                    (255.0 * 0.2).round(),
+                                  ),
                                 ],
                               ),
                               border: BoxBorder.symmetric(
