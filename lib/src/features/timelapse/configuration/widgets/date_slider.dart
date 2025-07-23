@@ -6,6 +6,9 @@ import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/timelapse/_shared/repositories/timelapse_notifier.dart';
 import 'package:progres/src/features/timelapse/configuration/widgets/date_histogram.dart';
 
+const double kDefaultBorderWidth = 2;
+const double kPressedBorderWidth = 4;
+
 class DateSlider extends ConsumerStatefulWidget {
   const DateSlider({
     super.key,
@@ -25,6 +28,9 @@ class DateSlider extends ConsumerStatefulWidget {
 }
 
 class _DateSliderState extends ConsumerState<DateSlider> {
+  double leftBorderWidth = kDefaultBorderWidth;
+  double rightBorderWidth = kDefaultBorderWidth;
+
   @override
   Widget build(BuildContext context) {
     Timelapse conf = ref.watch(timelapseProvider);
@@ -92,9 +98,11 @@ class _DateSliderState extends ConsumerState<DateSlider> {
                           border: BoxBorder.fromLTRB(
                             left: BorderSide(
                               color: Theme.of(context).colorScheme.primary,
+                              width: leftBorderWidth,
                             ),
                             right: BorderSide(
                               color: Theme.of(context).colorScheme.primary,
+                              width: rightBorderWidth,
                             ),
                           ),
                         ),
@@ -123,6 +131,7 @@ class _DateSliderState extends ConsumerState<DateSlider> {
             },
           ),
         ),
+        // THE HIDDEN SLIDER
         Positioned.fill(
           child: Opacity(
             opacity: 0,
@@ -141,6 +150,16 @@ class _DateSliderState extends ConsumerState<DateSlider> {
                 ref
                     .read(timelapseProvider.notifier)
                     .setTo(DateTime.fromMillisecondsSinceEpoch(values.end.round()));
+              },
+              onChangeStart: (RangeValues values) {
+                setState(() {
+                  leftBorderWidth = rightBorderWidth = kPressedBorderWidth;
+                });
+              },
+              onChangeEnd: (RangeValues values) {
+                setState(() {
+                  leftBorderWidth = rightBorderWidth = kDefaultBorderWidth;
+                });
               },
             ),
           ),
