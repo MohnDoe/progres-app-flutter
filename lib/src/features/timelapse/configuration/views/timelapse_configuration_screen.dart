@@ -252,6 +252,7 @@ class _TimelapseConfigurationScreenState
     return firstEntryDate.isAtSameMomentAs(DateTime.now())
         ? const SizedBox.shrink()
         : Column(
+            spacing: 8,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
@@ -288,109 +289,130 @@ class _TimelapseConfigurationScreenState
                   Text(dateFormatter.format(conf.to)),
                 ],
               ),
-              RangeSlider(
-                values: RangeValues(
-                  conf.from.millisecondsSinceEpoch.toDouble(),
-                  conf.to.millisecondsSinceEpoch.toDouble(),
-                ),
-                min: firstEntryDate.millisecondsSinceEpoch.toDouble(),
-                max: lastEntryDate.millisecondsSinceEpoch.toDouble(),
-                labels: null,
-                onChanged: (RangeValues values) {
-                  ref
-                      .read(timelapseProvider.notifier)
-                      .setFrom(DateTime.fromMillisecondsSinceEpoch(values.start.round()));
-                  ref
-                      .read(timelapseProvider.notifier)
-                      .setTo(DateTime.fromMillisecondsSinceEpoch(values.end.round()));
-                },
-              ),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final availableWidth = constraints.maxWidth - 32;
+              Stack(
+                children: [
+                  Positioned(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final double horizontalPadding = 24;
+                        final availableWidth =
+                            constraints.maxWidth - (horizontalPadding * 2);
 
-                  final selectedStartDate = conf.from;
-                  final selectedEndDate = conf.to;
+                        final selectedStartDate = conf.from;
+                        final selectedEndDate = conf.to;
 
-                  // Ensure totalDays is not zero to avoid division by zero.
-                  final double overallDateRangeInDays = max(
-                    1,
-                    lastEntryDate.difference(firstEntryDate).inDays.toDouble(),
-                  );
+                        // Ensure totalDays is not zero to avoid division by zero.
+                        final double overallDateRangeInDays = max(
+                          1,
+                          lastEntryDate.difference(firstEntryDate).inDays.toDouble(),
+                        );
 
-                  final selectionStartOffset =
-                      (selectedStartDate.difference(firstEntryDate).inDays /
-                          overallDateRangeInDays) *
-                      availableWidth;
+                        final selectionStartOffset =
+                            (selectedStartDate.difference(firstEntryDate).inDays /
+                                overallDateRangeInDays) *
+                            availableWidth;
 
-                  final selectionEndOffset =
-                      (selectedEndDate.difference(firstEntryDate).inDays /
-                          overallDateRangeInDays) *
-                      availableWidth;
+                        final selectionEndOffset =
+                            (selectedEndDate.difference(firstEntryDate).inDays /
+                                overallDateRangeInDays) *
+                            availableWidth;
 
-                  final selectionWidth = selectionEndOffset - selectionStartOffset;
+                        final selectionWidth = selectionEndOffset - selectionStartOffset;
 
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainerLowest,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Stack(
-                      alignment: Alignment.centerLeft,
-                      children: [
-                        Positioned(
-                          top: 8,
-                          bottom: 8,
-                          left: selectionStartOffset,
-                          child: Container(
-                            width: selectionWidth,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Theme.of(context).colorScheme.secondary.withAlpha(
-                                    (255.0 * 0.2).round(),
+                        return Container(
+                          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surfaceContainerLowest,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Stack(
+                            alignment: Alignment.centerLeft,
+                            children: [
+                              Positioned(
+                                top: 8,
+                                bottom: 8,
+                                left: selectionStartOffset,
+                                child: Container(
+                                  width: selectionWidth,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Theme.of(context).colorScheme.secondary.withAlpha(
+                                          (255.0 * 0.2).round(),
+                                        ),
+                                        Theme.of(context).colorScheme.secondary.withAlpha(
+                                          (255.0 * 0.5).round(),
+                                        ),
+                                        Theme.of(context).colorScheme.secondary.withAlpha(
+                                          (255.0 * 0.2).round(),
+                                        ),
+                                      ],
+                                    ),
+                                    border: BoxBorder.symmetric(
+                                      vertical: BorderSide(
+                                        color: Theme.of(context).colorScheme.primary,
+                                      ),
+                                      horizontal: BorderSide.none,
+                                    ),
                                   ),
-                                  Theme.of(context).colorScheme.secondary.withAlpha(
-                                    (255.0 * 0.5).round(),
-                                  ),
-                                  Theme.of(context).colorScheme.secondary.withAlpha(
-                                    (255.0 * 0.2).round(),
-                                  ),
-                                ],
-                              ),
-                              border: BoxBorder.symmetric(
-                                vertical: BorderSide(
-                                  color: Theme.of(context).colorScheme.primary,
                                 ),
-                                horizontal: BorderSide.none,
                               ),
-                            ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                child: DateHistogram(
+                                  entries: allEntries.map((entry) => entry.date).toList(),
+                                  validEntriesDates: validEntries
+                                      .map((entry) => entry.date)
+                                      .toList(),
+                                  selectedFirstDate: conf.from,
+                                  selectedLastDate: conf.to,
+                                  dotColor: Theme.of(
+                                    context,
+                                  ).colorScheme.surfaceContainer,
+                                  dotRadius: 2,
+                                  validDotColor: Theme.of(context).colorScheme.secondary,
+                                  validDotRadius: 2,
+                                  highlightedDotColor: Theme.of(
+                                    context,
+                                  ).colorScheme.primary,
+                                  highlightedDotRadius: 4,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          child: DateHistogram(
-                            entries: allEntries.map((entry) => entry.date).toList(),
-                            validEntriesDates: validEntries
-                                .map((entry) => entry.date)
-                                .toList(),
-                            selectedFirstDate: conf.from,
-                            selectedLastDate: conf.to,
-                            dotColor: Theme.of(context).colorScheme.surfaceContainer,
-                            dotRadius: 2,
-                            validDotColor: Theme.of(context).colorScheme.secondary,
-                            validDotRadius: 2,
-                            highlightedDotColor: Theme.of(context).colorScheme.primary,
-                            highlightedDotRadius: 4,
-                          ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
-                  );
-                },
+                  ),
+                  Positioned.fill(
+                    child: Opacity(
+                      opacity: 0,
+                      child: RangeSlider(
+                        values: RangeValues(
+                          conf.from.millisecondsSinceEpoch.toDouble(),
+                          conf.to.millisecondsSinceEpoch.toDouble(),
+                        ),
+                        min: firstEntryDate.millisecondsSinceEpoch.toDouble(),
+                        max: lastEntryDate.millisecondsSinceEpoch.toDouble(),
+                        labels: null,
+                        onChanged: (RangeValues values) {
+                          ref
+                              .read(timelapseProvider.notifier)
+                              .setFrom(
+                                DateTime.fromMillisecondsSinceEpoch(values.start.round()),
+                              );
+                          ref
+                              .read(timelapseProvider.notifier)
+                              .setTo(
+                                DateTime.fromMillisecondsSinceEpoch(values.end.round()),
+                              );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           );
