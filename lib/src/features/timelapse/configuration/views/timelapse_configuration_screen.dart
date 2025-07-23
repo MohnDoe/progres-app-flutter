@@ -141,46 +141,38 @@ class _TimelapseConfigurationScreenState
     Timelapse conf,
     Map<ProgressEntryType, int> entriesCountByEntryType,
   ) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            spacing: 16,
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            mainAxisSize: MainAxisSize.min,
-            children: ProgressEntryType.values
-                .map(
-                  (entryType) => ChoiceChip(
-                    visualDensity: VisualDensity.comfortable,
-                    label: Text(
-                      "${entryType.label} - ${entriesCountByEntryType[entryType]}",
-                    ),
-                    showCheckmark: false,
-                    side: BorderSide.none,
-                    avatar: ProgressEntry.getIconFromType(entryType),
-                    iconTheme: IconThemeData(size: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(8)),
-                    ),
-                    selected: conf.type == entryType,
-                    onSelected: entriesCountByEntryType[entryType]! > 0
-                        ? (bool _) {
-                            ref.read(timelapseProvider.notifier).setType(entryType);
-                          }
-                        : null,
-                  ),
-                )
-                .toList(),
-          ),
-        ),
-      ],
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        spacing: 16,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        mainAxisSize: MainAxisSize.max,
+        children: ProgressEntryType.values
+            .map(
+              (entryType) => ChoiceChip(
+                visualDensity: VisualDensity.comfortable,
+                label: Text("${entryType.label} - ${entriesCountByEntryType[entryType]}"),
+                showCheckmark: false,
+                side: BorderSide.none,
+                avatar: ProgressEntry.getIconFromType(entryType),
+                iconTheme: IconThemeData(size: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(8)),
+                ),
+                selected: conf.type == entryType,
+                onSelected: entriesCountByEntryType[entryType]! > 0
+                    ? (bool _) {
+                        ref.read(timelapseProvider.notifier).setType(entryType);
+                      }
+                    : null,
+              ),
+            )
+            .toList(),
+      ),
     );
   }
 
