@@ -32,7 +32,7 @@ class DateHistogramPainter extends CustomPainter {
 
     final double radius = 4;
 
-    for (int i = 0; i < totalDays; i++) {
+    for (int i = 0; i < totalDays + 1; i++) {
       final currentDate = firstDate.add(Duration(days: i));
       final bool hasEntry = datesWithEntry.any(
         (date) => date.isAtSameMomentAs(
