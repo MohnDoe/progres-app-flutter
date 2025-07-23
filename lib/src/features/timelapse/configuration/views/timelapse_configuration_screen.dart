@@ -350,11 +350,13 @@ class _TimelapseConfigurationScreenState
                                         ),
                                       ],
                                     ),
-                                    border: BoxBorder.symmetric(
-                                      vertical: BorderSide(
+                                    border: BoxBorder.fromLTRB(
+                                      left: BorderSide(
                                         color: Theme.of(context).colorScheme.primary,
                                       ),
-                                      horizontal: BorderSide.none,
+                                      right: BorderSide(
+                                        color: Theme.of(context).colorScheme.primary,
+                                      ),
                                     ),
                                   ),
                                 ),
