@@ -10,12 +10,15 @@ import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:image/image.dart' as img;
 import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/domain/models/progress_picture.dart';
-import 'package:progres/src/core/services/file_service.dart';
 import 'package:progres/src/core/services/ml_kit_service.dart';
+import 'package:progres/src/features/timelapse/_shared/repositories/timelapse_notifier.dart';
 import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart';
 import 'package:subtitle_toolkit/subtitle_toolkit.dart';
+
+import 'file_service.dart';
 
 class VideoService {
   static final kOutputVideoPrefix = 'generated_timelapse';
@@ -48,20 +51,31 @@ class VideoService {
 
   Stream<VideoGenerationProgress> _prepareFrames(
     List<ProgressPicture> listPictures,
+    Timelapse timelapseConfiguration,
   ) async* {
     Logger().i('Preparing frames');
     final framesDirectory = await _framesDirectory;
-
     await _initFramesDirectory();
 
     Logger().i('Using ${listPictures.length} entries.');
 
     for (int i = 0; i < listPictures.length; i++) {
-      final framePath = p.join(
+      String framePath = p.join(
         framesDirectory.path,
         'frame_${i.toString().padLeft(4, '0')}.jpg',
       );
-      await listPictures[i].file.copy(framePath);
+
+      final int? resolutionThreshold = timelapseConfiguration.quality.resolution;
+      if (resolutionThreshold != null) {
+        await PicturesFileService.scaleDownImageIfNecessary(
+          listPictures[i].file,
+          framesDirectory,
+          resolutionThreshold,
+        );
+      } else {
+        await listPictures[i].file.copy(framePath);
+      }
+
       yield VideoGenerationProgress(
         VideoGenerationStep.preparingFrames,
         (i + 1) / listPictures.length,
@@ -72,6 +86,7 @@ class VideoService {
   Stream<VideoGenerationProgress> _generateBasicVideo(
     String outputVideoPath,
     int fps,
+    bool useSubtitles,
     int frameCount,
   ) async* {
     Logger().i('Generating basic video.');
@@ -80,6 +95,7 @@ class VideoService {
     final String compilingCommand =
         "-framerate $fps "
         "-i $framesInputPattern "
+        "${useSubtitles ? "-vf \"${(await getSubtitleCommand())}\"" : ''} "
         "-r $fps "
         "-c:v libx264 -pix_fmt yuv420p "
         "$outputVideoPath";
@@ -93,15 +109,17 @@ class VideoService {
   Stream<VideoGenerationProgress> _generateVideoUsingAlignedFrames(
     String outputVideoPath,
     int fps,
+    bool useSubtitles,
     int frameCount,
   ) async* {
-    Logger().i('Generating basic video.');
+    Logger().i('Generating aligned video.');
     final framesInputPattern = await _alignedFramesInputPattern;
 
     final String compilingCommand =
         "-framerate $fps "
         "-i $framesInputPattern "
-        "-vf \"pad=ceil(iw/2)*2:ceil(ih/2)*2\" " // fix not divisible by 2
+        "-vf \"pad=ceil(iw/2)*2:ceil(ih/2)*2" // fix not divisible by 2
+        "${useSubtitles ? ",${(await getSubtitleCommand())}\"" : "\""} "
         "-r $fps "
         "-c:v libx264 -pix_fmt yuv420p "
         "$outputVideoPath";
@@ -221,41 +239,55 @@ class VideoService {
     }
   }
 
-  Stream<VideoGenerationProgress> createVideo(
-    ProgressEntryType entryType,
-    int fps,
-  ) async* {
-    Logger().i('Creating video.');
-    final totalStepCount = [
-      VideoGenerationStep.preparingFrames,
-      VideoGenerationStep.generating,
-    ].length;
-    final oneStepCompletedProgress = 1 / totalStepCount;
+  Future<String> getVideoPath(String videoFilename) async {
     final temporaryDirectory = await _temporaryDirectory;
-    final kOutputVideoFilename =
-        '${kOutputVideoPrefix}_${entryType.name}.$kOutputVideoExt';
 
-    final String outputVideoPath = p.join(temporaryDirectory.path, kOutputVideoFilename);
+    return p.join(temporaryDirectory.path, videoFilename);
+  }
 
-    List<ProgressPicture> listPictures = await PicturesFileService()
-        .listPicturesForEntryType(entryType);
+  Stream<VideoGenerationProgress> createVideo(
+    Timelapse configuration,
+    String outputFilename,
+  ) async* {
+    Logger().i('Creating video. ');
+    Logger().i(configuration);
 
-    // listPictures = listPictures.take(20).toList();
+    List<VideoGenerationStep> steps = [VideoGenerationStep.generating];
+
+    if (configuration.stabilization) {
+      steps = [...steps, VideoGenerationStep.aligningFrames];
+    } else {
+      steps = [...steps, VideoGenerationStep.preparingFrames];
+    }
+
+    final totalStepCount = steps.length;
+    final oneStepCompletedProgress = 1 / totalStepCount;
+
+    final String outputVideoPath = await getVideoPath(outputFilename);
+
+    List<ProgressPicture> listPictures = configuration.entries
+        .where((entry) => entry.pictures[configuration.type] != null)
+        .map((entry) => entry.pictures[configuration.type]!)
+        .toList();
 
     // GENERATE SUBTITLES FILE
-    // await _generateSubtitles(entries, fps);
+    if (configuration.showDateOnTimelapse) {
+      await _generateSubtitlesFile(configuration.entries, configuration.fps);
+    }
 
     // PREPARING FRAMES : PUTTING THEM IN TEMP FOLDER IN ORDER
 
-    // await for (final progress in _prepareFrames(listPictures)) {
-    //   yield VideoGenerationProgress(
-    //     progress.step,
-    //     progress.progress / totalStepCount,
-    //   );
-    // }
-
-    await for (final progress in MLKitService.generateAlignedImages(listPictures)) {
-      yield VideoGenerationProgress(progress.step, progress.progress / totalStepCount);
+    if (configuration.stabilization) {
+      await for (final progress in MLKitService.generateAlignedImages(
+        listPictures,
+        configuration,
+      )) {
+        yield VideoGenerationProgress(progress.step, progress.progress / totalStepCount);
+      }
+    } else {
+      await for (final progress in _prepareFrames(listPictures, configuration)) {
+        yield VideoGenerationProgress(progress.step, progress.progress / totalStepCount);
+      }
     }
 
     // PREPARING FRAMES DONE
@@ -263,15 +295,31 @@ class VideoService {
       VideoGenerationStep.generating,
       oneStepCompletedProgress,
     );
-    await for (final basicGenerationProgress in _generateVideoUsingAlignedFrames(
-      outputVideoPath,
-      fps,
-      listPictures.length,
-    )) {
-      yield VideoGenerationProgress(
-        basicGenerationProgress.step,
-        oneStepCompletedProgress + basicGenerationProgress.progress / totalStepCount,
-      );
+
+    if (configuration.stabilization) {
+      await for (final basicGenerationProgress in _generateVideoUsingAlignedFrames(
+        outputVideoPath,
+        configuration.fps,
+        configuration.showDateOnTimelapse,
+        listPictures.length,
+      )) {
+        yield VideoGenerationProgress(
+          basicGenerationProgress.step,
+          oneStepCompletedProgress + basicGenerationProgress.progress / totalStepCount,
+        );
+      }
+    } else {
+      await for (final basicGenerationProgress in _generateBasicVideo(
+        outputVideoPath,
+        configuration.fps,
+        configuration.showDateOnTimelapse,
+        listPictures.length,
+      )) {
+        yield VideoGenerationProgress(
+          basicGenerationProgress.step,
+          oneStepCompletedProgress + basicGenerationProgress.progress / totalStepCount,
+        );
+      }
     }
 
     print('Video generation complete. : $outputVideoPath');

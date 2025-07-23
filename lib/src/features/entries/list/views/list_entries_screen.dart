@@ -9,7 +9,7 @@ import 'package:progres/src/features/entries/list/controllers/list_entries_contr
 import 'package:progres/src/features/entries/list/widgets/add_today_button.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/widgets/entry_item.dart';
 import 'package:progres/src/features/entries/list/widgets/bottom_sheet/entry_bottom_sheet.dart';
-import 'package:progres/src/features/timelapse/generation/view/generation_screen.dart';
+import 'package:progres/src/features/timelapse/configuration/views/timelapse_configuration_screen.dart';
 
 /// The screen that displays the list of progress entries.
 ///
@@ -21,10 +21,7 @@ class ListEntriesScreen extends ConsumerWidget {
 
   const ListEntriesScreen({super.key});
 
-  void _displayEditEntryBottomSheet(
-    BuildContext context,
-    ProgressEntry? entry,
-  ) async {
+  void _displayEditEntryBottomSheet(BuildContext context, ProgressEntry? entry) async {
     await showModalBottomSheet(
       context: context,
       builder: (BuildContext ctx) {
@@ -68,8 +65,8 @@ class ListEntriesScreen extends ConsumerWidget {
               ),
               PopupMenuItem(
                 child: TextButton.icon(
-                  onPressed: () => context.goNamed(GenerationScreen.name),
-                  label: Text("Generation"),
+                  onPressed: () => context.pushNamed(TimelapseConfigurationScreen.name),
+                  label: Text("Generate timelapse"),
                 ),
               ),
             ],
@@ -80,9 +77,7 @@ class ListEntriesScreen extends ConsumerWidget {
       // Use the `when` method to handle the different states of the provider.
       body: entriesState.when(
         data: (entries) {
-          final List<Widget> listItems = [
-            if (!alreadyEntryForToday) AddTodayButton(),
-          ];
+          final List<Widget> listItems = [if (!alreadyEntryForToday) AddTodayButton()];
 
           listItems.addAll(
             entries.map(

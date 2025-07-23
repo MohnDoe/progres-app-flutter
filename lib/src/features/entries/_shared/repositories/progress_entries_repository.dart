@@ -25,35 +25,40 @@ class ProgressEntriesRepository {
     return sortedList;
   }
 
-  List<ProgressEntry> getEntriesBetweenDates(
-    DateTime from,
-    DateTime to,
+  List<ProgressEntry> getEntriesBetweenDates({
+    DateTime? from,
+    DateTime? to,
     ProgressEntryType? type,
-  ) {
+  }) {
     print('Getting entries between dates');
     print('From: $from, To: $to, Type: $type');
-    return entries.where((entry) {
+    return orderedEntries.where((entry) {
       final entryDate = entry.date;
-      print('Entry date: $entryDate');
       // Check if the entry date is within the specified range (inclusive)
-      final bool isWithinDateRange =
-          (entryDate.isAtSameMomentAs(from) || entryDate.isAfter(from)) &&
-          (entryDate.isAtSameMomentAs(to) || entryDate.isBefore(to));
+      bool isWithinDateRange = true;
+
+      if (from != null) {
+        isWithinDateRange =
+            isWithinDateRange &&
+            (entryDate.isAtSameMomentAs(from) || entryDate.isAfter(from));
+      }
+
+      if (to != null) {
+        isWithinDateRange =
+            isWithinDateRange &&
+            (entryDate.isAtSameMomentAs(to) || entryDate.isBefore(to));
+      }
 
       // If a type is specified, check if the entry has a picture for that type
       final bool hasPictureForType = type == null || (entry.pictures[type] != null);
-
-      print(
-        'isWithinDateRange: $isWithinDateRange, hasPictureForType: $hasPictureForType',
-      );
 
       return isWithinDateRange && hasPictureForType;
     }).toList();
   }
 
-  int getEntriesCount(DateTime from, DateTime to, ProgressEntryType? type) {
+  int getEntriesCount({DateTime? from, DateTime? to, ProgressEntryType? type}) {
     print('Getting entries count');
-    return getEntriesBetweenDates(from, to, type).length;
+    return getEntriesBetweenDates(from: from, to: to, type: type).length;
   }
 
   Future<void> addEntry(ProgressEntry entry) async {

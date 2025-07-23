@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:image/image.dart' as img;
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
@@ -23,9 +24,7 @@ class PicturesFileService {
   Future<ProgressPicture> duplicateProgressPicture(
     ProgressPicture progressPicture,
   ) async {
-    final newProgressPicture = ProgressPicture(
-      file: File(progressPicture.file.path),
-    );
+    final newProgressPicture = ProgressPicture(file: File(progressPicture.file.path));
 
     return newProgressPicture;
   }
@@ -47,10 +46,8 @@ class PicturesFileService {
     // Define a CANONICAL filename for this type.
     // Using entryType.name ensures it's always the same for, e.g., "front".
     // The extension is taken from the source file.
-    final String canonicalFileName =
-        '${entryType.name}${p.extension(picture.file.path)}';
-    final String canonicalFilePath =
-        '${typeSpecificDir.path}/$canonicalFileName';
+    final String canonicalFileName = '${entryType.name}${p.extension(picture.file.path)}';
+    final String canonicalFilePath = '${typeSpecificDir.path}/$canonicalFileName';
     final File canonicalFile = File(canonicalFilePath);
 
     // if (await canonicalFile.exists()) {
@@ -68,9 +65,7 @@ class PicturesFileService {
     try {
       await picture.file.copy(canonicalFile.path);
     } catch (e) {
-      print(
-        "Error copying file ${picture.file.path} to ${canonicalFile.path}: $e",
-      );
+      print("Error copying file ${picture.file.path} to ${canonicalFile.path}: $e");
       // Fallback or rethrow if needed: writeAsBytes
       // await canonicalFile.writeAsBytes(await sourceFile.readAsBytes());
       rethrow; // Rethrow the error if copy fails
@@ -87,11 +82,10 @@ class PicturesFileService {
     return DateTime(start.year, start.month, start.day);
   }
 
-  Future<List<ProgressPicture>> listPicturesForEntryType(
-    ProgressEntryType type,
-  ) async {
-    final List<ProgressEntry> correspondingEntries =
-        await listEntriesWithPictureOfType(type);
+  Future<List<ProgressPicture>> listPicturesForEntryType(ProgressEntryType type) async {
+    final List<ProgressEntry> correspondingEntries = await listEntriesWithPictureOfType(
+      type,
+    );
     List<ProgressPicture> pictures = [];
 
     pictures = correspondingEntries
@@ -144,9 +138,7 @@ class PicturesFileService {
       for (FileSystemEntity fileEntity in picturesDirectory.listSync()) {
         if (Directory(fileEntity.path).listSync().isNotEmpty) {
           final String entryTypeString = fileEntity.path.split('/').last;
-          result[ProgressEntryType.values.byName(
-            entryTypeString,
-          )] = ProgressPicture(
+          result[ProgressEntryType.values.byName(entryTypeString)] = ProgressPicture(
             file: File(Directory(fileEntity.path).listSync().first.path),
           );
         }
@@ -158,9 +150,7 @@ class PicturesFileService {
 
   Future<void> deleteEntry(ProgressEntry entry) async {
     final saveDirPath = await _saveDirPath;
-    final entryDirectory = Directory(
-      '$saveDirPath/${entry.date.millisecondsSinceEpoch}',
-    );
+    final entryDirectory = Directory('$saveDirPath/${entry.date.millisecondsSinceEpoch}');
 
     print("Deleting entry folder : $entryDirectory");
     if (await entryDirectory.exists()) {
@@ -168,17 +158,46 @@ class PicturesFileService {
     }
   }
 
-  Future<void> deletePicture(
-    ProgressEntry entry,
-    ProgressEntryType entryType,
+  static Future<(img.Image?, String)> scaleDownImageIfNecessary(
+    File originalImageFile,
+    Directory destinationDirectory,
+    int? resolutionThreshold,
   ) async {
+    img.Image? originalImageDecoded = img.decodeImage(
+      await originalImageFile.readAsBytes(),
+    );
+
+    if (originalImageDecoded == null) {
+      Logger().e(
+        'Could not decode image for pre-processing ${originalImageFile.path}. Skipping.',
+      );
+    }
+
+    String processedImagePath = originalImageFile.path;
+    if (originalImageDecoded != null &&
+        resolutionThreshold != null &&
+        originalImageDecoded.width > resolutionThreshold) {
+      processedImagePath = p.join(
+        destinationDirectory.path,
+        p.basename(originalImageFile.path),
+      );
+      final scaledImage = img.copyResize(
+        originalImageDecoded,
+        width: resolutionThreshold,
+      );
+      await File(processedImagePath).writeAsBytes(img.encodeJpg(scaledImage));
+      Logger().d(
+        'Scaled down ${originalImageFile.path} to ${scaledImage.width}x${scaledImage.height} at $processedImagePath.',
+      );
+      return (scaledImage, processedImagePath);
+    }
+    return (originalImageDecoded, processedImagePath);
+  }
+
+  Future<void> deletePicture(ProgressEntry entry, ProgressEntryType entryType) async {
     final saveDirPath = await _saveDirPath;
-    final entryDirectory = Directory(
-      '$saveDirPath/${entry.date.millisecondsSinceEpoch}',
-    );
-    final pictureDirectory = Directory(
-      '${entryDirectory.path}/${entryType.name}',
-    );
+    final entryDirectory = Directory('$saveDirPath/${entry.date.millisecondsSinceEpoch}');
+    final pictureDirectory = Directory('${entryDirectory.path}/${entryType.name}');
     if (await pictureDirectory.exists()) {
       await pictureDirectory.delete(recursive: true);
     }

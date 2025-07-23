@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:progres/src/core/domain/models/progress_entry.dart';
+import 'package:progres/src/features/timelapse/_shared/repositories/timelapse_notifier.dart';
 import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart';
 import 'package:progres/src/features/timelapse/generation/viewmodels/video_generation_view_model.dart';
 import 'package:progres/src/features/timelapse/player/view/video_player_screen.dart';
@@ -11,22 +11,13 @@ import 'package:progres/src/features/timelapse/player/view/video_player_screen.d
 class GenerationScreen extends ConsumerWidget {
   static const String name = 'generation';
   static const String path = '/generation';
-  static const String pathParams = '/:type/:from/:to';
 
-  final ProgressEntryType type;
-  final DateTime from;
-  final DateTime to;
-
-  const GenerationScreen({
-    super.key,
-    required this.from,
-    required this.to,
-    required this.type,
-  });
+  const GenerationScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final generationState = ref.watch(videoGenerationViewModelProvider);
+    final Timelapse conf = ref.read(timelapseProvider);
+    final generationState = ref.watch(videoGenerationViewModelProvider(conf));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Generating Video')),
@@ -35,14 +26,7 @@ class GenerationScreen extends ConsumerWidget {
           data: (progress) {
             if (progress.step == VideoGenerationStep.done) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                context.pushReplacementNamed(
-                  VideoPlayerScreen.name,
-                  pathParameters: {
-                    'from': from.millisecondsSinceEpoch.toString(),
-                    'to': to.millisecondsSinceEpoch.toString(),
-                    'type': type.name,
-                  },
-                );
+                context.goNamed(VideoPlayerScreen.name);
               });
               return const CircularProgressIndicator();
             }
@@ -70,12 +54,14 @@ class GenerationScreen extends ConsumerWidget {
 
   String _getStepText(VideoGenerationStep step) {
     switch (step) {
+      case VideoGenerationStep.none:
+        return 'Starting';
       case VideoGenerationStep.preparingFrames:
-        return 'Collecting entries';
+        return 'Collecting pictures';
       case VideoGenerationStep.generating:
         return 'Generating video';
       case VideoGenerationStep.aligningFrames:
-        return 'Aligning frames';
+        return 'Aligning pictures';
       case VideoGenerationStep.analyzing:
         return 'Analyzing pictures';
       case VideoGenerationStep.stabilizing:
