@@ -132,20 +132,33 @@ class _TimelapseConfigurationScreenState
   }
 
   Widget _buildQualitySelector(Timelapse conf) {
-    return DropdownButtonFormField<Quality>(
-      decoration: const InputDecoration(labelText: 'Quality'),
-      value: conf.quality,
-      items: Quality.values.map((Quality quality) {
-        return DropdownMenuItem<Quality>(
-          value: quality,
-          child: Text(quality.name.toUpperCase()),
-        );
-      }).toList(),
-      onChanged: (Quality? newValue) {
-        if (newValue != null) {
-          ref.read(timelapseProvider.notifier).setQuality(newValue);
-        }
-      },
+    return Row(
+      spacing: 16,
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      mainAxisSize: MainAxisSize.max,
+      children: Quality.values
+          .map(
+            (Quality quality) => ChoiceChip(
+              visualDensity: VisualDensity.comfortable,
+              label: Column(
+                children: [
+                  Text(quality.label, style: Theme.of(context).textTheme.labelLarge),
+                  Text(
+                    quality.description,
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
+                ],
+              ),
+              showCheckmark: false,
+              side: BorderSide.none,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+              ),
+              selected: conf.quality == quality,
+              onSelected: (_) => ref.read(timelapseProvider.notifier).setQuality(quality),
+            ),
+          )
+          .toList(),
     );
   }
 

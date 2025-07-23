@@ -3,7 +3,51 @@ import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/core/services/video_service.dart';
 import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart';
 
-enum Quality { sd, fhd, uhd }
+enum Quality {
+  hd,
+  fhd,
+  uhd,
+  original;
+
+  String get label {
+    switch (this) {
+      case Quality.hd:
+        return 'HD';
+      case Quality.fhd:
+        return 'FHD';
+      case Quality.uhd:
+        return 'UHD';
+      case Quality.original:
+        return 'Original';
+    }
+  }
+
+  String get description {
+    switch (this) {
+      case Quality.hd:
+        return '720p';
+      case Quality.fhd:
+        return '1080p';
+      case Quality.uhd:
+        return '4K';
+      case Quality.original:
+        return 'Original';
+    }
+  }
+
+  int? get resolution {
+    switch (this) {
+      case Quality.hd:
+        return 720;
+      case Quality.fhd:
+        return 1080;
+      case Quality.uhd:
+        return 2160;
+      case Quality.original:
+        return null;
+    }
+  }
+}
 
 class Timelapse {
   Timelapse({
