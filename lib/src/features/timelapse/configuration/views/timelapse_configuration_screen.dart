@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,7 +7,7 @@ import 'package:progres/src/core/domain/models/progress_entry.dart';
 import 'package:progres/src/features/entries/_shared/repositories/progress_entries_repository.dart';
 import 'package:progres/src/features/entries/list/controllers/list_entries_controller.dart';
 import 'package:progres/src/features/timelapse/_shared/repositories/timelapse_notifier.dart';
-import 'package:progres/src/features/timelapse/configuration/widgets/date_histogram.dart';
+import 'package:progres/src/features/timelapse/configuration/widgets/date_slider.dart';
 import 'package:progres/src/features/timelapse/generation/view/generation_screen.dart';
 import 'package:progres/src/features/timelapse/player/widgets/header_infos_divider.dart';
 
@@ -289,132 +287,11 @@ class _TimelapseConfigurationScreenState
                   Text(dateFormatter.format(conf.to)),
                 ],
               ),
-              Stack(
-                children: [
-                  Positioned(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final double horizontalPadding = 24;
-                        final availableWidth =
-                            constraints.maxWidth - (horizontalPadding * 2);
-
-                        final selectedStartDate = conf.from;
-                        final selectedEndDate = conf.to;
-
-                        // Ensure totalDays is not zero to avoid division by zero.
-                        final double overallDateRangeInDays = max(
-                          1,
-                          lastEntryDate.difference(firstEntryDate).inDays.toDouble(),
-                        );
-
-                        final selectionStartOffset =
-                            (selectedStartDate.difference(firstEntryDate).inDays /
-                                overallDateRangeInDays) *
-                            availableWidth;
-
-                        final selectionEndOffset =
-                            (selectedEndDate.difference(firstEntryDate).inDays /
-                                overallDateRangeInDays) *
-                            availableWidth;
-
-                        final selectionWidth = selectionEndOffset - selectionStartOffset;
-
-                        return Container(
-                          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surfaceContainerLowest,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Stack(
-                            alignment: Alignment.centerLeft,
-                            children: [
-                              Positioned(
-                                top: 8,
-                                bottom: 8,
-                                left: selectionStartOffset,
-                                child: Container(
-                                  width: selectionWidth,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        Theme.of(context).colorScheme.secondary.withAlpha(
-                                          (255.0 * 0.2).round(),
-                                        ),
-                                        Theme.of(context).colorScheme.secondary.withAlpha(
-                                          (255.0 * 0.5).round(),
-                                        ),
-                                        Theme.of(context).colorScheme.secondary.withAlpha(
-                                          (255.0 * 0.2).round(),
-                                        ),
-                                      ],
-                                    ),
-                                    border: BoxBorder.fromLTRB(
-                                      left: BorderSide(
-                                        color: Theme.of(context).colorScheme.primary,
-                                      ),
-                                      right: BorderSide(
-                                        color: Theme.of(context).colorScheme.primary,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                child: DateHistogram(
-                                  entries: allEntries.map((entry) => entry.date).toList(),
-                                  validEntriesDates: validEntries
-                                      .map((entry) => entry.date)
-                                      .toList(),
-                                  selectedFirstDate: conf.from,
-                                  selectedLastDate: conf.to,
-                                  dotColor: Theme.of(
-                                    context,
-                                  ).colorScheme.surfaceContainer,
-                                  dotRadius: 2,
-                                  validDotColor: Theme.of(context).colorScheme.secondary,
-                                  validDotRadius: 2,
-                                  highlightedDotColor: Theme.of(
-                                    context,
-                                  ).colorScheme.primary,
-                                  highlightedDotRadius: 4,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: Opacity(
-                      opacity: 0,
-                      child: RangeSlider(
-                        values: RangeValues(
-                          conf.from.millisecondsSinceEpoch.toDouble(),
-                          conf.to.millisecondsSinceEpoch.toDouble(),
-                        ),
-                        min: firstEntryDate.millisecondsSinceEpoch.toDouble(),
-                        max: lastEntryDate.millisecondsSinceEpoch.toDouble(),
-                        labels: null,
-                        onChanged: (RangeValues values) {
-                          ref
-                              .read(timelapseProvider.notifier)
-                              .setFrom(
-                                DateTime.fromMillisecondsSinceEpoch(values.start.round()),
-                              );
-                          ref
-                              .read(timelapseProvider.notifier)
-                              .setTo(
-                                DateTime.fromMillisecondsSinceEpoch(values.end.round()),
-                              );
-                        },
-                      ),
-                    ),
-                  ),
-                ],
+              DateSlider(
+                firstEntryDate: firstEntryDate,
+                lastEntryDate: lastEntryDate,
+                allEntries: allEntries,
+                validEntries: validEntries,
               ),
             ],
           );
