@@ -352,13 +352,13 @@ class _TimelapseConfigurationScreenState
                                 colors: [
                                   Theme.of(
                                     context,
-                                  ).colorScheme.secondary.withOpacity(0.4),
+                                  ).colorScheme.secondary.withOpacity(0.2),
                                   Theme.of(
                                     context,
-                                  ).colorScheme.secondary.withOpacity(0.75),
+                                  ).colorScheme.secondary.withOpacity(0.5),
                                   Theme.of(
                                     context,
-                                  ).colorScheme.secondary.withOpacity(0.4),
+                                  ).colorScheme.secondary.withOpacity(0.2),
                                 ],
                               ),
                               border: BoxBorder.symmetric(
@@ -381,12 +381,10 @@ class _TimelapseConfigurationScreenState
                             selectedLastDate: conf.to,
                             dotColor: Theme.of(context).colorScheme.surfaceContainer,
                             dotRadius: 2,
-                            validDotColor: Theme.of(
-                              context,
-                            ).colorScheme.tertiaryContainer,
-                            validDotRadius: 3,
+                            validDotColor: Theme.of(context).colorScheme.secondary,
+                            validDotRadius: 2,
                             highlightedDotColor: Theme.of(context).colorScheme.primary,
-                            highlightedDotRadius: 6,
+                            highlightedDotRadius: 4,
                           ),
                         ),
                       ],
