@@ -102,21 +102,27 @@ class _TimelapseConfigurationScreenState
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          ref
-              .read(timelapseProvider.notifier)
-              .setEntries(
-                ref
+      floatingActionButton: FilledButton.icon(
+        onPressed:
+            ref
                     .watch(listEntriesControllerProvider.notifier)
-                    .getEntriesBetweenDates(
-                      from: conf.from,
-                      to: conf.to,
-                      type: conf.type,
-                    ),
-              );
-          context.goNamed(GenerationScreen.name);
-        },
+                    .getEntriesCount(from: conf.from, to: conf.to, type: conf.type) >
+                0
+            ? () {
+                ref
+                    .read(timelapseProvider.notifier)
+                    .setEntries(
+                      ref
+                          .watch(listEntriesControllerProvider.notifier)
+                          .getEntriesBetweenDates(
+                            from: conf.from,
+                            to: conf.to,
+                            type: conf.type,
+                          ),
+                    );
+                context.goNamed(GenerationScreen.name);
+              }
+            : null,
         icon: FaIcon(FontAwesomeIcons.solidPlay, size: 16),
         label: Text("Generate now"),
       ),
@@ -208,11 +214,9 @@ class _TimelapseConfigurationScreenState
                 borderRadius: BorderRadius.all(Radius.circular(8)),
               ),
               selected: conf.type == entryType,
-              onSelected: entriesCountByEntryType[entryType]! > 0
-                  ? (bool _) {
-                      ref.read(timelapseProvider.notifier).setType(entryType);
-                    }
-                  : null,
+              onSelected: (bool _) {
+                ref.read(timelapseProvider.notifier).setType(entryType);
+              },
             ),
           )
           .toList(),
