@@ -35,9 +35,13 @@ class _TimelapseConfigurationScreenState
 
     final entries = ref.watch(progressEntriesRepositoryProvider).orderedEntries;
 
-    final Map<ProgressEntryType, int> entriesCountByEntryType = ref
+    final Map<ProgressEntryType, int> entriesCountGroupedByType = ref
         .watch(listEntriesControllerProvider.notifier)
-        .getEntriesCountByEntryType(conf.from, conf.to);
+        .getEntriesCountByEntryType(from: conf.from, to: conf.to);
+
+    final Map<ProgressEntryType, List<ProgressEntry>> entriesGroupedByType = ref
+        .watch(listEntriesControllerProvider.notifier)
+        .getEntriesGroupedByType();
 
     double minFps = 1;
     double maxFps = 30;
@@ -52,11 +56,15 @@ class _TimelapseConfigurationScreenState
             children: <Widget>[
               ConfigurationContainer(
                 label: 'Select a range',
-                child: _buildDateRangePicker(conf, entries.last.date, entries.first.date),
+                child: _buildDateRangePicker(
+                  conf,
+                  entries,
+                  entriesGroupedByType[conf.type]!,
+                ),
               ),
               ConfigurationContainer(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: _buildProgressEntryTypeSelector(conf, entriesCountByEntryType),
+                child: _buildProgressEntryTypeSelector(conf, entriesCountGroupedByType),
               ),
               ConfigurationContainer(
                 label: 'Framerate',
@@ -101,7 +109,11 @@ class _TimelapseConfigurationScreenState
               .setEntries(
                 ref
                     .watch(listEntriesControllerProvider.notifier)
-                    .getEntriesBetweenDates(conf.from, conf.to, conf.type),
+                    .getEntriesBetweenDates(
+                      from: conf.from,
+                      to: conf.to,
+                      type: conf.type,
+                    ),
               );
           context.goNamed(GenerationScreen.name);
         },
@@ -209,16 +221,14 @@ class _TimelapseConfigurationScreenState
 
   Widget _buildDateRangePicker(
     Timelapse conf,
-    DateTime firstEntryDate,
-    DateTime lastEntryDate,
+    List<ProgressEntry> allEntries,
+    List<ProgressEntry> validEntries,
   ) {
     final dateFormatter = DateFormat.yMMMd();
 
-    print('First entry date: $firstEntryDate');
-    print('Last entry date: $lastEntryDate');
+    final firstEntryDate = allEntries.last.date;
+    final lastEntryDate = allEntries.first.date;
 
-    print('[Before binding] Conf from: ${conf.from}');
-    print('[Before binding] Conf to: ${conf.to}');
     if (conf.from.isBefore(firstEntryDate)) {
       WidgetsBinding.instance.addPostFrameCallback(
         (_) => ref.read(timelapseProvider.notifier).setFrom(firstEntryDate),
@@ -359,12 +369,20 @@ class _TimelapseConfigurationScreenState
                         Container(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           child: DateHistogram(
+                            entries: allEntries.map((entry) => entry.date).toList(),
+                            validEntriesDates: validEntries
+                                .map((entry) => entry.date)
+                                .toList(),
                             selectedFirstDate: conf.from,
                             selectedLastDate: conf.to,
-                            dotColor: Theme.of(
+                            dotColor: Theme.of(context).colorScheme.surfaceContainer,
+                            dotRadius: 2,
+                            validDotColor: Theme.of(
                               context,
-                            ).colorScheme.surfaceContainerHighest,
+                            ).colorScheme.tertiaryContainer,
+                            validDotRadius: 3,
                             highlightedDotColor: Theme.of(context).colorScheme.primary,
+                            highlightedDotRadius: 6,
                           ),
                         ),
                       ],

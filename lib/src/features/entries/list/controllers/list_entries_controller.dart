@@ -24,24 +24,35 @@ class ListEntriesController extends StateNotifier<AsyncValue<List<ProgressEntry>
     }
   }
 
-  int getEntriesCount(DateTime from, DateTime to, ProgressEntryType type) {
-    return _repository.getEntriesCount(from, to, type);
+  int getEntriesCount({DateTime? from, DateTime? to, ProgressEntryType? type}) {
+    return _repository.getEntriesCount(from: from, to: to, type: type);
   }
 
-  Map<ProgressEntryType, int> getEntriesCountByEntryType(DateTime from, DateTime to) {
+  Map<ProgressEntryType, int> getEntriesCountByEntryType({DateTime? from, DateTime? to}) {
     final Map<ProgressEntryType, int> result = {};
     for (ProgressEntryType type in ProgressEntryType.values) {
-      result[type] = getEntriesCount(from, to, type);
+      result[type] = getEntriesCount(from: from, to: to, type: type);
     }
     return result;
   }
 
-  List<ProgressEntry> getEntriesBetweenDates(
-    DateTime from,
-    DateTime to,
+  Map<ProgressEntryType, List<ProgressEntry>> getEntriesGroupedByType({
+    DateTime? from,
+    DateTime? to,
+  }) {
+    final Map<ProgressEntryType, List<ProgressEntry>> result = {};
+    for (ProgressEntryType type in ProgressEntryType.values) {
+      result[type] = getEntriesBetweenDates(from: from, to: to, type: type);
+    }
+    return result;
+  }
+
+  List<ProgressEntry> getEntriesBetweenDates({
+    DateTime? from,
+    DateTime? to,
     ProgressEntryType? type,
-  ) {
-    return _repository.getEntriesBetweenDates(from, to, type);
+  }) {
+    return _repository.getEntriesBetweenDates(from: from, to: to, type: type);
   }
 
   @override
