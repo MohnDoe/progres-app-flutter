@@ -37,9 +37,7 @@ class GalleryScreen extends ConsumerStatefulWidget {
 }
 
 class _GalleryScreenState extends ConsumerState<GalleryScreen> {
-  final CarouselController _carouselController = CarouselController(
-    initialItem: 0,
-  );
+  final CarouselController _carouselController = CarouselController(initialItem: 0);
   ActiveEntry _activeEntry = ActiveEntry.first;
 
   late ProgressEntry _firstEntry;
@@ -217,9 +215,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.all(Radius.circular(8)),
                     ),
-                    disabledColor: Theme.of(
-                      context,
-                    ).colorScheme.surfaceContainerLow,
+                    disabledColor: Theme.of(context).colorScheme.surfaceContainerLow,
                     selected: _selectedType == type,
                     onSelected:
                         // check if user can switch to side by side mode
@@ -296,10 +292,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                                 setState(() {
                                   _activeEntry = ActiveEntry.first;
                                   _carouselController.animateToItem(
-                                    getIndexOfEntry(
-                                      _firstEntry,
-                                      ActiveEntry.first,
-                                    ),
+                                    getIndexOfEntry(_firstEntry, ActiveEntry.first),
                                   );
                                 });
                               },
@@ -332,10 +325,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                                 setState(() {
                                   _activeEntry = ActiveEntry.second;
                                   _carouselController.animateToItem(
-                                    getIndexOfEntry(
-                                      _secondEntry!,
-                                      ActiveEntry.second,
-                                    ),
+                                    getIndexOfEntry(_secondEntry!, ActiveEntry.second),
                                   );
                                 });
                               },
@@ -386,21 +376,15 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                           e.pictures[_selectedType]!.file,
                           fit: BoxFit.cover,
                         ),
-                        (_activeEntry == ActiveEntry.first &&
-                                    e == _firstEntry) ||
-                                (_activeEntry == ActiveEntry.second &&
-                                    e == _secondEntry)
+                        (_activeEntry == ActiveEntry.first && e == _firstEntry) ||
+                                (_activeEntry == ActiveEntry.second && e == _secondEntry)
                             ? Container(
                                 decoration: ShapeDecoration(
                                   shape: ContinuousRectangleBorder(
-                                    borderRadius: BorderRadius.all(
-                                      Radius.circular(16),
-                                    ),
+                                    borderRadius: BorderRadius.all(Radius.circular(16)),
                                     side: BorderSide(
                                       width: 4,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
+                                      color: Theme.of(context).colorScheme.primary,
                                     ),
                                   ),
                                 ),
@@ -428,9 +412,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
             ),
             const SizedBox(width: 16),
             IconButton(
-              onPressed: hasPreviousEntry()
-                  ? () => move(CarouselDirection.left)
-                  : null,
+              onPressed: hasPreviousEntry() ? () => move(CarouselDirection.left) : null,
               iconSize: 16,
               icon: const FaIcon(FontAwesomeIcons.solidChevronLeft),
             ),
@@ -444,9 +426,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
               ),
             ),
             IconButton(
-              onPressed: hasNextEntry()
-                  ? () => move(CarouselDirection.right)
-                  : null,
+              onPressed: hasNextEntry() ? () => move(CarouselDirection.right) : null,
               iconSize: 16,
               icon: const FaIcon(FontAwesomeIcons.solidChevronRight),
             ),

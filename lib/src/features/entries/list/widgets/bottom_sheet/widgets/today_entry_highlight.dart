@@ -73,7 +73,6 @@ class _TodayEntryHighlightState extends State<TodayEntryHighlight> {
                               "${widget.entry.date.millisecondsSinceEpoch}_$entryType",
                             ),
                             widget.entry.pictures[entryType],
-                            height: 80,
                             width: 80,
                             borderRadius: 48,
                             onTap: () => context.pushNamed(

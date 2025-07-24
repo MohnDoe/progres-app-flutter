@@ -12,8 +12,7 @@ class EntryTypePictureCard extends ConsumerStatefulWidget {
   final ProgressEntryType type;
 
   @override
-  ConsumerState<EntryTypePictureCard> createState() =>
-      _EntryTypePictureCardState();
+  ConsumerState<EntryTypePictureCard> createState() => _EntryTypePictureCardState();
 }
 
 class _EntryTypePictureCardState extends ConsumerState<EntryTypePictureCard> {
@@ -32,23 +31,18 @@ class _EntryTypePictureCardState extends ConsumerState<EntryTypePictureCard> {
     ProgressEntry entry = ref.watch(progressEntryStateNotifierProvider);
 
     final ProgressPicture? picture = entry.pictures[type];
-    final progressEntryNotifier = ref.read(
-      progressEntryStateNotifierProvider.notifier,
-    );
+    final progressEntryNotifier = ref.read(progressEntryStateNotifierProvider.notifier);
 
     Widget cardVisualContent = PictureRectangle(
       picture,
       width: 80,
-      height: 80,
       borderRadius: 32,
       highlight: picture == null,
       highlightWidth: 2,
       highlightColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       onTap: () => _displayPictureSourceOptions(),
       emptyWidget: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainer,
-        ),
+        decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainer),
         child: Center(child: ProgressEntry.getIconFromType(widget.type)),
       ),
     );
@@ -64,10 +58,7 @@ class _EntryTypePictureCardState extends ConsumerState<EntryTypePictureCard> {
             child: Opacity(
               opacity: 0.75,
               child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: 100,
-                  maxHeight: 100,
-                ),
+                constraints: const BoxConstraints(maxWidth: 100, maxHeight: 100),
                 child: cardVisualContent,
               ),
             ),
@@ -122,10 +113,7 @@ class _EntryTypePictureCardState extends ConsumerState<EntryTypePictureCard> {
             final ProgressEntryType draggedType = details.data;
             final ProgressEntryType targetType = type;
 
-            progressEntryNotifier.movePicture(
-              fromType: draggedType,
-              toType: targetType,
-            );
+            progressEntryNotifier.movePicture(fromType: draggedType, toType: targetType);
           },
         ),
       ],

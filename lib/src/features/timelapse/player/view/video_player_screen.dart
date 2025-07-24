@@ -136,7 +136,6 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
               child: PictureRectangle(
                 null,
                 width: double.infinity,
-                height: double.infinity,
                 borderRadius: 64,
                 highlightColor: Theme.of(context).colorScheme.primary,
                 highlight: true,
