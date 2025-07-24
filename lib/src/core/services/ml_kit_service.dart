@@ -279,10 +279,6 @@ class MLKitService {
         final int dstxInt = dstxDouble.round();
         final int dstyInt = dstyDouble.round();
 
-        // This is where the magenta circle will be drawn
-        final int magentaDrawX = targetxDouble.round();
-        final int magentaDrawY = targetyDouble.round();
-
         final int effectiveDstX = dstxInt;
         final int effectiveDstY = dstyInt;
         final int effectiveSrcW = transformedImage.width;
@@ -399,6 +395,8 @@ class MLKitService {
         compositingStopwatch.stop();
 
         // if (kDrawDebug) {
+        // final int magentaDrawX = targetxDouble.round();
+        // final int magentaDrawY = targetyDouble.round();
         //   finalImage = img.fillCircle(
         //     finalImage,
         //     x: magentaDrawX, // Use the rounded target X
