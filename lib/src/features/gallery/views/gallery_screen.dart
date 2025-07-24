@@ -37,9 +37,7 @@ class GalleryScreen extends ConsumerStatefulWidget {
 }
 
 class _GalleryScreenState extends ConsumerState<GalleryScreen> {
-  final CarouselController _carouselController = CarouselController(
-    initialItem: 0,
-  );
+  final CarouselController _carouselController = CarouselController(initialItem: 0);
   ActiveEntry _activeEntry = ActiveEntry.first;
 
   late ProgressEntry _firstEntry;
@@ -193,6 +191,104 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       });
     }
 
+    List<Widget> buildGalleryWidgets() {
+      if (mode == GalleryMode.display) {
+        return [
+          // DATE ENTRY
+          Text(
+            DateFormat.yMMMd().format(_firstEntry.date),
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          Text(
+            timeago.format(_firstEntry.date),
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: SizedBox.expand(
+              child: SizedBox(
+                child: PictureDisplay(
+                  picture: _firstEntry.pictures[_selectedType],
+                  highlight: true,
+                ),
+              ),
+            ),
+          ),
+        ];
+      } else {
+        return [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.max,
+            spacing: 16,
+            children: [
+              Expanded(
+                child: Column(
+                  children: [
+                    Text(
+                      DateFormat.yMMMd().format(_firstEntry.date),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    Text(
+                      timeago.format(_firstEntry.date),
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          _activeEntry = ActiveEntry.first;
+                          _carouselController.animateToItem(
+                            getIndexOfEntry(_firstEntry, ActiveEntry.first),
+                          );
+                        });
+                      },
+                      child: PictureDisplay(
+                        picture: _firstEntry.pictures[_selectedType],
+                        highlight: _activeEntry == ActiveEntry.first,
+                        borderRadius: 32,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  children: [
+                    Text(
+                      DateFormat.yMMMd().format(_secondEntry!.date),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    Text(
+                      timeago.format(_secondEntry!.date),
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          _activeEntry = ActiveEntry.second;
+                          _carouselController.animateToItem(
+                            getIndexOfEntry(_secondEntry!, ActiveEntry.second),
+                          );
+                        });
+                      },
+                      child: PictureDisplay(
+                        picture: _secondEntry!.pictures[_selectedType],
+                        highlight: _activeEntry == ActiveEntry.second,
+                        borderRadius: 32,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ];
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Material(
@@ -217,9 +313,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.all(Radius.circular(8)),
                     ),
-                    disabledColor: Theme.of(
-                      context,
-                    ).colorScheme.surfaceContainerLow,
+                    disabledColor: Theme.of(context).colorScheme.surfaceContainerLow,
                     selected: _selectedType == type,
                     onSelected:
                         // check if user can switch to side by side mode
@@ -247,113 +341,17 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.max,
         children: [
-          // BIG PICTURE
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (mode == GalleryMode.display)
-                    Column(
-                      children: [
-                        // DATE ENTRY
-                        Text(
-                          DateFormat.yMMMd().format(_firstEntry.date),
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        Text(
-                          timeago.format(_firstEntry.date),
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                        const SizedBox(height: 16),
-                        PictureDisplay(
-                          picture: _firstEntry.pictures[_selectedType],
-                          highlight: true,
-                        ),
-                      ],
-                    ),
-                  if (mode == GalleryMode.sideBySide)
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.max,
-                      spacing: 32,
-                      children: [
-                        Column(
-                          children: [
-                            Text(
-                              DateFormat.yMMMd().format(_firstEntry.date),
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            Text(
-                              timeago.format(_firstEntry.date),
-                              style: Theme.of(context).textTheme.titleSmall,
-                            ),
-                            const SizedBox(height: 8),
-                            InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _activeEntry = ActiveEntry.first;
-                                  _carouselController.animateToItem(
-                                    getIndexOfEntry(
-                                      _firstEntry,
-                                      ActiveEntry.first,
-                                    ),
-                                  );
-                                });
-                              },
-                              child: PictureDisplay(
-                                picture: _firstEntry.pictures[_selectedType],
-                                highlight: _activeEntry == ActiveEntry.first,
-                                width: 200,
-                                borderRadius: 64,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 40),
-                          child: Divider(),
-                        ),
-                        Column(
-                          children: [
-                            Text(
-                              DateFormat.yMMMd().format(_secondEntry!.date),
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            Text(
-                              timeago.format(_secondEntry!.date),
-                              style: Theme.of(context).textTheme.titleSmall,
-                            ),
-                            const SizedBox(height: 8),
-                            InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _activeEntry = ActiveEntry.second;
-                                  _carouselController.animateToItem(
-                                    getIndexOfEntry(
-                                      _secondEntry!,
-                                      ActiveEntry.second,
-                                    ),
-                                  );
-                                });
-                              },
-                              child: PictureDisplay(
-                                picture: _secondEntry!.pictures[_selectedType],
-                                highlight: _activeEntry == ActiveEntry.second,
-                                width: 200,
-                                borderRadius: 64,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                ],
+                mainAxisSize: MainAxisSize.max,
+                children: buildGalleryWidgets(),
               ),
             ),
           ),
+          //
           SizedBox(
             height: 80,
             child: CarouselView(
@@ -386,21 +384,15 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                           e.pictures[_selectedType]!.file,
                           fit: BoxFit.cover,
                         ),
-                        (_activeEntry == ActiveEntry.first &&
-                                    e == _firstEntry) ||
-                                (_activeEntry == ActiveEntry.second &&
-                                    e == _secondEntry)
+                        (_activeEntry == ActiveEntry.first && e == _firstEntry) ||
+                                (_activeEntry == ActiveEntry.second && e == _secondEntry)
                             ? Container(
                                 decoration: ShapeDecoration(
                                   shape: ContinuousRectangleBorder(
-                                    borderRadius: BorderRadius.all(
-                                      Radius.circular(16),
-                                    ),
+                                    borderRadius: BorderRadius.all(Radius.circular(16)),
                                     side: BorderSide(
                                       width: 4,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
+                                      color: Theme.of(context).colorScheme.primary,
                                     ),
                                   ),
                                 ),
@@ -428,9 +420,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
             ),
             const SizedBox(width: 16),
             IconButton(
-              onPressed: hasPreviousEntry()
-                  ? () => move(CarouselDirection.left)
-                  : null,
+              onPressed: hasPreviousEntry() ? () => move(CarouselDirection.left) : null,
               iconSize: 16,
               icon: const FaIcon(FontAwesomeIcons.solidChevronLeft),
             ),
@@ -444,9 +434,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
               ),
             ),
             IconButton(
-              onPressed: hasNextEntry()
-                  ? () => move(CarouselDirection.right)
-                  : null,
+              onPressed: hasNextEntry() ? () => move(CarouselDirection.right) : null,
               iconSize: 16,
               icon: const FaIcon(FontAwesomeIcons.solidChevronRight),
             ),

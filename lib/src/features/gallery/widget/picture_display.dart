@@ -21,16 +21,12 @@ class PictureDisplay extends StatelessWidget {
     return PictureRectangle(
       picture,
       highlight: highlight,
-      width: width,
-      height: double.infinity,
       borderRadius: borderRadius,
-      highlightWidth: 4,
+      highlightWidth: 2,
+      shouldCalculateAspectRatio: true,
       highlightColor: Theme.of(context).colorScheme.primary,
       emptyWidget: Center(
-        child: Text(
-          "No picture.",
-          style: Theme.of(context).textTheme.labelMedium,
-        ),
+        child: Text("No picture.", style: Theme.of(context).textTheme.labelMedium),
       ),
     );
   }

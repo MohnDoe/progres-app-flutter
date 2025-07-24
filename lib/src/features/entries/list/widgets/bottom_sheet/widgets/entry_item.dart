@@ -28,10 +28,7 @@ class _EntryItemState extends State<EntryItem> {
     context.pushNamed(
       GalleryScreen.name,
       extra: widget.entry,
-      pathParameters: {
-        'entryType': type.name,
-        'mode': GalleryMode.display.name,
-      },
+      pathParameters: {'entryType': type.name, 'mode': GalleryMode.display.name},
     );
   }
 
@@ -60,10 +57,7 @@ class _EntryItemState extends State<EntryItem> {
                 Spacer(),
                 Text(DateFormat.yMMMd().format(widget.entry.date)),
                 const SizedBox(width: 8),
-                IconButton(
-                  onPressed: widget.onTapEdit,
-                  icon: Icon(Icons.edit, size: 16),
-                ),
+                IconButton(onPressed: widget.onTapEdit, icon: Icon(Icons.edit, size: 16)),
               ],
             ),
           );
@@ -92,15 +86,16 @@ class EntryImages extends StatelessWidget {
       spacing: 4,
       children: displayedTypes
           .map(
-            (ProgressEntryType entryType) => PictureRectangle(
-              key: ObjectKey(pictures[entryType]),
-              pictures[entryType],
-              onTap: () {
-                onPictureTap(entryType);
-              },
+            (ProgressEntryType entryType) => SizedBox(
               width: 40,
-              height: 40,
-              borderRadius: 20,
+              child: PictureRectangle(
+                key: ObjectKey(pictures[entryType]),
+                pictures[entryType],
+                onTap: () {
+                  onPictureTap(entryType);
+                },
+                borderRadius: 20,
+              ),
             ),
           )
           .toList(),
