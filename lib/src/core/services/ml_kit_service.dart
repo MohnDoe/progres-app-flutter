@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 import 'package:logger/logger.dart';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
@@ -35,11 +36,9 @@ class _TransformationResult {
   _TransformationResult(this.image, this.trackedPoint);
 }
 
-const kWidthThreshold = 480;
-const kUseScaledDownImage = true;
 const kSkipScaling = false;
-const kSkipRotation = true;
-const kDrawLandmarks = true;
+const kSkipRotation = false;
+const kDrawDebug = kDebugMode && false;
 
 class MLKitService {
   // Assuming this is the class name you're using
@@ -166,7 +165,7 @@ class MLKitService {
         continue;
       }
 
-      if (kDrawLandmarks) {
+      if (kDrawDebug) {
         // Draw landmarks on the working image (as per original logic)
         final drawLandmarksStopwatch = Stopwatch()..start();
         workingImage = _drawLandmarksOnImage(
@@ -186,7 +185,10 @@ class MLKitService {
         referenceImageHeight = workingImage.height;
 
         _logger.i(
-          'Reference SET: Center=(${targetMetrics.midShoulder.x.toStringAsFixed(2)}, ${targetMetrics.midShoulder.y.toStringAsFixed(2)}), '
+          'Reference SET: '
+          'W=$referenceImageWidth, H=$referenceImageHeight, '
+          'GeoCenter=(${targetMetrics.midShoulder.x / 2}, ${targetMetrics.midShoulder.y / 2}), '
+          'Center=(${targetMetrics.midShoulder.x.toStringAsFixed(2)}, ${targetMetrics.midShoulder.y.toStringAsFixed(2)}), '
           'SpineLen=${targetMetrics.spineLength.toStringAsFixed(2)}, ShoulderWid=${targetMetrics.shoulderWidth.toStringAsFixed(2)}, '
           'SpineAngle=${targetMetrics.spineAngleDeg.toStringAsFixed(2)}deg',
         );
@@ -235,6 +237,19 @@ class MLKitService {
           height: referenceImageHeight,
         );
 
+        if (kDrawDebug) {
+          // White circle on transformedImage
+          final int whiteCircleDrawX = finalTrackedPoint.x.round();
+          final int whiteCircleDrawY = finalTrackedPoint.y.round();
+          transformedImage = img.fillCircle(
+            transformedImage,
+            x: whiteCircleDrawX,
+            y: whiteCircleDrawY,
+            radius: 16, // Keep radius distinct for now
+            color: img.ColorRgb8(255, 255, 255), // White
+          );
+        }
+
         finalImage = img.fill(
           finalImage,
           color: transformedImage.backgroundColor ?? img.ColorRgb8(0, 0, 0),
@@ -250,13 +265,149 @@ class MLKitService {
         );
 
         final compositingStopwatch = Stopwatch()..start();
-        finalImage = img.compositeImage(
-          finalImage,
-          transformedImage,
-          dstX: dstX.round(),
-          dstY: dstY.round(),
-        );
+
+        final double targetxDouble = targetMetrics.midShoulder.x as double;
+        final double targetyDouble = targetMetrics.midShoulder.y as double;
+        final double finaltrackedxDouble =
+            finalTrackedPoint.x as double; // from transformationResult
+        final double finaltrackedyDouble =
+            finalTrackedPoint.y as double; // from transformationResult
+
+        final double dstxDouble = targetxDouble - finaltrackedxDouble;
+        final double dstyDouble = targetyDouble - finaltrackedyDouble;
+
+        final int dstxInt = dstxDouble.round();
+        final int dstyInt = dstyDouble.round();
+
+        // This is where the magenta circle will be drawn
+        final int magentaDrawX = targetxDouble.round();
+        final int magentaDrawY = targetyDouble.round();
+
+        final int effectiveDstX = dstxInt;
+        final int effectiveDstY = dstyInt;
+        final int effectiveSrcW = transformedImage.width;
+        final int effectiveSrcH = transformedImage.height;
+
+        // Calculate the actual drawing rectangle on the destination (finalImage)
+        // This is the source rectangle translated by dstX_int, dstY_int
+        final int drawRectX0 = effectiveDstX;
+        final int drawRectY0 = effectiveDstY;
+        final int drawRectX1 = effectiveDstX + effectiveSrcW;
+        final int drawRectY1 = effectiveDstY + effectiveSrcH;
+
+        // The destination canvas bounds
+        const int canvasX0 = 0;
+        const int canvasY0 = 0;
+        final int canvasX1 = finalImage.width;
+        final int canvasY1 = finalImage.height;
+
+        // Find the intersection of the drawing rectangle and the canvas
+        final int clipX0 = math.max(drawRectX0, canvasX0);
+        final int clipY0 = math.max(drawRectY0, canvasY0);
+        final int clipX1 = math.min(drawRectX1, canvasX1);
+        final int clipY1 = math.min(drawRectY1, canvasY1);
+
+        final int clippedWidth = clipX1 - clipX0;
+        final int clippedHeight = clipY1 - clipY0;
+
+        if (clippedWidth > 0 && clippedHeight > 0) {
+          // These are the parameters that will actually be passed to compositeImage
+          // They define the target rectangle on 'finalImage' (dst)
+          final int finalCompositeDstX = clipX0;
+          final int finalCompositeDstY = clipY0;
+          final int finalCompositeDstW = clippedWidth;
+          final int finalCompositeDstH = clippedHeight;
+          // These define the source rectangle from 'transformedImage' (src)
+          final int finalCompositeSrcX = clipX0 - drawRectX0;
+          final int finalCompositeSrcY = clipY0 - drawRectY0;
+          final int finalCompositeSrcW = clippedWidth;
+          final int finalCompositeSrcH = clippedHeight;
+
+          final int fdstX = finalCompositeDstX;
+          final int fdstY = finalCompositeDstY;
+          final int fdstW = finalCompositeDstW;
+          final int fdstH = finalCompositeDstH;
+
+          final int fsrcX = finalCompositeSrcX;
+          final int fsrcY = finalCompositeSrcY;
+          final int fsrcW = finalCompositeSrcW;
+          final int fsrcH = finalCompositeSrcH;
+
+          // _logger.i(
+          //   // Use a prominent log level
+          //   "CALLING compositeImage with PARAMS:\n"
+          //   "  dst (finalImage): W=${finalImage.width}, H=${finalImage.height}\n"
+          //   "  src (transformedImage): W=${transformedImage.width}, H=${transformedImage.height}\n"
+          //   "  dstX: $fdstX, dstY: $fdstY, dstW: $fdstW, dstH: $fdstH\n"
+          //   "  srcX: $fsrcX, srcY: $fsrcY, srcW: $fsrcW, srcH: $fsrcH",
+          // );
+
+          // // For debugging, let's also directly check xCache/yCache contents for the first few elements
+          // // This is before compositeImage is called, assuming compositeImage will build them identically.
+          // final tempDx = (fsrcW == fdstW && fdstW != 0)
+          //     ? 1.0
+          //     : (fsrcW / fdstW); // Should be 1.0
+          // final tempDy = (fsrcH == fdstH && fdstH != 0)
+          //     ? 1.0
+          //     : (fsrcH / fdstH); // Should be 1.0
+          //
+          // List<int> debugXCache = [];
+          // if (fdstW > 0) {
+          //   debugXCache = List<int>.generate(fdstW, (x) => fsrcX + (x * tempDx).toInt());
+          //   _logger.d(
+          //     "Debug xCache[0]: ${debugXCache.isNotEmpty ? debugXCache[0] : 'N/A'} (expected ${fsrcX + 0})",
+          //   );
+          // }
+          // List<int> debugYCache = [];
+          // if (fdstH > 0) {
+          //   debugYCache = List<int>.generate(fdstH, (y) => fsrcY + (y * tempDy).toInt());
+          //   _logger.d(
+          //     "Debug yCache[0]: ${debugYCache.isNotEmpty ? debugYCache[0] : 'N/A'} (expected ${fsrcY + 0})",
+          //   );
+          // }
+          // if (debugXCache.isNotEmpty && debugXCache[0] < 0) {
+          //   _logger.e(
+          //     "CRITICAL: debugXCache[0] IS NEGATIVE: ${debugXCache[0]} from fsrcX=$fsrcX",
+          //   );
+          // }
+          // if (debugYCache.isNotEmpty && debugYCache[0] < 0) {
+          //   _logger.e(
+          //     "CRITICAL: debugYCache[0] IS NEGATIVE: ${debugYCache[0]} from fsrcY=$fsrcY",
+          //   );
+          // }
+
+          finalImage = img.compositeImage(
+            // THE CALL
+            finalImage,
+            transformedImage,
+            dstX: fdstX,
+            dstY: fdstY,
+            dstW: fdstW,
+            dstH: fdstH,
+            srcX: fsrcX,
+            srcY: fsrcY,
+            srcW: fsrcW,
+            srcH: fsrcH,
+            center: false,
+            blend: img.BlendMode.direct,
+          );
+        } else {
+          _logger.d("Skipping composite: No overlap after clipping.");
+          compositingStopwatch.stop();
+          continue;
+        }
         compositingStopwatch.stop();
+
+        if (kDrawDebug) {
+          finalImage = img.fillCircle(
+            finalImage,
+            x: magentaDrawX, // Use the rounded target X
+            y: magentaDrawY, // Use the rounded target Y
+            radius: 10, // Keep radius distinct
+            color: img.ColorRgb8(255, 0, 255), // Magenta
+          );
+        }
+
         totalCompositingTime += compositingStopwatch.elapsedMilliseconds;
 
         final saveFrameStopwatch = Stopwatch()..start();
@@ -408,6 +559,20 @@ class MLKitService {
         overallScaleFactor = 1.0;
       }
 
+      const double minOverallScale = 0.25; // Example: Don't shrink more than 4x
+      const double maxOverallScale = 4.0;
+
+      if (overallScaleFactor > 0 && overallScaleFactor < minOverallScale) {
+        _logger.w(
+          "Clamping overallScaleFactor from ${overallScaleFactor.toStringAsFixed(3)} to $minOverallScale",
+        );
+        overallScaleFactor = minOverallScale;
+      } else if (overallScaleFactor > maxOverallScale) {
+        _logger.w(
+          "Clamping overallScaleFactor from ${overallScaleFactor.toStringAsFixed(3)} to $maxOverallScale",
+        );
+        overallScaleFactor = maxOverallScale;
+      }
       _logger.d(
         "  OverallScaleFactor for spine: ${overallScaleFactor.toStringAsFixed(3)} (targetSW: ${targetMetrics.spineLength.toStringAsFixed(2)}, currentSW: ${currentMetrics.spineLength.toStringAsFixed(2)})",
       );
