@@ -38,7 +38,7 @@ class _TransformationResult {
 
 const kSkipScaling = false;
 const kSkipRotation = false;
-const kDrawDebug = kDebugMode && false;
+const kDrawDebug = kDebugMode;
 
 class MLKitService {
   // Assuming this is the class name you're using
@@ -237,18 +237,18 @@ class MLKitService {
           height: referenceImageHeight,
         );
 
-        if (kDrawDebug) {
-          // White circle on transformedImage
-          final int whiteCircleDrawX = finalTrackedPoint.x.round();
-          final int whiteCircleDrawY = finalTrackedPoint.y.round();
-          transformedImage = img.fillCircle(
-            transformedImage,
-            x: whiteCircleDrawX,
-            y: whiteCircleDrawY,
-            radius: 16, // Keep radius distinct for now
-            color: img.ColorRgb8(255, 255, 255), // White
-          );
-        }
+        // if (kDrawDebug) {
+        //   // White circle on transformedImage
+        //   final int whiteCircleDrawX = finalTrackedPoint.x.round();
+        //   final int whiteCircleDrawY = finalTrackedPoint.y.round();
+        //   transformedImage = img.fillCircle(
+        //     transformedImage,
+        //     x: whiteCircleDrawX,
+        //     y: whiteCircleDrawY,
+        //     radius: 16, // Keep radius distinct for now
+        //     color: img.ColorRgb8(255, 255, 255), // White
+        //   );
+        // }
 
         finalImage = img.fill(
           finalImage,
@@ -398,15 +398,15 @@ class MLKitService {
         }
         compositingStopwatch.stop();
 
-        if (kDrawDebug) {
-          finalImage = img.fillCircle(
-            finalImage,
-            x: magentaDrawX, // Use the rounded target X
-            y: magentaDrawY, // Use the rounded target Y
-            radius: 10, // Keep radius distinct
-            color: img.ColorRgb8(255, 0, 255), // Magenta
-          );
-        }
+        // if (kDrawDebug) {
+        //   finalImage = img.fillCircle(
+        //     finalImage,
+        //     x: magentaDrawX, // Use the rounded target X
+        //     y: magentaDrawY, // Use the rounded target Y
+        //     radius: 10, // Keep radius distinct
+        //     color: img.ColorRgb8(255, 0, 255), // Magenta
+        //   );
+        // }
 
         totalCompositingTime += compositingStopwatch.elapsedMilliseconds;
 
