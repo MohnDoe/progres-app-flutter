@@ -33,17 +33,21 @@ class _EntryTypePictureCardState extends ConsumerState<EntryTypePictureCard> {
     final ProgressPicture? picture = entry.pictures[type];
     final progressEntryNotifier = ref.read(progressEntryStateNotifierProvider.notifier);
 
-    Widget cardVisualContent = PictureRectangle(
-      picture,
+    Widget cardVisualContent = SizedBox(
       width: 80,
-      borderRadius: 32,
-      highlight: picture == null,
-      highlightWidth: 2,
-      highlightColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-      onTap: () => _displayPictureSourceOptions(),
-      emptyWidget: Container(
-        decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainer),
-        child: Center(child: ProgressEntry.getIconFromType(widget.type)),
+      child: PictureRectangle(
+        picture,
+        borderRadius: 32,
+        highlight: picture == null,
+        highlightWidth: 2,
+        highlightColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+        onTap: () => _displayPictureSourceOptions(),
+        emptyWidget: Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainer,
+          ),
+          child: Center(child: ProgressEntry.getIconFromType(widget.type)),
+        ),
       ),
     );
 
@@ -58,7 +62,7 @@ class _EntryTypePictureCardState extends ConsumerState<EntryTypePictureCard> {
             child: Opacity(
               opacity: 0.75,
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 100, maxHeight: 100),
+                constraints: const BoxConstraints(maxWidth: 80, maxHeight: 80),
                 child: cardVisualContent,
               ),
             ),

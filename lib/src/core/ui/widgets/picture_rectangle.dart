@@ -8,7 +8,6 @@ class PictureRectangle extends StatefulWidget {
     this.picture, {
     super.key,
     this.onTap,
-    required this.width,
     required this.borderRadius,
     this.emptyWidget = const Placeholder(),
     this.highlight = false,
@@ -20,7 +19,6 @@ class PictureRectangle extends StatefulWidget {
 
   final ProgressPicture? picture;
   final void Function()? onTap;
-  final double width;
   final double borderRadius;
   final double aspectRatio;
   final bool shouldCalculateAspectRatio;
@@ -82,47 +80,42 @@ class _PictureRectangleState extends State<PictureRectangle> {
       });
     }
 
-    return SizedBox(
-      width: widget.width,
-      child: AspectRatio(
-        aspectRatio: aspectRatio,
-        child: Stack(
-          children: [
-            ClipPath(
-              clipBehavior: Clip.antiAlias,
-              clipper: ShapeBorderClipper(
-                shape: ContinuousRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(widget.borderRadius)),
-                ),
-              ),
-              child: SizedBox(
-                width: double.infinity,
-                height: double.infinity,
-                child: InkWell(onTap: widget.onTap, child: imageWidget),
+    return AspectRatio(
+      aspectRatio: aspectRatio,
+      child: Stack(
+        children: [
+          ClipPath(
+            clipBehavior: Clip.antiAlias,
+            clipper: ShapeBorderClipper(
+              shape: ContinuousRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(widget.borderRadius)),
               ),
             ),
-            if (widget.highlight)
-              Positioned(
-                top: 0,
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  decoration: ShapeDecoration(
-                    shape: ContinuousRectangleBorder(
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(widget.borderRadius),
-                      ),
-                      side: BorderSide(
-                        width: widget.highlightWidth,
-                        color: widget.highlightColor,
-                      ),
+            child: SizedBox(
+              width: double.infinity,
+              height: double.infinity,
+              child: InkWell(onTap: widget.onTap, child: imageWidget),
+            ),
+          ),
+          if (widget.highlight)
+            Positioned(
+              top: 0,
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                decoration: ShapeDecoration(
+                  shape: ContinuousRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(widget.borderRadius)),
+                    side: BorderSide(
+                      width: widget.highlightWidth,
+                      color: widget.highlightColor,
                     ),
                   ),
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }

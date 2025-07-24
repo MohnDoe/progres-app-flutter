@@ -86,14 +86,16 @@ class EntryImages extends StatelessWidget {
       spacing: 4,
       children: displayedTypes
           .map(
-            (ProgressEntryType entryType) => PictureRectangle(
-              key: ObjectKey(pictures[entryType]),
-              pictures[entryType],
-              onTap: () {
-                onPictureTap(entryType);
-              },
+            (ProgressEntryType entryType) => SizedBox(
               width: 40,
-              borderRadius: 20,
+              child: PictureRectangle(
+                key: ObjectKey(pictures[entryType]),
+                pictures[entryType],
+                onTap: () {
+                  onPictureTap(entryType);
+                },
+                borderRadius: 20,
+              ),
             ),
           )
           .toList(),

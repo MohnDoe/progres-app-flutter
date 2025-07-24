@@ -21,7 +21,6 @@ class PictureDisplay extends StatelessWidget {
     return PictureRectangle(
       picture,
       highlight: highlight,
-      width: width,
       borderRadius: borderRadius,
       highlightWidth: 2,
       shouldCalculateAspectRatio: true,
