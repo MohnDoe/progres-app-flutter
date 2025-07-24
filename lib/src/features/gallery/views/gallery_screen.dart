@@ -191,6 +191,104 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       });
     }
 
+    List<Widget> buildGalleryWidgets() {
+      if (mode == GalleryMode.display) {
+        return [
+          // DATE ENTRY
+          Text(
+            DateFormat.yMMMd().format(_firstEntry.date),
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          Text(
+            timeago.format(_firstEntry.date),
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: SizedBox.expand(
+              child: SizedBox(
+                child: PictureDisplay(
+                  picture: _firstEntry.pictures[_selectedType],
+                  highlight: true,
+                ),
+              ),
+            ),
+          ),
+        ];
+      } else {
+        return [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.max,
+            spacing: 16,
+            children: [
+              Expanded(
+                child: Column(
+                  children: [
+                    Text(
+                      DateFormat.yMMMd().format(_firstEntry.date),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    Text(
+                      timeago.format(_firstEntry.date),
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          _activeEntry = ActiveEntry.first;
+                          _carouselController.animateToItem(
+                            getIndexOfEntry(_firstEntry, ActiveEntry.first),
+                          );
+                        });
+                      },
+                      child: PictureDisplay(
+                        picture: _firstEntry.pictures[_selectedType],
+                        highlight: _activeEntry == ActiveEntry.first,
+                        borderRadius: 32,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  children: [
+                    Text(
+                      DateFormat.yMMMd().format(_secondEntry!.date),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    Text(
+                      timeago.format(_secondEntry!.date),
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          _activeEntry = ActiveEntry.second;
+                          _carouselController.animateToItem(
+                            getIndexOfEntry(_secondEntry!, ActiveEntry.second),
+                          );
+                        });
+                      },
+                      child: PictureDisplay(
+                        picture: _secondEntry!.pictures[_selectedType],
+                        highlight: _activeEntry == ActiveEntry.second,
+                        borderRadius: 32,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ];
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Material(
@@ -243,107 +341,17 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.max,
         children: [
-          // BIG PICTURE
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (mode == GalleryMode.display)
-                    Column(
-                      children: [
-                        // DATE ENTRY
-                        Text(
-                          DateFormat.yMMMd().format(_firstEntry.date),
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        Text(
-                          timeago.format(_firstEntry.date),
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                        const SizedBox(height: 16),
-                        PictureDisplay(
-                          picture: _firstEntry.pictures[_selectedType],
-                          highlight: true,
-                        ),
-                      ],
-                    ),
-                  if (mode == GalleryMode.sideBySide)
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.max,
-                      spacing: 32,
-                      children: [
-                        Column(
-                          children: [
-                            Text(
-                              DateFormat.yMMMd().format(_firstEntry.date),
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            Text(
-                              timeago.format(_firstEntry.date),
-                              style: Theme.of(context).textTheme.titleSmall,
-                            ),
-                            const SizedBox(height: 8),
-                            InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _activeEntry = ActiveEntry.first;
-                                  _carouselController.animateToItem(
-                                    getIndexOfEntry(_firstEntry, ActiveEntry.first),
-                                  );
-                                });
-                              },
-                              child: PictureDisplay(
-                                picture: _firstEntry.pictures[_selectedType],
-                                highlight: _activeEntry == ActiveEntry.first,
-                                width: 200,
-                                borderRadius: 64,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 40),
-                          child: Divider(),
-                        ),
-                        Column(
-                          children: [
-                            Text(
-                              DateFormat.yMMMd().format(_secondEntry!.date),
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            Text(
-                              timeago.format(_secondEntry!.date),
-                              style: Theme.of(context).textTheme.titleSmall,
-                            ),
-                            const SizedBox(height: 8),
-                            InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _activeEntry = ActiveEntry.second;
-                                  _carouselController.animateToItem(
-                                    getIndexOfEntry(_secondEntry!, ActiveEntry.second),
-                                  );
-                                });
-                              },
-                              child: PictureDisplay(
-                                picture: _secondEntry!.pictures[_selectedType],
-                                highlight: _activeEntry == ActiveEntry.second,
-                                width: 200,
-                                borderRadius: 64,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                ],
+                mainAxisSize: MainAxisSize.max,
+                children: buildGalleryWidgets(),
               ),
             ),
           ),
+          //
           SizedBox(
             height: 80,
             child: CarouselView(
