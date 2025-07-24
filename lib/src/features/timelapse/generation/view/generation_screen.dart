@@ -45,7 +45,11 @@ class GenerationScreen extends ConsumerWidget {
               ],
             );
           },
-          error: (error, stackTrace) => Center(child: Text(error.toString())),
+          error: (error, stackTrace) => Center(
+            child: Column(
+              children: [Text(error.toString()), Text(stackTrace.toString())],
+            ),
+          ),
           loading: () => const Center(child: CircularProgressIndicator()),
         ),
       ),

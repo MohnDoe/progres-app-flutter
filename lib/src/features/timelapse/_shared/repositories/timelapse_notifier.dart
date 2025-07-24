@@ -4,6 +4,7 @@ import 'package:progres/src/core/services/video_service.dart';
 import 'package:progres/src/features/timelapse/generation/models/video_generation_progress.dart';
 
 enum Quality {
+  low,
   hd,
   fhd,
   uhd,
@@ -11,6 +12,8 @@ enum Quality {
 
   String get label {
     switch (this) {
+      case Quality.low:
+        return 'Low';
       case Quality.hd:
         return 'HD';
       case Quality.fhd:
@@ -24,12 +27,14 @@ enum Quality {
 
   String get description {
     switch (this) {
+      case Quality.low:
+        return '460p';
       case Quality.hd:
         return '720p';
       case Quality.fhd:
         return '1080p';
       case Quality.uhd:
-        return '4K';
+        return '2160p';
       case Quality.original:
         return 'Original';
     }
@@ -37,6 +42,8 @@ enum Quality {
 
   int? get resolution {
     switch (this) {
+      case Quality.low:
+        return 460;
       case Quality.hd:
         return 720;
       case Quality.fhd:
