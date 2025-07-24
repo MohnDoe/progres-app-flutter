@@ -34,7 +34,7 @@ enum Quality {
       case Quality.fhd:
         return '1080p';
       case Quality.uhd:
-        return '4K';
+        return '2160p';
       case Quality.original:
         return 'Original';
     }
